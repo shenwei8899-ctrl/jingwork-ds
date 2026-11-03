@@ -106,6 +106,8 @@
   max-width: calc(100vw - 48px);
   border-radius: var(--dsw-radius-panel);
   overflow: hidden;
+  border: 0;
+  --dsw-elevation-stroke-color: var(--dsw-alias-glass-edge);
   background: var(--dsw-alias-bg-layer-2);
   box-shadow: var(--dsw-elevation-prominent);
   /* Elevated surface: the scrollbar thumb takes the l2 elevation tokens.
@@ -182,7 +184,7 @@
 }
 
 .navCell.active {
-  background: var(--dsw-specific-sidebar-nav-item-active);
+  background: var(--dsw-alias-glass-selected);
 }
 
 .navIcon {

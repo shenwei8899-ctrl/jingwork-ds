@@ -26,8 +26,8 @@ function declarations(selector: string): Map<string, string> | undefined {
 }
 
 describe('SidebarRoot.module.css', () => {
-  it('uses a compact expanded navigation gap without shrinking the collapsed rail spacing', () => {
-    expect(declarations('.panelList')?.get('gap')).toBe('2px')
+  it('uses a compact expanded navigation rhythm without shrinking the collapsed rail spacing', () => {
+    expect(declarations('.panelList')?.get('gap')).toBe('6px')
     expect(declarations('.collapsed .panelList')?.get('gap')).toBe('12px')
   })
 
@@ -35,7 +35,7 @@ describe('SidebarRoot.module.css', () => {
     const root = declarations('.root')
     expect(root?.get('--dsh-sidebar-inline-padding')).toBe('8px')
     expect(root?.get('--dsh-sidebar-row-padding')).toBe('12px')
-    expect(root?.get('--dsh-sidebar-label-gap')).toBe('6px')
+    expect(root?.get('--dsh-sidebar-label-gap')).toBe('10px')
     expect(root?.get('--dsh-sidebar-paint-inset')).toBe('3px')
     expect(root?.get('padding')).toBe('6px var(--dsh-sidebar-inline-padding)')
     expect(declarations('.regionArea')?.get('margin-left')).toBe('-4px')
@@ -49,10 +49,10 @@ describe('SidebarRoot.module.css', () => {
   })
 
   it('keeps the reviewed expanded spacing separate from rail and caption controls', () => {
-    expect(declarations('.logoRow')?.get('padding')).toBe('8px 0 8px 8px')
+    expect(declarations('.logoRow')?.get('padding')).toBe('8px 0 12px 12px')
     expect(declarations('.logoRow')?.get('margin-bottom')).toBe('0')
-    expect(declarations('.newSession')?.get('margin')).toBe('0 calc(var(--dsh-sidebar-paint-inset) + 1px) 10px')
-    expect(declarations('.newSessionContent')?.get('justify-content')).toBe('center')
+    expect(declarations('.newSession')?.get('margin')).toBe('0 calc(var(--dsh-sidebar-paint-inset) + 1px) 14px')
+    expect(declarations('.newSessionContent')?.get('justify-content')).toBe('flex-start')
     expect(declarations(":global(html[data-platform='darwin']:not([data-fullscreen])) .root:not(.collapsed) > .topStrip > .toggle")?.get('transform')).toBe('translateX(4px)')
     expect(css).not.toContain(':not(.fading)')
     expect(declarations(':global([data-windows-titlebar]) .root:not(.collapsed) .newSession')?.has('margin-left')).toBe(false)
@@ -85,8 +85,8 @@ describe('SidebarRoot.module.css', () => {
   })
 
   it('keeps full-size brand artwork with a compact mark-to-name gap', () => {
-    expect(declarations('.brandIdentity')?.get('gap')).toBe('5px')
-    expect(declarations('.brandIdentity')?.get('height')).toBe('24px')
+    expect(declarations('.brandIdentity')?.get('gap')).toBe('10px')
+    expect(declarations('.brandIdentity')?.get('height')).toBe('32px')
     expect(declarations('.brandName')?.get('height')).toBe('24px')
     expect(declarations('.brandName')?.get('line-height')).toBe('24px')
     expect(declarations('.brandName')?.get('font-size')).toBe('18px')

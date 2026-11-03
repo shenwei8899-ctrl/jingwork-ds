@@ -1,0 +1,6 @@
+- article:
+  - text: 项目内置
+  - heading "客户端界面设计" [level=3]
+  - code: dsh-client-ui-ux
+  - paragraph: 设计与审查客户端界面，检查组件复用、视觉规范、提示反馈、弹层和加载状态。
+  - button "查看说明"

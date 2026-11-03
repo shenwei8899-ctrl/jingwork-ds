@@ -1,0 +1,13 @@
+- dialog "技能说明":
+  - heading "技能说明" [level=2]
+  - button "关闭"
+  - heading "客户端界面设计" [level=3]
+  - code: dsh-client-ui-ux
+  - paragraph: 设计与审查客户端界面，检查组件复用、视觉规范、提示反馈、弹层和加载状态。
+  - term: 来源文件
+  - definition: .agents/skills/dsh-client-ui-ux/SKILL.md
+  - term: 手动调用
+  - definition: 支持
+  - term: 模型调用
+  - definition: 支持
+  - paragraph: 实际可调用的技能以当前会话的技能目录为准

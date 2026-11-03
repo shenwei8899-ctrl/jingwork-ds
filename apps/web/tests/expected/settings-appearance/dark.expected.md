@@ -2,20 +2,20 @@
   "card": {
     "radius": "20px",
     "border": "1px",
-    "stroke": "rgba(255, 255, 255, 0.2)",
-    "fill": "rgb(44, 44, 46)"
+    "stroke": "rgba(255, 255, 255, 0.12)",
+    "fill": "rgba(28, 35, 47, 0.78)"
   },
   "selector": {
     "radius": "12px",
     "border": "0px",
-    "stroke": "rgb(249, 250, 251)",
+    "stroke": "rgb(228, 235, 245)",
     "fill": "rgb(53, 54, 56)",
     "height": 36
   },
   "usage": {
     "radius": "12px",
     "border": "1px",
-    "stroke": "rgba(255, 255, 255, 0.16)",
+    "stroke": "rgba(192, 210, 235, 0.15)",
     "fill": "rgba(0, 0, 0, 0)",
     "height": 36
   },
@@ -23,14 +23,14 @@
     "radius": "12px",
     "border": "1px",
     "stroke": "rgba(0, 0, 0, 0)",
-    "fill": "rgb(249, 250, 251)",
+    "fill": "rgb(172, 186, 202)",
     "height": 36
   },
   "save": {
     "radius": "12px",
     "border": "0px",
     "stroke": "rgb(15, 17, 21)",
-    "fill": "rgb(249, 250, 251)",
+    "fill": "rgb(172, 186, 202)",
     "height": 36
   }
 }

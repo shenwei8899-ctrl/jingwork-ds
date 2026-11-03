@@ -7,7 +7,7 @@
      the sides narrow with the shared width axis); the bottom gradient mask
      is owned by the chat scroller. No top pad: the composer stack's gap owns
      the space above; the status strip still carries its own margin. */
-  padding: 0 var(--dsh-composer-side-clearance) 4px;
+  padding: 0 var(--dsh-composer-side-clearance) 12px;
 }
 
 .dock {
@@ -52,12 +52,12 @@
   gap: 12px;
   width: 100%;
   max-width: var(--dsh-composer-card-max-width);
-  padding-top: 8px;
+  padding-top: 14px;
   /* Input stroke: the light neutral (l2, one step above the menus' l1),
      drawn as the elevation hairline so it costs no layout; the shadow is the
      soft elevation tier. Fill: the input surface token (elevated in dark). */
   border: 0;
-  --dsw-elevation-stroke-color: var(--dsw-alias-border-l2);
+  --dsw-elevation-stroke-color: var(--dsw-alias-glass-edge);
   border-radius: var(--dsw-radius-panel);
   background: var(--dsw-specific-input-major);
   box-shadow: var(--dsw-elevation-soft);
@@ -179,7 +179,7 @@
   /* Docked floor: one 24px line + 4px top pad = 28 content height; 36 leaves
      an 8px breath below the line (the hero keeps its own 52px floor below). */
   min-height: 36px;
-  padding: 4px 8px 0 14px;
+  padding: 4px 14px 0 18px;
   font-family: var(--dsw-font-family);
   font-size: inherit;
   line-height: inherit;
@@ -225,7 +225,7 @@
    36px floor. */
 .placeholder {
   position: absolute;
-  inset: 4px 8px auto 14px;
+  inset: 4px 14px auto 18px;
   color: var(--dsw-alias-label-caption);
   white-space: nowrap;
   overflow: hidden;
@@ -243,14 +243,12 @@
   cursor: pointer;
 }
 
-/* Hero (centered empty-state) keeps the 2-line floor (figma min-h 52 = ~2 × 24
-   line + 4pt); the docked composer collapses to the content height. */
+/* Empty sessions leave space for a multi-line task description. */
 .hero .input {
-  min-height: 52px;
+  min-height: 76px;
 }
 
-/* The hero's 52px floor fits two lines, so its placeholder clamps at two
-   instead of the docked single line. */
+/* Empty-session placeholders may wrap; docked hints remain single-line. */
 .hero .placeholder {
   white-space: normal;
   display: -webkit-box;
@@ -270,7 +268,9 @@
   /* 2px moved from the bottom pad to the top: the whole control row sits 2px
      lower in the card (it read too high against the textarea) while the
      controls' own centering stays untouched. */
-  padding: 2px 8px 6px;
+  margin: 0 16px;
+  border-top: 0.5px solid var(--dsw-alias-border-l1);
+  padding: 10px 0 12px;
   min-width: 0;
   /* Size container so the chips inside can collapse to icon-only when the
      card runs out of row width (PermissionSelect @container rule). Anonymous
@@ -383,22 +383,17 @@
   cursor: default;
 }
 
-/* Primary send (figma IconButton 34:10465): 34px circle, #3964FE light /
-   #679EFE dark — the info-fill pair (500→400), NOT button-primary (ink);
-   white glyph; empty text = 0.4 opacity. */
+/* Primary send uses the shared graphite action material. */
 .primary {
   display: grid;
   place-items: center;
   flex: none;
-  width: 34px;
-  height: 34px;
+  width: 38px;
+  height: 38px;
   border: none;
-  border-radius: 999px;
-  corner-shape: round;
+  border-radius: var(--dsw-radius-lg);
   background: var(--dsw-alias-button-info-fill);
-  /* Static white, not the foreground token: the arrow stays white on the blue
-     fill in both themes (design 34:10465). */
-  color: #fff;
+  color: var(--dsw-alias-label-primary-foreground);
   cursor: pointer;
   transition: background-color 100ms ease;
   /* Opts out of the row's 2px downward shift (.row top pad): the send circle

@@ -22,7 +22,7 @@
 }
 
 .sessionRow.selected {
-  background-color: var(--dsw-alias-interactive-bg-hover);
+  background: var(--dsw-alias-glass-selected);
 }
 
 .dragPreview {

@@ -8,7 +8,7 @@
   justify-content: center;
   height: 100%;
   min-width: 0;
-  padding: 0 24px;
+  padding: 32px 24px;
 }
 
 /* Cap matches the InputBar card. Glow may paint past the sides. */
@@ -41,7 +41,7 @@
   font-size: 26px;
   line-height: 32px;
   font-weight: 500;
-  color: var(--dsw-alias-label-primary);
+  color: var(--dsw-alias-label-secondary);
 }
 
 /* Title text + badge as one wrap unit so the title never breaks mid-text with
@@ -91,7 +91,7 @@
   display: block;
   overflow: visible;
   transform-origin: 50% 60%;
-  color: var(--dsw-alias-label-primary);
+  color: var(--dsw-alias-label-secondary);
 }
 
 /* Hover swim: a slow continuous sway about the body center — the head
@@ -159,7 +159,7 @@
   border: none;
   border-radius: var(--dsw-radius-sm);
   background: transparent;
-  color: var(--dsw-alias-label-primary);
+  color: var(--dsw-alias-label-secondary);
   font-size: 13px;
   line-height: 20px;
   font-weight: 500;
@@ -184,7 +184,7 @@
 
 .folder {
   flex: none;
-  color: var(--dsw-alias-label-primary);
+  color: var(--dsw-alias-label-secondary);
 }
 
 .workspaceLabel {
@@ -214,7 +214,7 @@
   font-size: 14px;
   font-weight: 400;
   line-height: 22px;
-  color: var(--dsw-alias-label-primary);
+  color: var(--dsw-alias-label-secondary);
 }
 
 .modalInput::placeholder {

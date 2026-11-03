@@ -32,11 +32,11 @@ body,
 body * {
   --dsw-elevation-stroke: 0 0 0 0.5px var(--dsw-elevation-stroke-color);
   --dsw-elevation-panel:
-    var(--dsw-elevation-stroke), 0 3px 8px 0 rgba(0, 0, 0, 0.03), 0 0 16px 0 rgba(0, 0, 0, 0.02);
+    var(--dsw-elevation-stroke), 0 6px 24px 0 var(--dsw-alias-glass-shadow-color), 0 1px 3px 0 var(--dsw-alias-glass-shadow-near);
   --dsw-elevation-prominent:
-    var(--dsw-elevation-stroke), 0 3px 8px 0 rgba(0, 0, 0, 0.04), 0 0 20px 0 rgba(0, 0, 0, 0.05);
+    var(--dsw-elevation-stroke), 0 12px 32px 0 var(--dsw-alias-glass-shadow-color), 0 2px 8px 0 var(--dsw-alias-glass-shadow-near);
   --dsw-elevation-soft:
-    var(--dsw-elevation-stroke), 0 4px 16px 0 rgba(0, 0, 0, 0.03), 0 0 24px 0 rgba(0, 0, 0, 0.03);
+    var(--dsw-elevation-stroke), 0 8px 28px 0 var(--dsw-alias-glass-shadow-color), 0 1px 4px 0 var(--dsw-alias-glass-shadow-near);
 }
 
 body[data-ds-dark-theme] {

@@ -1,0 +1,6 @@
+- article:
+  - text: ▤
+  - strong: report.md
+  - text: 1 KB
+  - button "Preview"
+  - button "Download"

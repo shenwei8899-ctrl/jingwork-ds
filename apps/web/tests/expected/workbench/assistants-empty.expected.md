@@ -1,0 +1,19 @@
+- banner:
+  - heading "Assistants" [level=1]
+  - paragraph: Create and manage your AI agents, or start from a built-in template
+- region "Agent catalog":
+  - tablist "Agent categories":
+    - tab "Enterprise agents"
+    - tab "My agents" [selected]
+    - tab "Built-in agents"
+  - text: 0 agents
+  - textbox "Search agents"
+  - group "View":
+    - button "Cards" [pressed]
+    - button "Table"
+  - button "Refresh"
+  - button "New agent"
+  - button "Create from built-in"
+  - heading "No personal agents yet" [level=2]
+  - paragraph: Start from scratch or a built-in template, configure its role and capabilities, then start a chat.
+  - button "Create your first agent"

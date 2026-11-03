@@ -4,7 +4,7 @@
   flex-direction: column;
   height: 100%;
   min-width: 0;
-  background: var(--dsw-alias-bg-base);
+  background: transparent;
 }
 
 /* 76px with its rule: the height of the Sidebar's tab strip and header row
@@ -462,7 +462,7 @@
     --dsh-chat-user-width,
     clamp(680px, calc(var(--dsh-conversation-column-width, 0px) * 0.64), 920px)
   );
-  --dsh-composer-card-max-width: calc(var(--dsh-chat-content-width) + 32px);
+  --dsh-composer-card-max-width: 1040px;
   --dsh-composer-side-clearance: 16px;
   --dsh-composer-dock-inset: 8px;
 }
@@ -577,19 +577,14 @@
   left: 0;
 }
 
-/* Hero phase: the composer stack (hero chrome + workspace row + card) is
-   flex-centered in the column; composer phase docks it at the bottom. Flex,
-   NOT absolute+transform: a transform would make this box the containing
-   block for position:fixed descendants (pickers/modals), shrinking them. */
+/* Empty sessions use a wide bottom composer. Flex positioning preserves the
+   viewport containing block for fixed pickers and modals. */
 .composerHero {
   align-self: center;
-  /* figma 75:8208 drew 12 between all three rows; the workspace row now sits
-     8 above the card (its margin-top restores 12 under the hero chrome). */
-  gap: 8px;
-  /* Foot inside the centered box floats the stack a bit above true center. */
-  padding-bottom: 32px;
-  /* Card cap + both clearances: the hero input card lands at exactly the same
-     width as the docked composer at every viewport. */
+  gap: 12px;
+  /* Keep the input clear of the window edge. */
+  padding-bottom: 28px;
+  /* Empty and active sessions share the same input width. */
   width: min(calc(var(--dsh-composer-card-max-width) + 2 * var(--dsh-composer-side-clearance)), 100%);
   z-index: 1;
 }
@@ -620,11 +615,10 @@
   display: none;
 }
 
-/* Hero: the composer sits inside the session scroll body; center there so
-   the tree seat matches active (sticky footer) without a Root remount. */
+/* Empty and active sessions retain the same resident composer seat. */
 .root[data-phase='hero'] .scrollBody,
 .embeddedBody[data-content-phase='hero'] .scrollBody {
-  justify-content: center;
+  justify-content: flex-end;
   overflow-y: auto;
 }
 

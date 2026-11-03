@@ -147,7 +147,7 @@ const SURFACE_PROPERTIES = ['background', 'background-color']
  */
 const SURFACE_TOKEN_PATTERN = /^--dsw-(?:alias-bg-|specific-)/
 /** Translucent elevated surfaces whose colors do not resolve to a palette rung. */
-const TRANSLUCENT_ELEVATED_SURFACES = new Set(['--dsw-specific-menu'])
+const TRANSLUCENT_ELEVATED_SURFACES = new Set(['--dsw-specific-menu', '--dsw-specific-input-major'])
 
 /**
  * The palette's own dark elevation ladder, resolved from `design-platform.css`:

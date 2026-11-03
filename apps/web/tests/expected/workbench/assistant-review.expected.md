@@ -1,0 +1,27 @@
+- region "New agent":
+  - button "Close draft"
+  - heading "New agent" [level=1]
+  - navigation "Creation steps":
+    - button "Basic information"
+    - button "Instructions"
+    - button "Skills"
+    - button "Connectors"
+    - button "Review"
+  - heading "Review" [level=2]
+  - heading "Test agent" [level=2]
+  - paragraph: Persistent assistant workflow fixture
+  - term: Agent ID
+  - definition: test-agent
+  - term: Role and instructions
+  - definition: Summarize decisions and check their owners.
+  - term: Skills
+  - definition: Meeting notes
+  - term: Connectors
+  - definition: None
+  - checkbox "Enable for new sessions after saving" [checked]
+  - text: Enable for new sessions after saving
+  - paragraph: Choose the model in the chat. File access, search and tool permissions use the current environment settings.
+  - text: Step 5 of 5
+  - button "Cancel"
+  - button "Back"
+  - button "Create agent"

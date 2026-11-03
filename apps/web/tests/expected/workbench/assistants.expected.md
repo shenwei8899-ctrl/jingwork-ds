@@ -1,0 +1,70 @@
+- banner:
+  - heading "Assistants" [level=1]
+  - paragraph: Create and manage your AI agents, or start from a built-in template
+- region "Agent catalog":
+  - tablist "Agent categories":
+    - tab "Enterprise agents"
+    - tab "My agents"
+    - tab "Built-in agents" [selected]
+  - text: 6 agents
+  - textbox "Search agents"
+  - group "View":
+    - button "Cards" [pressed]
+    - button "Table"
+  - button "Refresh"
+  - button "New agent"
+  - button "Create from built-in"
+  - article:
+    - heading "通用助理" [level=2]
+    - text: Agent ID assistant
+    - button "Copy ID"
+    - text: Ready
+    - paragraph: 梳理目标、规划任务，协助处理日常工作
+    - button "Create from template"
+    - button "Set as default"
+    - button "Start chat"
+  - article:
+    - heading "文案专家" [level=2]
+    - text: Agent ID writer
+    - button "Copy ID"
+    - text: Ready
+    - paragraph: 文章、宣传文案、内容策划与润色
+    - button "Create from template"
+    - button "Set as default"
+    - button "Start chat"
+  - article:
+    - heading "数据分析师" [level=2]
+    - text: Agent ID analyst
+    - button "Copy ID"
+    - text: Ready
+    - paragraph: 分析表格、解释指标，制作图表和报表
+    - button "Create from template"
+    - button "Set as default"
+    - button "Start chat"
+  - article:
+    - heading "研究助理" [level=2]
+    - text: Agent ID researcher
+    - button "Copy ID"
+    - text: Ready
+    - paragraph: 检索资料、对比信息，整理有依据的研究结论
+    - button "Create from template"
+    - button "Set as default"
+    - button "Start chat"
+  - article:
+    - heading "编程助手" [level=2]
+    - text: Agent ID developer
+    - button "Copy ID"
+    - text: Ready
+    - paragraph: 开发功能、排查问题与审查代码
+    - button "Create from template"
+    - button "Set as default"
+    - button "Start chat"
+  - article:
+    - heading "办公助手" [level=2]
+    - text: Agent ID office
+    - button "Copy ID"
+    - text: Ready
+    - paragraph: 整理文档、制作演示文稿与处理办公文件
+    - button "Create from template"
+    - button "Set as default"
+    - button "Start chat"

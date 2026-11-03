@@ -1,0 +1,55 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/client/ui-workbench/README.md
+/:
+  en: 6aecdf527721e4b0
+  zh: 7716f97462363fa2
+/deepseek-ai-dsh-client-ui-workbench:
+  en: 3be9e51fda82cf31
+  zh: 9c242e4cc0030bdd
+/deepseek-ai-dsh-client-ui-workbench/summary:
+  en: 7060cce4e78e85a5
+  zh: 2bca4c4d0d1d98a7
+/deepseek-ai-dsh-client-ui-workbench/table-of-contents:
+  en: 122f0d41696980b1
+  zh: 528864635b577290
+/deepseek-ai-dsh-client-ui-workbench/use-this-package:
+  en: 29735a5b69dfbcc4
+  zh: 70d15a335c8ea133
+/deepseek-ai-dsh-client-ui-workbench/understand-the-implementation:
+  en: 0e6249d96062cb1d
+  zh: 59ed2aacf133263c
+/deepseek-ai-dsh-client-ui-workbench/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/deepseek-ai-dsh-client-ui-workbench/model-experience/expert-instructions-and-skills:
+  en: 22b597f650b40291
+  zh: 6a9f83fa317b05d2
+/deepseek-ai-dsh-client-ui-workbench/model-experience/expert-instructions-and-skills/what-the-model-sees:
+  en: e76e05bf85e072b3
+  zh: f723653ad6dce954
+/deepseek-ai-dsh-client-ui-workbench/model-experience/expert-instructions-and-skills/token-effect:
+  en: dabb89fb0582fa05
+  zh: 6507bd4c224dde56
+/deepseek-ai-dsh-client-ui-workbench/model-experience/expert-instructions-and-skills/kv-cache-effect:
+  en: 73c1f2a8ebf911af
+  zh: b8471df380abda51
+/deepseek-ai-dsh-client-ui-workbench/model-experience/tool-selection:
+  en: 595f3383ac207b91
+  zh: 1c5dafd308c9a301
+/deepseek-ai-dsh-client-ui-workbench/model-experience/tool-selection/what-the-model-sees:
+  en: b186811714bf7738
+  zh: d89a977fb844bc49
+/deepseek-ai-dsh-client-ui-workbench/model-experience/tool-selection/token-effect:
+  en: 4df3a57a569f059c
+  zh: c7513e48deed3413
+/deepseek-ai-dsh-client-ui-workbench/model-experience/tool-selection/kv-cache-effect:
+  en: 4cd06dc5450f0818
+  zh: 613c3addedec115c
+/deepseek-ai-dsh-client-ui-workbench/known-limitations-and-deferred-work:
+  en: c76eb897e8383072
+  zh: 2814074799661d94
+/deepseek-ai-dsh-client-ui-workbench/known-limitations-and-deferred-work/dev-note:
+  en: 5a42766a829fc7e0
+  zh: b66b2419c459174e

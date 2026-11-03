@@ -725,6 +725,109 @@ export interface Config {
 ```
 <!-- END GENERATED config-catalog:@deepseek-ai/dsh-client-ui-trajectory -->
 
+<!-- BEGIN GENERATED config-catalog:@deepseek-ai/dsh-client-ui-workbench -->
+<a id="deepseek-aidsh-client-ui-workbench"></a>
+
+## `@deepseek-ai/dsh-client-ui-workbench`
+
+- `inject`: `settings` · `agentPresets` · `skills`
+- `refs`: `Volatile` (`@deepseek-ai/cordis`)
+- `source`: [`packages/client/ui-workbench/src/index.ts:13`](../packages/client/ui-workbench/src/index.ts)
+
+```ts config-catalog
+/** Workbench configuration is edited through the shared Settings revision fence. */
+export interface Config {
+  /** Individual expert definitions and capability assignments. */
+  experts: Volatile<WorkbenchData['experts']>
+  /** Coordinator instructions and expert membership. */
+  teams: Volatile<WorkbenchData['teams']>
+  /** Custom invocable Markdown skills. */
+  skills: Volatile<WorkbenchData['skills']>
+  /** MCP server settings; credentials remain in the Host environment. */
+  connectors: Volatile<WorkbenchData['connectors']>
+}
+
+/** Profile-scoped configuration persisted by Settings. */
+export type WorkbenchData = {
+  /** Editable individual expert definitions. */
+  experts: Expert[]
+  /** Editable coordinator definitions referencing experts. */
+  teams: ExpertTeam[]
+  /** Custom Markdown skills registered with the Host. */
+  skills: WorkbenchSkill[]
+  /** MCP server definitions available for assignment. */
+  connectors: Connector[]
+}
+
+/** Persistent expert, team, skill and connector configuration. Slugs are user-editable configuration keys. */
+export type Expert = {
+  /** Missing legacy ownership resolves to personal. */
+  category?: ExpertCategory
+  /** Missing legacy activation resolves to enabled; disabling affects new sessions only. */
+  enabled?: boolean
+  /** User-editable key used by references and imports. */
+  slug: string
+  /** Display name shown in the workbench. */
+  name: string
+  /** Short description shown on the card. */
+  description: string
+  /** Role instructions included in the preset persona. */
+  instructions: string
+  /** Custom skill keys whose content augments the persona. */
+  skills: string[]
+  /** MCP connector keys assigned to this expert. */
+  connectors: string[]
+}
+
+/** A coordinator's ordered expert roster. */
+export type ExpertTeam = {
+  /** User-editable key used by references and imports. */
+  slug: string
+  /** Display name shown in the workbench. */
+  name: string
+  /** Short description shown on the card. */
+  description: string
+  /** Role instructions included in the preset persona. */
+  instructions: string
+  /** Ordered expert keys coordinated by the team. */
+  members: string[]
+}
+
+/** A user-owned, invocable Markdown skill. */
+export type WorkbenchSkill = {
+  /** User-editable key used by references and imports. */
+  slug: string
+  /** Display name shown in the workbench. */
+  name: string
+  /** Short description shown on the card. */
+  description: string
+  /** Markdown instructions returned when the skill is invoked. */
+  content: string
+}
+
+/** Connector configuration; credentials remain in the MCP server's own environment. */
+export type Connector = {
+  /** User-editable key used by references and imports. */
+  slug: string
+  /** Display name shown in the workbench. */
+  name: string
+  /** MCP server transport. */
+  transport: 'streamable-http' | 'stdio'
+  /** HTTP endpoint; unused for a local process. */
+  url: string
+  /** Executable name or path for the local server. */
+  command: string
+  /** Arguments passed individually to the server executable. */
+  args: string[]
+  /** Whether assigned presets connect to this server. */
+  enabled: boolean
+}
+
+/** Assistant ownership category within the profile. */
+export type ExpertCategory = 'personal' | 'enterprise' | 'builtin'
+```
+<!-- END GENERATED config-catalog:@deepseek-ai/dsh-client-ui-workbench -->
+
 <!-- BEGIN GENERATED config-catalog:@deepseek-ai/dsh-compaction-basic -->
 <a id="deepseek-aidsh-compaction-basic"></a>
 

@@ -355,7 +355,7 @@ describe('web e2e: sidebar search alignment and row action targets', () => {
       }
     })
     expect(geometry).toEqual({
-      clipped: true, labelGap: 6, targetWidth: ACTION_TARGET_SIZE, clearance: 2, titleEdgeHitsTitle: true, overflows: false,
+      clipped: true, labelGap: 10, targetWidth: ACTION_TARGET_SIZE, clearance: 6, titleEdgeHitsTitle: true, overflows: false,
     })
     await compareOrRefreshGolden(GEOMETRY_EXPECTED, [
       '# Sidebar alignment', '',
