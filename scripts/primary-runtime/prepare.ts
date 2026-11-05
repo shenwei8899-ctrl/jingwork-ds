@@ -94,12 +94,13 @@ export async function downloadNodeRuntime(target: PrimaryRuntimeTarget, destinat
   const archive = await downloadPrimaryRuntimeAsset(`https://nodejs.org/dist/v${lock.nodeVersion}/${filename}`, artifact.nodeSha256, cache)
   const staging = mkdtempSync(join(tmpdir(), 'dsh-node-'))
   try {
-    if (target === 'win-x64') await extractZip(archive, { dir: staging })
+    const windows = target.startsWith('win-')
+    if (windows) await extractZip(archive, { dir: staging })
     else await extractTar({ file: archive, cwd: staging })
     const source = join(staging, filename.replace(/\.(?:zip|tar\.gz)$/u, ''))
     mkdirSync(join(destination, 'bin'), { recursive: true })
-    cpSync(join(source, ...(target === 'win-x64' ? ['node.exe'] : ['bin', 'node'])),
-      join(destination, 'bin', target === 'win-x64' ? 'node.exe' : 'node'))
+    cpSync(join(source, ...(windows ? ['node.exe'] : ['bin', 'node'])),
+      join(destination, 'bin', windows ? 'node.exe' : 'node'))
     cpSync(join(source, 'LICENSE'), join(destination, 'LICENSE'))
   } finally {
     rmSync(staging, { recursive: true, force: true })
@@ -219,7 +220,7 @@ export async function preparePrimaryRuntime(options: PreparePrimaryRuntimeOption
     const output = join(staging, 'payload')
     const dependencies = join(output, 'dependencies')
     mkdirSync(dependencies, { recursive: true })
-    const platform = target === 'win-x64' ? 'win32' : target.startsWith('linux-') ? 'linux' : 'darwin'
+    const platform = target.startsWith('win-') ? 'win32' : target.startsWith('linux-') ? 'linux' : 'darwin'
     const arch = target.endsWith('-arm64') ? 'arm64' : 'x64'
     let pnpmVersion: string | undefined
     if (!options.pythonOnly) {

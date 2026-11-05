@@ -5,7 +5,7 @@ export const DESKTOP_AUTO_UPDATE_ENV: 'DSH_DESKTOP_AUTO_UPDATE_ENV'
 export type DesktopAutoUpdateEnvironment = 'test' | 'production'
 
 /** Directory name of one supported Desktop release target. */
-export type DesktopAutoUpdateTarget = 'mac-arm64' | 'mac-x64' | 'win-x64'
+export type DesktopAutoUpdateTarget = 'mac-arm64' | 'mac-x64' | 'win-x64' | 'win-arm64'
 
 /**
  * Name the fixed installer object shared by uploading and cache refresh.

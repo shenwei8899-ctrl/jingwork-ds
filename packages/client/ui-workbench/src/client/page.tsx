@@ -727,7 +727,7 @@ export function WorkbenchPage(props: PageProps) {
       )}
       <Modal
         open={editing !== null}
-        className={editing?.kind === 'skills' ? css.skillModal : undefined}
+        {...(editing?.kind === 'skills' ? { className: css.skillModal } : {})}
         onClose={() => {
           if (!busy) setEditing(null)
         }}

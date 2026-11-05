@@ -97,7 +97,7 @@ pnpm run package:desktop:mac:x64
 pnpm run package:desktop:win:x64
 ```
 
-macOS arm64 命令要求 Apple Silicon。macOS x64 命令可以在 Intel macOS 或带 Rosetta 的 Apple Silicon 上运行。Windows x64 命令要求 Windows x64。Linux 不是受支持的 Desktop 发布目标。
+macOS arm64 命令要求 Apple Silicon。macOS x64 命令可以在 Intel macOS 或带 Rosetta 的 Apple Silicon 上运行。Windows x64 和 ARM64 打包命令分别要求对应架构的 Windows 主机；ARM64 命令仅生成未签名开发安装包。Linux 不是受支持的 Desktop 发布目标。
 
 macOS 正式发布和本地未签名 DMG 都通过 [electron-builder 配置](../scripts/electron-builder-config.mjs)中的 `dmg.format: 'ULMO'` 使用 LZMA 压缩。[构建时补丁](../../../patches/app-builder-lib@26.17.0.patch)为固定版本 builder 的校验规则和 TypeScript 声明添加此格式。
 
@@ -110,6 +110,8 @@ macOS 正式发布和本地未签名 DMG 都通过 [electron-builder 配置](../
 runner 的受监督启动和恢复见 [Windows runner 机器准备](../windows-signing/README.zh.md#machine-setup)。
 
 `Package Desktop · Windows · x64` [手动工作流](../../../.github/workflows/windows-package.yml) 选择专用 Windows x64 runner 标签 `dsh-win-package-trial`，并使用机器 preset `test` 或 `production`。选择 `signed`（默认）或 `unsigned`；签名模式复用现有 EV token 预检、签名缓存与失败 interlock，不发布或上传 release。`build_version` 默认为 `auto`，使用[发布版本](#release-versions)中的 CI 标识；显式值可以是源码产品版本，或扩展构建版本，例如产品 `0.2.1-alpha.1` 对应 `0.2.1-alpha.1.20261009.1`。版本前缀必须匹配所选源码；校验错误显示其当前示例。manifest 保持不变。
+
+推送到 `codex/windows-package-0.2.2-alpha.2` 会运行[未签名开发工作流](../../../.github/workflows/windows-development-package.yml)。它在 Windows x64 和 ARM64 hosted runner 上构建 `0.2.2-alpha.2`，无需机器 preset 或签名凭据。每次运行会分别保留两种安装包和 SHA-256 校验和 14 天。未签名安装包不含更新 feed，仅用于安装检查，不具备分发或发布资格。
 
 在 Actions 选择工作流、源码分支、preset、签名模式和版本，再点击 Run workflow。输入变更合并前，用 `gh workflow run windows-package.yml --ref <branch> -f preset=test -f signing=unsigned -f build_version=auto` 测试已推送分支；合并后验证网页表单。它不监听 push 或 PR。日志和成功生成的 EXE 保留 14 天。依赖打包流程前检查日志和安装包；安装是独立操作。检出前，Node 删除 runner 专用源码目录，不跟随依赖 junction；工作流校验目标位置并拒绝链接祖先目录。不得指向日常开发目录。运行共享一个并发组，不取消正在进行的构建；最多保留一个待运行任务，新触发会替换它。仅在成功完成干净检出后上传诊断。机器配置位于 checkout 之外，不作为产物上传。
 

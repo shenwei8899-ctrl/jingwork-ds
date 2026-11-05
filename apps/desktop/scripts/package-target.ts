@@ -10,7 +10,12 @@ import {
 } from './desktop-auto-update-environment.mjs'
 import { desktopArtifactOutput, desktopTargetBuildPaths } from './desktop-build-paths.mjs'
 import { packageMacOSArtifacts, type DesktopPrepackagedArtifact } from './package-macos.ts'
-import { loadDesktopPackageEnvironment, localMacOSPackageEnvironment, validateDesktopPackageEnvironment } from './desktop-package-environment.mjs'
+import {
+  loadDesktopPackageEnvironment,
+  localMacOSPackageEnvironment,
+  localWindowsPackageEnvironment,
+  validateDesktopPackageEnvironment,
+} from './desktop-package-environment.mjs'
 import { createPackagingRun, recordPackagingEvent } from './packaging-run.mjs'
 import { withWindowsSigningStage } from './windows-signing-stage.mjs'
 import { prepareWindowsSignatureCacheDirectory, resolveWindowsSignatureCacheDirectory } from './windows-signature-cache-directory.mjs'
@@ -48,7 +53,7 @@ const DESKTOP_UPLOAD_CREDENTIAL_ENV_NAMES = new Set([
 const AUTOMATIC_BUILD_VERSION = 'auto'
 
 /** Fixed platform and architecture identifiers exposed by package scripts. */
-export type DesktopPackageTargetName = 'mac-arm64' | 'mac-x64' | 'win-x64'
+export type DesktopPackageTargetName = 'mac-arm64' | 'mac-x64' | 'win-x64' | 'win-arm64'
 
 /** One supported release target and its electron-builder selectors. */
 export interface DesktopPackageTarget {
@@ -80,6 +85,13 @@ const TARGETS: Record<DesktopPackageTargetName, DesktopPackageTarget> = {
     arch: 'x64',
     builderPlatform: '--win',
     builderArch: '--x64',
+  },
+  'win-arm64': {
+    name: 'win-arm64',
+    platform: 'win32',
+    arch: 'arm64',
+    builderPlatform: '--win',
+    builderArch: '--arm64',
   },
 }
 
@@ -178,8 +190,8 @@ export function resolveDesktopPackageTarget(
     throw new Error(`desktop package: unsupported target ${JSON.stringify(name)}; expected ${Object.keys(TARGETS).join(', ')}`)
   }
   const target = TARGETS[name]
-  if (target.platform === 'win32' && (hostPlatform !== 'win32' || hostArch !== 'x64')) {
-    throw new Error('desktop package: win-x64 requires a Windows x64 build host')
+  if (target.platform === 'win32' && (hostPlatform !== 'win32' || hostArch !== target.arch)) {
+    throw new Error(`desktop package: ${name} requires a Windows ${target.arch} build host`)
   }
   if (target.platform === 'darwin' && hostPlatform !== 'darwin') {
     throw new Error(`desktop package: ${name} requires a macOS build host`)
@@ -239,8 +251,11 @@ export function parseDesktopPackageInvocation(
   if (positionals.length > 1) throw new Error('desktop package: expected at most one target')
   const name = positionals[0] ?? hostTargetName(hostPlatform, hostArch)
   if (values.unsigned && values['prepare-only']) throw new Error('desktop package: --unsigned cannot use --prepare-only')
-  if (values['skip-notarization'] && (name === 'win-x64' || values.unsigned || values['prepare-only'])) {
+  if (values['skip-notarization'] && (name.startsWith('win-') || values.unsigned || values['prepare-only'])) {
     throw new Error('desktop package: --skip-notarization requires a signed macOS build, without --prepare-only')
+  }
+  if (name === 'win-arm64' && !values.unsigned) {
+    throw new Error('desktop package: win-arm64 currently supports unsigned development builds only')
   }
   const requestedBuildVersion = values['build-version']?.trim()
   if (values['build-version'] !== undefined && (requestedBuildVersion === undefined || requestedBuildVersion === '')) {
@@ -344,8 +359,10 @@ async function main(): Promise<void> {
   if (invocation.skipNotarization) {
     process.stdout.write('desktop package: skipping notarization and stapling; internal debugging only, not qualified for distribution or update publishing\n')
   }
-  const environment = target.platform === 'darwin' && invocation.unsigned
-    ? localMacOSPackageEnvironment()
+  const environment = invocation.unsigned
+    ? target.platform === 'darwin'
+      ? localMacOSPackageEnvironment()
+      : localWindowsPackageEnvironment()
     : loadDesktopPackageEnvironment(target.platform, process.env, APP_ROOT, {
       unsigned: invocation.unsigned, prepareOnly: invocation.prepareOnly,
     })

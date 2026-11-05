@@ -97,7 +97,7 @@ pnpm run package:desktop:mac:x64
 pnpm run package:desktop:win:x64
 ```
 
-The macOS arm64 command requires Apple Silicon. The macOS x64 command runs on Intel macOS or Apple Silicon with Rosetta. The Windows x64 command requires Windows x64. Linux is not a supported Desktop release target.
+The macOS arm64 command requires Apple Silicon. The macOS x64 command runs on Intel macOS or Apple Silicon with Rosetta. Windows x64 and ARM64 package commands require matching native Windows hosts; the ARM64 command creates unsigned development installers only. Linux is not a supported Desktop release target.
 
 Both release and local unsigned macOS DMGs use LZMA compression (`dmg.format: 'ULMO'`) in [the electron-builder configuration](../scripts/electron-builder-config.mjs). A [build-time patch](../../../patches/app-builder-lib@26.17.0.patch) adds this format to the pinned builder's validation and TypeScript declarations.
 
@@ -110,6 +110,8 @@ Each target owns its packed package inputs, prepared runtime, package set, dsh t
 For supervised runner startup and recovery, follow [Windows runner machine setup](../windows-signing/README.md#machine-setup).
 
 The `Package Desktop · Windows · x64` [manual workflow](../../../.github/workflows/windows-package.yml) selects the dedicated Windows x64 runner label `dsh-win-package-trial` and the machine preset `test` or `production`. Choose `signed` (default) or `unsigned`; signed mode uses the existing EV token preflight, signature cache and failure interlock. It does not publish or upload a release. `build_version` defaults to `auto`, using the CI identifier in [Release versions](#release-versions); an explicit value may be the checkout's product version or an extended build version such as `0.2.1-alpha.1.20261009.1` for product `0.2.1-alpha.1`. The version prefix must match the selected checkout; validation errors show its current example. Manifests remain unchanged.
+
+Push to `codex/windows-package-0.2.2-alpha.2` to run the [unsigned development workflow](../../../.github/workflows/windows-development-package.yml). It builds version `0.2.2-alpha.2` on Windows x64 and ARM64 hosted runners, without machine presets or signing credentials. Each run retains a separate installer artifact and SHA-256 checksum for 14 days. These unsigned installers omit update feeds and are for installation checks; they are not qualified for distribution or publication.
 
 Select the workflow in Actions, choose the source branch, preset, signing mode and version, then click Run workflow. Before merging input changes, test the pushed branch with `gh workflow run windows-package.yml --ref <branch> -f preset=test -f signing=unsigned -f build_version=auto`; verify the web form after merging. There is no push or PR trigger. Logs and successful EXEs are retained for 14 days. Inspect the retained logs and installer before relying on packaging; installation is separate. Before checkout, Node removes the runner-owned source directory without following dependency junctions; the workflow validates its location and rejects linked ancestors. Never point it at a development checkout. Runs share one concurrency group without cancelling an active build; only one run remains pending, and a newer dispatch replaces it. Diagnostics upload requires a successful clean checkout. Machine settings stay outside the checkout and are never uploaded as artifacts.
 

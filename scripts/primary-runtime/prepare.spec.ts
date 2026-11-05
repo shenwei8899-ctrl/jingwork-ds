@@ -10,7 +10,10 @@ import lock from './lock.json' with { type: 'json' }
 
 it('covers every SDK wheel target with the shared interpreter lock', () => {
   const platforms = JSON.parse(readFileSync(new URL('../../python/sdk-runtime/platforms.json', import.meta.url), 'utf8')) as Record<string, unknown>
-  expect(Object.keys(lock.targets).sort()).toEqual(Object.keys(platforms).map(target => target.replace('macos-', 'mac-')).sort())
+  const desktopOnlyTargets = ['win-arm64']
+  expect(Object.keys(lock.targets).filter(target => !desktopOnlyTargets.includes(target)).sort())
+    .toEqual(Object.keys(platforms).map(target => target.replace('macos-', 'mac-')).sort())
+  expect(Object.keys(lock.targets).filter(target => desktopOnlyTargets.includes(target))).toEqual(desktopOnlyTargets)
 })
 
 const libraryWheel = Buffer.from('UEsDBAoAAAAAAASeLl0sYMPjDAAAAAwAAAAJAAAAc2FtcGxlLnB5c2FtcGxlID0gNDIKUEsBAh4DCgAAAAAABJ4uXSxgw+MMAAAADAAAAAkAAAAAAAAAAQAAAKSBAAAAAHNhbXBsZS5weVBLBQYAAAAAAQABADcAAAAzAAAAAAA=', 'base64')

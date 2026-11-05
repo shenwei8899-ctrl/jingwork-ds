@@ -4,14 +4,14 @@ import { isAbsolute, join, resolve } from 'node:path'
 
 const APP_ROOT = resolve(import.meta.dirname, '..')
 const BUILD_ROOT = join(APP_ROOT, '.desktop-build')
-const SUPPORTED_TARGETS = new Set(['mac-arm64', 'mac-x64', 'win-x64'])
+const SUPPORTED_TARGETS = new Set(['mac-arm64', 'mac-x64', 'win-x64', 'win-arm64'])
 
 /**
  * Resolve the fixed build target selected by a packaging environment.
  * @param {NodeJS.ProcessEnv} env - Packaging environment.
  * @param {NodeJS.Platform} hostPlatform - Build-host platform used when no target override exists.
  * @param {string} hostArch - Build-host architecture used when no target override exists.
- * @returns {'mac-arm64' | 'mac-x64' | 'win-x64'} Supported Desktop target name.
+ * @returns {'mac-arm64' | 'mac-x64' | 'win-x64' | 'win-arm64'} Supported Desktop target name.
  */
 export function resolveDesktopBuildTarget(
   env = process.env,
@@ -19,14 +19,13 @@ export function resolveDesktopBuildTarget(
   hostArch = process.arch,
 ) {
   const platform = env.DSH_DESKTOP_TARGET_PLATFORM ?? env.npm_config_platform ?? hostPlatform
-  const arch = env.DSH_DESKTOP_TARGET_ARCH ?? env.npm_config_arch
-    ?? (platform === 'win32' || platform === 'win' ? 'x64' : hostArch)
+  const arch = env.DSH_DESKTOP_TARGET_ARCH ?? env.npm_config_arch ?? hostArch
   const os = platform === 'darwin' ? 'mac' : platform === 'win32' || platform === 'win' ? 'win' : platform
   const target = `${os}-${arch}`
   if (!SUPPORTED_TARGETS.has(target)) {
     throw new Error(`desktop build paths: unsupported target ${target}`)
   }
-  return /** @type {'mac-arm64' | 'mac-x64' | 'win-x64'} */ (target)
+  return /** @type {'mac-arm64' | 'mac-x64' | 'win-x64' | 'win-arm64'} */ (target)
 }
 
 function assertSupportedTarget(target) {
@@ -37,7 +36,7 @@ function assertSupportedTarget(target) {
 
 /**
  * Return the mutable preparation and artifact directories owned by one release target.
- * @param {'mac-arm64' | 'mac-x64' | 'win-x64'} target - Supported Desktop target name.
+ * @param {'mac-arm64' | 'mac-x64' | 'win-x64' | 'win-arm64'} target - Supported Desktop target name.
  * @param {NodeJS.ProcessEnv} environment - Packaging environment with an optional absolute cache directory.
  * @returns {{ root: string, artifacts: string, unsignedArtifacts: string, unnotarizedArtifacts: string, runtime: string, packageSet: string, dsh: string, dshPnpm: string, electron: string, packedDsh: string, packedVendor: string, packedLandlock: string, downloads: string, pnpmStore: string }} Target paths plus shared download and package caches.
  */
@@ -69,8 +68,7 @@ export function desktopTargetBuildPaths(target, environment = process.env) {
 
 /**
  * Return the platform and architecture of the payload one release target prepares.
- * Windows is prepared as x64 only, so this differs from the build host on an arm64 Windows machine.
- * @param {'mac-arm64' | 'mac-x64' | 'win-x64'} target - Supported Desktop target name.
+ * @param {'mac-arm64' | 'mac-x64' | 'win-x64' | 'win-arm64'} target - Supported Desktop target name.
  * @returns {{ platform: 'darwin' | 'win32', arch: 'arm64' | 'x64' }} Platform and architecture of the prepared payload.
  */
 export function desktopTargetPlatform(target) {
@@ -79,6 +77,7 @@ export function desktopTargetPlatform(target) {
     'mac-arm64': { platform: 'darwin', arch: 'arm64' },
     'mac-x64': { platform: 'darwin', arch: 'x64' },
     'win-x64': { platform: 'win32', arch: 'x64' },
+    'win-arm64': { platform: 'win32', arch: 'arm64' },
   })
   return targets[target]
 }
@@ -100,8 +99,7 @@ export function resolveDesktopTargetBuildPaths(
 
 /**
  * Resolve the primary-runtime directory an unpackaged development launch uses.
- * The build target fixes Windows to x64, so the shell cannot derive this directory from
- * the architecture of the process that launched it.
+ * The selected Windows architecture determines which primary runtime the shell launches.
  * @param {NodeJS.ProcessEnv} env - Packaging environment.
  * @param {NodeJS.Platform} hostPlatform - Build-host platform used when no target override exists.
  * @param {string} hostArch - Build-host architecture used when no target override exists.
