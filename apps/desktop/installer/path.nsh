@@ -1,5 +1,10 @@
 Var InstallerPath
 Var InstallerError
+!ifdef APP_ARM64_UNPACKED_SIZE
+!define /ifndef DSH_INSTALLER_UNPACKED_SIZE "${APP_ARM64_UNPACKED_SIZE}"
+!else
+!define /ifndef DSH_INSTALLER_UNPACKED_SIZE "${APP_64_UNPACKED_SIZE}"
+!endif
 ; Reject reparse points along the selected path before any write or cleanup.
 !macro InstallerValidatePathFunction PREFIX
 Function ${PREFIX}InstallerValidatePath
@@ -158,7 +163,7 @@ Function InstallerPreflight
         StrCpy $InstallerError "$(INSTALLER_PATH_WRITABLE)"
         Return
     ${EndIf}
-    IntOp $2 ${APP_64_UNPACKED_SIZE} + 65536
+    IntOp $2 ${DSH_INSTALLER_UNPACKED_SIZE} + 65536
     System::Int64Op $2 * 1024
     Pop $2
     System::Int64Op $0 < $2
