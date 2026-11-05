@@ -25,6 +25,7 @@ const source = (name: string, extra = '') => `---\nname: ${name}\ndescription: D
 describe('workbench built-in skill metadata', () => {
   it('retains source descriptions, portable paths and explicit invocation restrictions', () => {
     expect(parseBuiltinSkill(source('skill-one'), '.agents/skills/skill-one/SKILL.md')).toEqual({
+      content: 'Do not copy this instruction body.',
       name: 'skill-one',
       description: 'Describe skill-one.',
       path: '.agents/skills/skill-one/SKILL.md',
@@ -34,7 +35,7 @@ describe('workbench built-in skill metadata', () => {
     const restricted = parseBuiltinSkill(source('skill-two', 'disable-model-invocation: true\nuser-invocable: false\n').replaceAll('\n', '\r\n'), '.agents/skills/skill-two/SKILL.md')
     expect(restricted.userInvocable).toBe(false)
     expect(restricted.modelInvocable).toBe(false)
-    expect(JSON.stringify(restricted)).not.toContain('instruction body')
+    expect(restricted.content).toContain('instruction body')
   })
   it.each([
     'no frontmatter',

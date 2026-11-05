@@ -28,6 +28,8 @@ import type {} from '@deepseek-ai/dsh-client-ui-session/client'
 // Type-only: the `goal` SessionProjectionMap key merge (single source, the domain's pure outlet).
 import type { GoalProjection, GoalRef } from '@deepseek-ai/dsh-goal/client'
 import type { GoalActionResult, GoalBarInjected } from './slots.ts'
+import type { TaskControl } from './SuperAgent.tsx'
+import { controlTask, registerTaskMode } from './super-agent-registration.ts'
 import { createGoalActivationSource } from './activation-source.ts'
 import { GoalDock } from './GoalBar.tsx'
 import { GoalCommandInputView } from './GoalCommandInputView.tsx'
@@ -84,6 +86,13 @@ export function apply(ctx: ClientContext): void {
     locale: NS,
   }, GoalCommandInputView))
 
+  registerTaskMode(ctx)
+  let taskControl: ((sessionId: SessionId, action: TaskControl) => Promise<GoalActionResult>) | undefined
+  ctx.inject(['remote.commands'], (child) => {
+    const control = (sessionId: SessionId, action: TaskControl) => controlTask(child, sessionId, action)
+    taskControl = control
+    child.effect(() => () => { if (taskControl === control) taskControl = undefined })
+  })
   const sessions = ctx.sessions
 
   /** The session's current projected CAS ref, read at verb call time (no staleness fence: the RPC's CAS is the guard). */
@@ -129,6 +138,9 @@ export function apply(ctx: ClientContext): void {
       })
       return {
         hooks: { goalActivation },
+        onTaskControl: action => taskControl === undefined
+          ? Promise.resolve(noCurrentGoal)
+          : taskControl(sessionId, action),
         onEdit: async (objective) => {
           const ref = refOf(sessionId)
           if (ref === undefined) return noCurrentGoal

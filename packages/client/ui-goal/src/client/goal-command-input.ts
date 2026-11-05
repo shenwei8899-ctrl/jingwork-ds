@@ -39,7 +39,7 @@ export function goalCommandText(event: SessionEvent<'command/run'>): string {
 export const goalCommandInputDefinition: ConversationNodeDefinition<GoalCommandInputState> = {
   kind: 'goal-command-input',
   target: 'chat',
-  match: event => event.type === 'command/run' && event.data.name === GOAL_COMMAND
+  match: event => event.type === 'command/run' && (event.data.name === GOAL_COMMAND || event.data.name === 'super-agent')
     ? { id: String(event.data.commandId), role: 'start' }
     : null,
   start: (_context, match) => {

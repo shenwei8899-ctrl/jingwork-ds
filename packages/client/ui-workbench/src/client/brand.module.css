@@ -1,0 +1,25 @@
+.mark {
+  display: block;
+  object-fit: contain;
+  width: var(--dsh-sidebar-brand-mark-size, 24px);
+  height: var(--dsh-sidebar-brand-mark-size, 24px);
+}
+
+.name {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.subtitle {
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+}

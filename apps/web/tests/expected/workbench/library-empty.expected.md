@@ -1,1 +1,1 @@
-- paragraph: Choose a session workspace to browse its images, documents and media
+- paragraph: No matches found

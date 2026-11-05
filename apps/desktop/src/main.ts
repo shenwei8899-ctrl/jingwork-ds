@@ -19,6 +19,7 @@ import {
   net,
   protocol,
   session,
+  safeStorage,
   shell,
   type IpcMainInvokeEvent,
   type MenuItemConstructorOptions,
@@ -42,9 +43,14 @@ import { DesktopCommandManager } from './command-management.ts'
 import { serveWebDocument, authenticateWebHost, forwardWebRequest } from './web-document.ts'
 import { DesktopFatalRecovery } from './fatal-recovery.ts'
 import { pruneCrashReports, RendererConsoleTail, writeCrashReport, type CrashReportSource } from './crash-report.ts'
+import { JingworkClientLogs, DESKTOP_LOG_OPERATIONS } from './jingwork-client-logs.ts'
 import { OperationJournal } from './operation-journal.ts'
 import { runOperationReportJob, type OperationReportJobResult } from './operation-report-job.ts'
 import { openWelcomeWindow } from './welcome-window.ts'
+import { JingworkDesktopAuth, readJingworkLoginConfig } from './jingwork-auth.ts'
+import { startJingworkConversationSync } from './jingwork-conversation-sync.ts'
+import { startJingworkKnowledge } from './jingwork-knowledge.ts'
+import { openJingworkWelcome } from './jingwork-window.ts'
 import { WELCOME_IPC, needsWelcome, type WelcomeNotice } from './welcome-api.ts'
 import { connectDesktopWelcome, type DesktopWelcomeBackend } from './welcome-backend.ts'
 import { DesktopUpdateJournal } from './update-journal.ts'
@@ -113,6 +119,7 @@ const recovery = new DesktopFatalRecovery({
   revealReport: async (path) => { await access(path); shell.showItemInFolder(path) },
 })
 
+let jingworkClientLogs: JingworkClientLogs | undefined
 let operationJournal: OperationJournal | undefined
 let operationReportJob: Promise<OperationReportJobResult> | undefined
 let operationReportAbort: AbortController | undefined
@@ -127,6 +134,7 @@ function stopOperationReports(): Promise<void> {
 
 async function waitForOperationReports(): Promise<void> {
   operationReportsStopping = true
+  await jingworkClientLogs?.close()
   operationReportAbort?.abort()
   const job = operationReportJob
   if (job === undefined) return
@@ -168,6 +176,7 @@ function persistCrashReport(error: unknown, source: CrashReportSource): Promise<
 }
 
 function reportFatal(error: unknown, source: CrashReportSource): void {
+  jingworkClientLogs?.runtime(source, 'desktop_fatal')
   console.error(error)
   if (shuttingDown) {
     // No dialog during shutdown, but the report still records what failed on the way out.
@@ -256,7 +265,7 @@ function platformLoginUrl(authorizeUrl: string): string {
   return url.href
 }
 
-function createWindow(preload: string, show = false, primary = false): BrowserWindow {
+function createWindow(preload: string, show = false, primary = false, jingwork = false): BrowserWindow {
   const window = new BrowserWindow({
     width: 1280,
     height: 820,
@@ -281,6 +290,7 @@ function createWindow(preload: string, show = false, primary = false): BrowserWi
     } : {}),
     webPreferences: {
       preload,
+      additionalArguments: jingwork ? ['--dsh-jingwork-account'] : [],
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: true,
@@ -367,12 +377,31 @@ function createWindow(preload: string, show = false, primary = false): BrowserWi
 
 async function main(): Promise<void> {
   const desktopSettings = readDesktopSettings(app.getPath('userData'))
+  const jingworkConfig = readJingworkLoginConfig(app.getPath('userData'))
+  const jingworkAuth = jingworkConfig === undefined ? undefined : new JingworkDesktopAuth(
+    jingworkConfig, app.getPath('userData'), {
+      encrypt(value) {
+        if (!safeStorage.isEncryptionAvailable()
+          || (process.platform === 'linux' && safeStorage.getSelectedStorageBackend() === 'basic_text')) {
+          throw new Error('Jingwork credential encryption is unavailable')
+        }
+        return safeStorage.encryptString(value)
+      },
+      decrypt: value => safeStorage.decryptString(Buffer.from(value)),
+    }, (input, init) => net.fetch(input instanceof URL ? input.href : input, init),
+  )
   void pruneCrashReports(app.getPath('logs'))
   const journalDirectory = process.env.DSH_DESKTOP_UPDATE_JOURNAL_DIR
   const updateJournal = journalDirectory === undefined ? undefined : new DesktopUpdateJournal(journalDirectory, app.getVersion())
   const resources = runtimeResources()
   const paths = resolveDesktopPaths()
   const development = !app.isPackaged
+  if (jingworkAuth !== undefined && jingworkConfig !== undefined) {
+    try {
+      jingworkClientLogs = await JingworkClientLogs.open(jingworkAuth, app.getPath('userData'),
+        jingworkConfig.conversationLogIntervalMs ?? 5000, jingworkConfig.requestTimeoutMs)
+    } catch (_error) { console.warn('Jingwork client log storage is unavailable. Check local storage and restart Desktop.') }
+  }
   const primaryRuntime = development
     ? developmentPrimaryRuntime()
     : join(process.resourcesPath, 'runtime', 'primary-runtime')
@@ -388,6 +417,10 @@ async function main(): Promise<void> {
     for (const failure of result.failures) console.warn(`desktop login shell: ${failure.shell} failed (${failure.reason})`)
     return result.environment
   })
+  const knowledgeRelay = jingworkAuth === undefined || jingworkConfig === undefined
+    ? undefined
+    : await startJingworkKnowledge(jingworkAuth, jingworkConfig.requestTimeoutMs)
+  app.on('will-quit', () => { void knowledgeRelay?.dispose() })
   let hostEnvironment: NodeJS.ProcessEnv = process.env
   const prepareHostEnvironment = async (): Promise<void> => { hostEnvironment = await loginShell }
   let quitting = false
@@ -484,6 +517,7 @@ async function main(): Promise<void> {
       if (analyticsEnabled) await welcomeBackend?.report(event)
     } catch (_error) { /* Analytics cannot interrupt native actions. */ }
   }
+  let stopConversationSync: (() => Promise<void>) | undefined
   let stopAccount: (() => void) | undefined
   let openedAttempt: string | undefined
   let returnedAttempt: string | undefined
@@ -518,13 +552,18 @@ async function main(): Promise<void> {
   const backend = new DesktopBackendController((onFailure) => {
     const hostInspectPort = developmentHostInspectPort(development)
     const host = new DesktopHostProcess(resources.node, resources.dsh, activeProject,
-      hostInspectPort, { ...hostEnvironment, DSH_CLIENT_VERSION: desktopClientVersion() }, onFailure,
+      hostInspectPort, { ...hostEnvironment, ...knowledgeRelay?.environment, DSH_CLIENT_VERSION: desktopClientVersion() }, onFailure,
       primaryRuntime,
       resources, (next) => { platformView.setSession(next) }, (record) => {
         operationJournal ??= new OperationJournal(join(app.getPath('userData'), 'plugin-operations'), {
           segmentBytes: 256 * 1024, recordBytes: 4096, queuedBytes: 64 * 1024,
         })
         operationJournal.enqueue(JSON.stringify(record))
+        if (record.operation.phase === 'settled') {
+          const failed = record.operation.application === 'failed' || record.operation.application === 'cancelled'
+          jingworkClientLogs?.operation('plugin_operation', failed ? 'failed' : 'success')
+          if (failed) jingworkClientLogs?.runtime('host', 'plugin_operation_failed')
+        }
       })
     return {
       start: async () => {
@@ -534,12 +573,20 @@ async function main(): Promise<void> {
         if (ready.injections === undefined) throw new Error('Desktop Host did not provide boot injections')
         injections = ready.injections
         welcomeBackend = await connectDesktopWelcome(ready.url, (input, init) => net.fetch(input, init), async () => (await session.defaultSession.cookies.get({ url: ready.url })).map(cookie => `${cookie.name}=${cookie.value}`).join('; '))
+        await stopConversationSync?.()
+        if (jingworkAuth !== undefined && jingworkConfig !== undefined) {
+          stopConversationSync = startJingworkConversationSync(jingworkAuth, welcomeBackend.conversationLogs,
+            app.getPath('userData'), jingworkConfig.conversationLogIntervalMs ?? 5000, jingworkConfig.requestTimeoutMs,
+            (failed, reason) => console.warn(failed
+              ? `Jingwork conversation log sync paused (${reason ?? 'unknown'}). Local chat is retained. Check connection, sign-in and local storage.`
+              : 'Jingwork conversation log sync resumed.'))
+        }
         analyticsEnabled = await welcomeBackend.analyticsEnabled().catch(() => false)
         if (!reportedLaunch) { reportedLaunch = true; void track('desktop_app_launch', {}) }
         stopAccount?.()
         const accountBackend = welcomeBackend.account
         stopAccount = accountBackend.watch((state) => {
-          if (quitting) return
+          if (quitting || jingworkAuth !== undefined) return
           if (welcomeWindow !== undefined && !welcomeWindow.isDestroyed()) welcomeWindow.webContents.send(WELCOME_IPC.state, state)
           const attempt = state.attempt
           if (attempt?.phase === 'waiting-browser' && attempt.authorizeUrl !== undefined && openedAttempt !== attempt.id) {
@@ -565,6 +612,7 @@ async function main(): Promise<void> {
         }, () => {
           // The stream reconnects; a transport failure does not change account state.
         }, () => {
+          if (jingworkAuth !== undefined) return
           void readWelcomeState().then(async (value) => {
             if (!needsWelcome(value) || quitting) return
             pendingWelcomeNotice = 'session-expired'
@@ -576,6 +624,8 @@ async function main(): Promise<void> {
         }, (enabled) => { analyticsEnabled = enabled })
       },
       stop: async () => {
+        await stopConversationSync?.()
+        stopConversationSync = undefined
         analyticsEnabled = false
         stopAccount?.()
         try { await host.stop(requireCleanStop) }
@@ -748,7 +798,6 @@ async function main(): Promise<void> {
     // A confirmation on a hidden window would go unseen, so it waits for the next show; the mandatory
     // flow keeps its own taskbar and Dock attention instead.
     if (!isMandatory()) await windowShown()
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- A quit can begin while the show is awaited.
     if (quitting) return state
     return updates.install(version)
   }
@@ -782,6 +831,49 @@ async function main(): Promise<void> {
   const shortcuts = installDesktopShortcuts(() => mainWindow, app.getPath('userData'),
     process.platform === 'darwin' ? 'macos' : process.platform === 'win32' ? 'windows' : 'linux', () => { refreshApplicationMenu() }, window => updateOverlays.input(window))
   app.on('will-quit', () => { shortcuts.dispose() })
+
+  ipcMain.handle(DESKTOP_IPC.jingworkKnowledgeBases, async (event) => {
+    assertProductSender(event)
+    if (jingworkAuth === undefined) throw new Error('Jingwork authentication is not configured')
+    const databases = await jingworkAuth.knowledgeBases()
+    jingworkClientLogs?.operation('knowledge_read')
+    return databases
+  })
+  ipcMain.handle(DESKTOP_IPC.jingworkAgents, (event) => {
+    assertMainApplication(event)
+    if (jingworkAuth === undefined) throw new Error('Jingwork authentication is not configured')
+    return jingworkAuth.agents()
+  })
+  ipcMain.handle(DESKTOP_IPC.jingworkOpenAgent, async (event, id: unknown) => {
+    assertMainApplication(event)
+    if (jingworkAuth === undefined || jingworkConfig === undefined || welcomeBackend === undefined
+      || typeof id !== 'string' || !id || id.length > 80) throw new Error('Invalid Jingwork agent')
+    const role = await jingworkAuth.role(id)
+    const preset = await welcomeBackend.prepareEnterprise(role, jingworkConfig.requestTimeoutMs)
+    jingworkClientLogs?.operation('agent_open')
+    return preset
+  })
+  ipcMain.handle(DESKTOP_IPC.jingworkLogOperation, (event, action: unknown, outcome: unknown) => {
+    assertProductSender(event)
+    const operation = DESKTOP_LOG_OPERATIONS.find(value => value === action)
+    if (operation === undefined || (outcome !== 'success' && outcome !== 'failed')) throw new Error('Invalid desktop operation log')
+    jingworkClientLogs?.operation(operation, outcome)
+    if (outcome === 'failed') jingworkClientLogs?.runtime('workbench', 'operation_failed')
+  })
+  ipcMain.handle(DESKTOP_IPC.jingworkAccount, (event) => {
+    assertMainApplication(event)
+    return jingworkAuth?.name ?? null
+  })
+  ipcMain.handle(DESKTOP_IPC.jingworkSignOut, async (event) => {
+    assertMainApplication(event)
+    if (jingworkAuth === undefined) throw new Error('Jingwork authentication is not configured')
+    await session.fromPartition('persist:jingwork-login').clearStorageData()
+    jingworkClientLogs?.operation('sign_out')
+    await jingworkAuth.signOut()
+    enteredWorkspace = false
+    mainWindow?.hide()
+    await showWelcome()
+  })
 
   ipcMain.handle(DESKTOP_IPC.boot, async (event) => {
     assertDesktopSender(event, ['app'])
@@ -1030,7 +1122,7 @@ async function main(): Promise<void> {
   const applicationIconPath = development ? join(app.getAppPath(), 'resources', 'icon-windows.png')
     : join(process.resourcesPath, 'icon.png')
   app.setAboutPanelOptions({
-    applicationName: 'DeepSeek Harness',
+    applicationName: app.getName(),
     applicationVersion: app.getVersion(),
     // The release has no separate build number; omit Electron's bundle version.
     version: '',
@@ -1169,7 +1261,7 @@ async function main(): Promise<void> {
     }
   }
   const createMainWindow = (): BrowserWindow => {
-    const window = createWindow(appPreload, false, true)
+    const window = createWindow(appPreload, false, true, jingworkAuth !== undefined)
     mainWindow = window
     browserGuests.bind(window, (guest, name) => shortcuts.attachGuest(window, guest, name))
     shortcuts.attach(window)
@@ -1198,6 +1290,7 @@ async function main(): Promise<void> {
     window.on('closed', () => { if (mainWindow === window) mainWindow = undefined })
     window.webContents.on('console-message', (details) => {
       if (details.level !== 'error') return
+      jingworkClientLogs?.runtime('renderer', 'renderer_console_error')
       rendererConsole.push(`${details.sourceId}:${String(details.lineNumber)} ${details.message}`)
     })
     window.webContents.on('did-fail-load', (_event, code, description, url, isMainFrame) => {
@@ -1223,6 +1316,7 @@ async function main(): Promise<void> {
     if (isQuitting() || recovery.active || window.isDestroyed()) return
     if (activate) window.show()
     else window.showInactive()
+    if (!enteredWorkspace) jingworkClientLogs?.operation('launch')
     enteredWorkspace = true
     if (welcomeWindow !== undefined) {
       welcomeWindow.close()
@@ -1248,38 +1342,40 @@ async function main(): Promise<void> {
       return Promise.resolve()
     }
     openingWelcome ??= (async () => {
-      welcomeWindow = await openWelcomeWindow(locale, {
-        analytics: track,
-        analyticsEnabled: () => Promise.resolve(analyticsEnabled),
-        takeNotice: () => {
-          const notice = pendingWelcomeNotice
-          pendingWelcomeNotice = undefined
-          return Promise.resolve(notice)
-        },
-        startSignIn: async () => {
-          if (welcomeBackend === undefined) throw new Error('desktop welcome: backend unavailable')
-          return welcomeBackend.account.start(desktopClientMetadata(locale.id))
-        },
-        cancelSignIn: async (id) => {
-          if (welcomeBackend === undefined) throw new Error('desktop welcome: backend unavailable')
-          return welcomeBackend.account.cancel(id)
-        },
-        copySignInLink: async (id) => {
-          const state = await welcomeBackend?.account.state()
-          if (state?.attempt?.id !== id || state.attempt.phase !== 'waiting-browser' || state.attempt.authorizeUrl === undefined) {
-            throw new Error('desktop welcome: login link is unavailable')
-          }
-          await clipboard.writeText(platformLoginUrl(state.attempt.authorizeUrl))
-        },
-        saveApiKey: async (apiKey) => {
-          if (backend.host === undefined || welcomeBackend === undefined) return { ok: false }
-          const saved = await welcomeBackend.save(apiKey)
-          if (!saved.ok) return saved
-          await enterWorkspace()
-          return { ok: true }
-        },
-        skip: enterWorkspace,
-      })
+      welcomeWindow = jingworkAuth !== undefined
+        ? openJingworkWelcome(locale, jingworkAuth, () => enterWorkspace())
+        : await openWelcomeWindow(locale, {
+          analytics: track,
+          analyticsEnabled: () => Promise.resolve(analyticsEnabled),
+          takeNotice: () => {
+            const notice = pendingWelcomeNotice
+            pendingWelcomeNotice = undefined
+            return Promise.resolve(notice)
+          },
+          startSignIn: async () => {
+            if (welcomeBackend === undefined) throw new Error('desktop welcome: backend unavailable')
+            return welcomeBackend.account.start(desktopClientMetadata(locale.id))
+          },
+          cancelSignIn: async (id) => {
+            if (welcomeBackend === undefined) throw new Error('desktop welcome: backend unavailable')
+            return welcomeBackend.account.cancel(id)
+          },
+          copySignInLink: async (id) => {
+            const state = await welcomeBackend?.account.state()
+            if (state?.attempt?.id !== id || state.attempt.phase !== 'waiting-browser' || state.attempt.authorizeUrl === undefined) {
+              throw new Error('desktop welcome: login link is unavailable')
+            }
+            await clipboard.writeText(platformLoginUrl(state.attempt.authorizeUrl))
+          },
+          saveApiKey: async (apiKey) => {
+            if (backend.host === undefined || welcomeBackend === undefined) return { ok: false }
+            const saved = await welcomeBackend.save(apiKey)
+            if (!saved.ok) return saved
+            await enterWorkspace()
+            return { ok: true }
+          },
+          skip: enterWorkspace,
+        })
       const window = welcomeWindow
       window.once('closed', () => {
         void welcomeBackend?.account.state().then((state) => {
@@ -1308,7 +1404,10 @@ async function main(): Promise<void> {
     writeDesktopLocaleCache(app.getPath('userData'), locale.id)
     windowsLanguage = locale.id
     refreshApplicationMenu()
-    if (!enteredWorkspace && needsWelcome({ loggedIn: state.loggedIn, hasApiKey: state.hasApiKey })) {
+    const requiresLogin = jingworkAuth === undefined
+      ? needsWelcome({ loggedIn: state.loggedIn, hasApiKey: state.hasApiKey })
+      : !await jingworkAuth.restore()
+    if (!enteredWorkspace && requiresLogin) {
       // A later login must retain its own activation policy instead of replaying startup focus.
       raiseAfterUpdate = false
       await showWelcome()

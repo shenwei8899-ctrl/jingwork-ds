@@ -1,27 +1,42 @@
 - region "New agent":
   - button "Close draft"
-  - heading "New agent" [level=1]
+  - heading "Create from “General expert”" [level=1]
   - navigation "Creation steps":
     - button "Basic information"
-    - button "Instructions"
+    - button "Model configuration"
+    - button "Knowledge base"
     - button "Skills"
     - button "Connectors"
+    - button "Runtime tools"
+    - button "Subagents"
     - button "Review"
   - heading "Review" [level=2]
   - heading "Test agent" [level=2]
   - paragraph: Persistent assistant workflow fixture
   - term: Agent ID
-  - definition: test-agent
+  - definition: {{agentId}}
   - term: Role and instructions
   - definition: Summarize decisions and check their owners.
+  - term: Default model
+  - definition: Use the Harness default model
+  - term: Welcome message
+  - definition: Welcome to the fixture agent
+  - term: Quick-start cards
+  - definition: Help me write a weekly report
+  - term: Runtime tools
+  - definition: Files and skills、Search and web、Command execution、Task planning、Questions and deliverables
+  - term: Subagents
+  - definition: None
   - term: Skills
   - definition: Meeting notes
+  - term: Knowledge base
+  - definition: Product knowledge
   - term: Connectors
   - definition: None
   - checkbox "Enable for new sessions after saving" [checked]
   - text: Enable for new sessions after saving
-  - paragraph: Choose the model in the chat. File access, search and tool permissions use the current environment settings.
-  - text: Step 5 of 5
+  - paragraph: The saved agent settings select its model and tools. Execution follows the current environment permissions.
+  - text: Step 8 of 8
   - button "Cancel"
   - button "Back"
   - button "Create agent"

@@ -234,7 +234,7 @@
   justify-content: flex-end;
   gap: 8px;
   height: 72px;
-  padding: 8px 0 12px 12px;
+  padding: 8px 12px 12px;
   margin-bottom: 0;
   box-sizing: border-box;
   overflow: hidden;
@@ -255,6 +255,7 @@
    emphasis only). A button only in behavior (New Session shortcut): the
    pointer cursor is the sole affordance — no hover chrome on the mark. */
 .brand {
+  --dsh-sidebar-brand-mark-size: 40px;
   flex: 1;
   min-width: 0;
   display: inline-flex;
@@ -265,6 +266,7 @@
   background: transparent;
   color: inherit;
   cursor: pointer;
+  justify-content: center;
 }
 
 /* On macOS the brand is a window-drag surface, not a New Session button;
@@ -278,8 +280,8 @@
 .brandIdentity {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  height: 32px;
+  gap: 12px;
+  height: 44px;
   min-width: 0;
 }
 
@@ -414,8 +416,7 @@
   white-space: nowrap;
 }
 
-/* New Session: 38px bar, 12px radius (figma 133:7634 geometry, squared-off
-   corners); collapsed it renders as the rail's plain icon control. */
+/* New Session shares the navigation rows' neutral resting appearance. */
 .newSession {
   container-type: inline-size;
   position: relative;
@@ -429,10 +430,9 @@
   margin: 0 calc(var(--dsh-sidebar-paint-inset) + 1px) 14px;
   box-sizing: border-box;
   border: 0;
-  --dsw-elevation-stroke-color: var(--dsw-alias-glass-edge);
   border-radius: var(--dsw-radius-lg);
-  background: var(--dsw-alias-glass-selected);
-  box-shadow: var(--dsw-elevation-panel);
+  background: transparent;
+  box-shadow: none;
   color: var(--dsw-alias-label-primary);
   font-size: 14px;
   font-weight: 500;
@@ -443,13 +443,14 @@
 
 @media (hover: hover) {
   .newSession:hover {
-    background: var(--dsw-alias-button-floating-hover);
+    background: var(--dsw-alias-interactive-bg-hover);
   }
 }
 
-/* macOS: the themed elevated fill reads as a foreign slab on the vibrancy
-   sidebar; a white wash sits in the glass like native macOS sidebar
-   controls. Dark keeps the same white ink at lower alpha. */
+.newSession:active {
+  background: var(--dsw-specific-sidebar-nav-item-active);
+}
+
 .collapsed .newSession {
   align-self: flex-start;
   width: 36px;
@@ -466,6 +467,10 @@
   .collapsed .newSession:hover {
     background-color: var(--dsw-alias-interactive-bg-hover);
   }
+}
+
+.collapsed .newSession:active {
+  background: var(--dsw-specific-sidebar-nav-item-active);
 }
 
 .newSessionLabel {
@@ -550,7 +555,7 @@
 }
 
 .panelRow.panelActive {
-  background: var(--dsw-alias-glass-selected);
+  background: var(--dsw-specific-sidebar-nav-item-active);
   color: var(--dsw-alias-label-primary);
 }
 

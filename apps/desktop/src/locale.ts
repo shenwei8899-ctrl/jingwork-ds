@@ -1,6 +1,9 @@
 /** Typed shell copy for every shipped language owned by the Electron shell. */
 
 export const en = {
+  jingworkLoginTitle: 'Sign in to Jingwork',
+  jingworkLoginFailed: 'Could not complete Jingwork sign-in. Check the backend connection and retry.',
+  jingworkLoginRetry: 'Retry',
   cliCommandMenu: 'Manage dsh Command…',
   cliCommandTitle: 'Manage dsh Command',
   cliCommandLocation: 'Desktop command: {path}',
@@ -181,6 +184,9 @@ export const en = {
 export type DesktopMessages = { readonly [Key in keyof typeof en]: string }
 
 export const zh = {
+  jingworkLoginTitle: '登录 Jingwork',
+  jingworkLoginFailed: '未能完成 Jingwork 登录，请检查后台连接后重试',
+  jingworkLoginRetry: '重试',
   cliCommandMenu: '管理 dsh 命令…',
   cliCommandTitle: '管理 dsh 命令',
   cliCommandLocation: 'Desktop 命令：{path}',
@@ -359,6 +365,9 @@ export const zh = {
 
 /** Japanese copy, checked against the English keys. */
 export const ja = {
+  jingworkLoginTitle: 'Jingwork にログイン',
+  jingworkLoginFailed: 'Jingwork にログインできませんでした。接続を確認して再試行してください。',
+  jingworkLoginRetry: '再試行',
   cliCommandMenu: 'dsh コマンドを管理…',
   cliCommandTitle: 'dsh コマンドを管理',
   cliCommandLocation: 'デスクトップコマンド: {path}',
@@ -537,6 +546,9 @@ export const ja = {
 
 /** Spanish dictionary, checked against the English keys. */
 export const es = {
+  jingworkLoginTitle: 'Iniciar sesión en Jingwork',
+  jingworkLoginFailed: 'No se pudo iniciar sesión en Jingwork. Comprueba la conexión y vuelve a intentarlo.',
+  jingworkLoginRetry: 'Reintentar',
   cliCommandMenu: 'Administrar el comando dsh…',
   cliCommandTitle: 'Administrar el comando dsh',
   cliCommandLocation: 'Comando de escritorio: {path}',
@@ -715,6 +727,9 @@ export const es = {
 
 /** French dictionary, checked against the English keys. */
 export const fr = {
+  jingworkLoginTitle: 'Connexion à Jingwork',
+  jingworkLoginFailed: 'La connexion à Jingwork a échoué. Vérifiez la connexion puis réessayez.',
+  jingworkLoginRetry: 'Réessayer',
   cliCommandMenu: 'Gérer la commande dsh…',
   cliCommandTitle: 'Gérer la commande dsh',
   cliCommandLocation: 'Commande de bureau : {path}',
@@ -893,6 +908,9 @@ export const fr = {
 
 /** German dictionary, checked against the English keys. */
 export const de = {
+  jingworkLoginTitle: 'Bei Jingwork anmelden',
+  jingworkLoginFailed: 'Die Anmeldung bei Jingwork ist fehlgeschlagen. Prüfen Sie die Verbindung und versuchen Sie es erneut.',
+  jingworkLoginRetry: 'Erneut versuchen',
   cliCommandMenu: 'dsh-Befehl verwalten…',
   cliCommandTitle: 'dsh-Befehl verwalten',
   cliCommandLocation: 'Desktop-Befehl: {path}',
@@ -1071,6 +1089,9 @@ export const de = {
 
 /** Russian dictionary, checked against the English keys. */
 export const ru = {
+  jingworkLoginTitle: 'Вход в Jingwork',
+  jingworkLoginFailed: 'Не удалось войти в Jingwork. Проверьте подключение и повторите попытку.',
+  jingworkLoginRetry: 'Повторить',
   cliCommandMenu: 'Управление командой dsh…',
   cliCommandTitle: 'Управление командой dsh',
   cliCommandLocation: 'Команда Desktop: {path}',
@@ -1249,6 +1270,9 @@ export const ru = {
 
 /** Portuguese dictionary, checked against the English keys. */
 export const pt = {
+  jingworkLoginTitle: 'Entrar no Jingwork',
+  jingworkLoginFailed: 'Não foi possível entrar no Jingwork. Verifique a ligação e tente novamente.',
+  jingworkLoginRetry: 'Tentar novamente',
   cliCommandMenu: 'Gerenciar comando dsh…',
   cliCommandTitle: 'Gerenciar comando dsh',
   cliCommandLocation: 'Comando da área de trabalho: {path}',

@@ -5,9 +5,16 @@ import { parseRemoteStreamServerMessage, REMOTE_STREAM_MUX_PATH } from '@deepsee
 import type { AccountClientMetadata, AccountView, SignInAttemptId } from '@deepseek-ai/dsh-deepseek-account/types'
 
 /** Authenticated unary caller shared with native onboarding. */
-export type AccountInvoke = (request: { namespace: string; method: string; args: Record<string, unknown> }) => Promise<unknown>
+export type AccountInvoke = (
+  request: { namespace: string; method: string; args: Record<string, unknown> },
+  signal?: AbortSignal,
+) => Promise<unknown>
 
-/** Decode the UI-safe state received across HTTP or WebSocket. @param value - wire value. @returns account projection. */
+/**
+ * Decode the UI-safe state received across HTTP or WebSocket.
+ * @param value - wire value.
+ * @returns Account projection.
+ */
 export function accountView(value: unknown): AccountView {
   if (typeof value !== 'object' || value === null || !('status' in value)
     || !['signed-out', 'credential-stored'].includes(String(value.status)) || !('attempt' in value)) {

@@ -1,0 +1,38 @@
+- region "New agent":
+  - button "Close draft"
+  - heading "Create from “General expert”" [level=1]
+  - navigation "Creation steps":
+    - button "Basic information"
+    - button "Model configuration"
+    - button "Knowledge base"
+    - button "Skills"
+    - button "Connectors"
+    - button "Runtime tools"
+    - button "Subagents"
+    - button "Review"
+  - heading "Basic information" [level=2]
+  - paragraph: "Selected template: General expert"
+  - strong: Avatar
+  - text: Change avatar
+  - button "Change avatar"
+  - paragraph: PNG, JPEG, WebP or GIF, up to 5 MB
+  - text: Name
+  - textbox "Name": General expert
+  - text: Agent ID
+  - textbox "Agent ID": {{agentId}}
+  - text: Generated automatically and editable before creation. Fixed after saving Description
+  - textbox "Description": Clarify goals, plan tasks and help with everyday work
+  - text: Welcome message
+  - textbox "Welcome message": Share your ideas for work or everyday life
+  - text: Shown on the chat home page
+  - heading "Chat home settings" [level=3]
+  - paragraph: Set up quick-prompt cards for the chat home page
+  - strong: Quick-start cards
+  - button "Add card"
+  - heading "Help me write a weekly report" [level=3]
+  - paragraph: Summarize this week’s progress and next week’s plans
+  - paragraph: Create a weekly report from my work, including progress, challenges and plans for next week. First ask about my work
+  - button "Use and customize this example"
+  - text: Step 1 of 8
+  - button "Cancel"
+  - button "Next"

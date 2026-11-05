@@ -60,4 +60,7 @@ export interface GoalBarActions {
 }
 
 /** Injected business face of the GoalBar dock entry. */
-export type GoalBarInjected = GoalBarActions & GoalActivationInjected
+export type GoalBarInjected = GoalBarActions & GoalActivationInjected & {
+  /** Control the task associated with the current goal. */
+  onTaskControl?: (action: import('./SuperAgent.tsx').TaskControl) => Promise<GoalActionResult>
+}

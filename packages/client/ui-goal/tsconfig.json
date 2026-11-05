@@ -46,6 +46,12 @@
     },
     {
       "path": "../../typert/protocol"
+    },
+    {
+      "path": "../../goal/super-agent"
+    },
+    {
+      "path": "../../plan/plan-mode"
     }
   ]
 }

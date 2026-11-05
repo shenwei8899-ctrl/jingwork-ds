@@ -110,11 +110,11 @@ describe('ui-layout client apply', () => {
       repeat: false, composing: false, defaultPrevented: false }
     const context = { region: 'editable' as const, target: null, modal: 'settings' }
     expect(registry.dispatch(gesture, context, vi.fn()).status).toBe('pass')
-    expect(width()).toBe(280)
+    expect(width()).toBe(248)
     expect(registry.dispatch(gesture, { ...context, modal: null }, vi.fn()).status).toBe('handled')
     expect(width()).toBe(0)
     expect(registry.dispatch(gesture, { ...context, modal: 'sidebar' }, vi.fn()).status).toBe('handled')
-    expect(width()).toBe(280)
+    expect(width()).toBe(248)
   })
 
   it('shares a pre-created instance between service actions, root rendering, and panelInfo', async () => {

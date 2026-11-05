@@ -1,7 +1,11 @@
 import type { ProductEvent } from '@deepseek-ai/dsh-client-product-analytics/types'
 /** Native welcome operations using the shared Web authentication and RPC APIs. */
 
+import { conversationLogSource, type ConversationLogSource } from './conversation-log-source.ts'
 import { randomUUID } from 'node:crypto'
+import { setTimeout as delay } from 'node:timers/promises'
+import { load as loadYaml } from 'js-yaml'
+import type { JingworkRole } from './jingwork-auth.ts'
 import { desktopAccountBackend, type DesktopAccountBackend } from './account-backend.ts'
 
 /** Metadata needed before the native entry or workspace becomes visible. */
@@ -17,6 +21,14 @@ export interface DesktopWelcomeBackend {
   /** @returns the current Host policy; every read observes live configuration. */
   analyticsEnabled(): Promise<boolean>
   readonly account: DesktopAccountBackend
+  /** Passive committed-message reads for native backend log delivery. */
+  readonly conversationLogs: ConversationLogSource
+  /** Synchronize a role with revision-fenced settings and await its native preset.
+   * @param role Latest backend role.
+   * @param timeoutMs Deployment request deadline in milliseconds.
+   * @returns Ready Harness preset id.
+   */
+  prepareEnterprise(role: JingworkRole, timeoutMs: number): Promise<string>
   /** @param event - desktop-owned fields. @returns after local Host intake. */
   report(event: ProductEvent): Promise<void>
   /** @returns Configured-key presence and the shared language preference, without credential values. */
@@ -122,7 +134,45 @@ export async function connectDesktopWelcome(
   }
   return {
     account,
+    conversationLogs: conversationLogSource(origin, invoke, cookies),
     read,
+    async prepareEnterprise(role, timeoutMs) {
+      const signal = AbortSignal.timeout(timeoutMs)
+      const settings = await invoke({ namespace: 'settings', method: 'describe', args: {} }, signal)
+      if (!record(settings) || !Array.isArray(settings.namespaces)) throw new Error('Harness settings are unavailable')
+      const namespace: unknown = settings.namespaces.find((item: unknown) => record(item) && item.ns === 'ui-workbench')
+      if (!record(namespace) || !record(namespace.value) || !Array.isArray(namespace.value.experts)
+        || typeof namespace.revision !== 'number') throw new Error('Harness workbench is unavailable')
+      const experts: unknown[] = namespace.value.experts
+      const previous = experts.find(item => record(item) && item.slug === role.slug)
+      if (previous !== undefined && (!record(previous) || previous.category !== 'enterprise')) {
+        throw new Error('Harness enterprise role conflicts with a personal agent')
+      }
+      if (JSON.stringify(previous) !== JSON.stringify(role)) {
+        await invoke({ namespace: 'settings', method: 'update', args: {
+          ns: 'ui-workbench', patch: { experts: [...experts.filter(item => !record(item) || item.slug !== role.slug), role] },
+          expectedRevision: namespace.revision,
+        } }, signal)
+      }
+      const id = `workbench-${role.slug}`
+      while (!signal.aborted) {
+        const roster = await invoke({ namespace: 'agentPresets', method: 'list', args: {} }, signal)
+        if (!record(roster) || !Array.isArray(roster.presets)) throw new Error('Harness preset directory is unavailable')
+        const preset: unknown = roster.presets.find((item: unknown) => record(item) && item.id === id)
+        if (record(preset)) {
+          if (preset.broken) throw new Error('Harness enterprise preset could not be activated')
+          const document = await invoke({ namespace: 'agentPresets', method: 'read', args: { agentPreset: id } }, signal)
+          if (!record(document) || typeof document.content !== 'string') throw new Error('Harness preset document is unavailable')
+          const plugins: unknown = loadYaml(document.content)
+          const persona: unknown = Array.isArray(plugins)
+            ? plugins.find((item: unknown) => record(item) && item.id === 'persona') : undefined
+          if (record(persona) && record(persona.config) && persona.config.prefix === role.instructions
+            && document.name === role.name && document.description === role.description) return id
+        }
+        await delay(100, undefined, { signal })
+      }
+      throw new Error('Harness enterprise preset activation timed out')
+    },
     async analyticsEnabled() {
       const enabled = await invoke({ namespace: 'productAnalytics', method: 'enabled', args: {} }, AbortSignal.timeout(1000))
       if (typeof enabled !== 'boolean') throw new Error('desktop analytics: invalid collection policy')

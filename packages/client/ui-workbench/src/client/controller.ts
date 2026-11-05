@@ -5,8 +5,11 @@ import type { ConfigForm } from '@deepseek-ai/dsh-client-ui-settings/client'
 import type {} from '@deepseek-ai/dsh-client-ui-workspace/client'
 import type {} from '@deepseek-ai/dsh-client-ui-sidebar-right/client'
 import { createSnapshotStore } from '@deepseek-ai/dsh-client-store'
-import { fileAddressFor } from '@deepseek-ai/dsh-util-workspace-path'
+import { workspaceTitleOf, fileAddressFor } from '@deepseek-ai/dsh-util-workspace-path'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
+import type {} from '@deepseek-ai/dsh-session-title/client'
+import type {} from '@deepseek-ai/dsh-client-ui-deliverables/types'
+import type { ModelCatalog } from '@deepseek-ai/dsh-api-session-controller/types'
 import type { AgentPresetRow } from '@deepseek-ai/dsh-agent-preset-registry/types'
 import type { WorkspaceDirectoryListing } from '@deepseek-ai/dsh-api-workspace-files/types'
 import type { Connector, Expert, ExpertTeam, WorkbenchData, WorkbenchSkill } from '../types.ts'
@@ -23,8 +26,25 @@ export interface PendingPreview {
   sessionId: SessionId
   address: string
 }
+/** One authorized Session and the files its durable log attributes to it. */
+export interface LibrarySession {
+  id: SessionId
+  cwd: string
+  displayTitle: string
+  deliverableFiles: readonly string[]
+}
 /** Data fetched from the Host, owned by this controller rather than copied into a view store. */
 export interface WorkbenchSnapshot {
+  /** Live Jingwork catalog, absent for profiles without native enterprise login. */
+  enterprise?: readonly Expert[]
+  /** Authorized knowledge catalog from the management backend. */
+  knowledgeBases?: readonly { id: string; name: string; description: string }[]
+  models?: ModelCatalog
+  /** All authorized workspace Sessions, including unopened history. */
+  librarySessions: readonly LibrarySession[]
+  libraryLoading: boolean
+  /** Some historical Sessions could not provide exact file attribution. */
+  libraryAttributionIncomplete: boolean
   roster: readonly AgentPresetRow[]
   files: WorkspaceDirectoryListing | null
   fileSession: SessionId | null
@@ -36,6 +56,15 @@ export interface WorkbenchSnapshot {
 /** Settings and file commands supplied by the plugin's injected services. */
 export interface WorkbenchPorts {
   form: ConfigForm<WorkbenchData>
+  /** Restore the composition default before removing the selected preset; refuse stale selections. */
+  restoreDefault: (preset: string) => Promise<WorkbenchKey | null>
+  /** Read the signed-in enterprise catalog through the native credential owner. */
+  listEnterprise?: () => Promise<Expert[]>
+  /** List knowledge bases visible to the signed-in account. */
+  listKnowledgeBases?: () => Promise<{ id: string; name: string; description: string }[]>
+  listModels?: Context['remote']['session']['modelCatalog']
+  listSessions: Context['remote']['session']['list']
+  readSessionProjections: Context['remote']['session']['projections']
   listPresets: Context['remote']['agentPresets']['list']
   listFiles: Context['remote']['workspaceFiles']['list']
   statFile: Context['remote']['workspaceFiles']['stat']
@@ -50,6 +79,9 @@ export class WorkbenchController {
   readonly form
   /** Roster diagnostics and directory-read state. */
   readonly source = createSnapshotStore<WorkbenchSnapshot>({
+    librarySessions: [],
+    libraryLoading: false,
+    libraryAttributionIncomplete: false,
     roster: [],
     files: null,
     fileSession: null,
@@ -62,6 +94,7 @@ export class WorkbenchController {
   private fileAbort: AbortController | undefined
   private generation = 0
   private rosterGeneration = 0
+  private libraryGeneration = 0
   constructor(private readonly ports: WorkbenchPorts) {
     this.form = ports.form
   }
@@ -72,12 +105,71 @@ export class WorkbenchController {
   async load(): Promise<void> {
     const generation = ++this.rosterGeneration
     try {
-      const result = await this.ports.listPresets()
+      const [result, enterprise, models, knowledgeBases] = await Promise.all([
+        this.ports.listPresets(), this.ports.listEnterprise?.(), this.ports.listModels?.(), this.ports.listKnowledgeBases?.(),
+      ])
       if (this.abort.signal.aborted || generation !== this.rosterGeneration) return
+      if (models && !models.ok) throw new Error(models.error.message)
       if (!result.ok) throw new Error(result.error.message)
-      this.patch({ roster: result.value.presets, error: null })
+      this.patch({
+        roster: result.value.presets, error: null,
+        ...(models?.ok ? { models: models.value } : {}),
+        ...(enterprise === undefined ? {} : { enterprise }),
+        ...(knowledgeBases === undefined ? {} : { knowledgeBases }),
+      })
     } catch (_error) {
       if (!this.abort.signal.aborted && generation === this.rosterGeneration) this.patch({ error: 'loadError' })
+    }
+  }
+  /** Read authorized historical workspace Sessions without opening conversations. */
+  async loadLibrary(): Promise<void> {
+    const generation = ++this.libraryGeneration
+    this.patch({ libraryLoading: true, error: null })
+    try {
+      const result = await this.ports.listSessions({}, this.abort.signal)
+      if (generation !== this.libraryGeneration) return
+      if (!result.ok) throw new Error(result.error.message)
+      const visible = result.value.items.filter((row): row is typeof row & { cwd: string } => row.cwd !== undefined)
+      const exactFiles = new Map<SessionId, readonly string[]>()
+      const exactTitles = new Map<SessionId, string>()
+      let attributionIncomplete = false
+      let cursor = 0
+      const missing = visible.filter(row => row.projections?.values.deliverableFiles === undefined)
+      await Promise.all(Array.from({ length: Math.min(4, missing.length) }, async () => {
+        while (cursor < missing.length) {
+          const row = missing[cursor++]
+          if (row === undefined) return
+          try {
+            const projections = await this.ports.readSessionProjections({ sessionId: row.sessionId }, this.abort.signal)
+            if (!projections.ok || projections.value?.kind !== 'sequenced') {
+              attributionIncomplete = true
+              continue
+            }
+            const values = projections.value.values
+            if (typeof values.title === 'string') exactTitles.set(row.sessionId, values.title)
+            if (values.deliverableFiles === undefined) attributionIncomplete = true
+            else exactFiles.set(row.sessionId, values.deliverableFiles)
+          } catch (_error) {
+            if (!this.abort.signal.aborted) attributionIncomplete = true
+          }
+        }
+      }))
+      if (generation !== this.libraryGeneration) return
+      this.patch({
+        librarySessions: visible.map(row => ({
+          id: row.sessionId,
+          cwd: row.cwd,
+          displayTitle: row.projections?.values.title ?? exactTitles.get(row.sessionId)
+            ?? (workspaceTitleOf(row.cwd) || row.sessionId),
+          deliverableFiles: row.projections?.values.deliverableFiles ?? exactFiles.get(row.sessionId) ?? [],
+        })),
+        libraryLoading: false,
+        libraryAttributionIncomplete: attributionIncomplete,
+      })
+    } catch (_error) {
+      if (!this.abort.signal.aborted && generation === this.libraryGeneration) {
+        this.patch({ libraryLoading: false, error: 'loadError' })
+      }
     }
   }
   /** Save one complete entity with a Settings revision fence.
@@ -85,6 +177,7 @@ export class WorkbenchController {
    * @param entity Validated editor value.
    * @param originalSlug Previous key; undefined creates a new item.
    * @param revision Revision seen when editing began.
+   * @param importedSkills Skill definitions staged by the assistant editor, committed with the entity.
    * @returns Localized failure key, or null on acceptance.
    */
   async save(
@@ -92,6 +185,7 @@ export class WorkbenchController {
     entity: Entity,
     originalSlug: string | undefined,
     revision: number | undefined,
+    importedSkills: readonly WorkbenchSkill[] = [],
   ): Promise<WorkbenchKey | null> {
     const data = this.form.getSnapshot().value
     if (data === undefined) return 'notConfigured'
@@ -119,8 +213,14 @@ export class WorkbenchController {
     const next =
       originalSlug === undefined ? [...rows, entity] : rows.map(row => (row.slug === originalSlug ? entity : row))
     try {
-      validateWorkbench({ ...data, [kind]: next })
-      const accepted = await this.form.mutate([{ op: 'set', path: [kind], value: next }], revision)
+      if (importedSkills.length && kind !== 'experts') return 'saveError'
+      if (importedSkills.some(skill => data.skills.some(saved => saved.slug === skill.slug))) return 'duplicate'
+      const skills = [...data.skills, ...importedSkills]
+      validateWorkbench({ ...data, [kind]: next, ...(importedSkills.length ? { skills } : {}) })
+      const operations: Parameters<typeof this.form.mutate>[0] = importedSkills.length
+        ? [{ op: 'set', path: [kind], value: next }, { op: 'set', path: ['skills'], value: skills }]
+        : [{ op: 'set', path: [kind], value: next }]
+      const accepted = await this.form.mutate(operations, revision)
       if (!accepted) return 'saveError'
       await this.load()
       return null
@@ -143,9 +243,11 @@ export class WorkbenchController {
   async setEnabled(slug: string, enabled: boolean, revision: number | undefined): Promise<WorkbenchKey | null> {
     const expert = this.form.getSnapshot().value?.experts.find(row => row.slug === slug)
     if (expert === undefined) return 'saveError'
+    if (!enabled && this.form.getSnapshot().value?.experts.some(row => row.enabled !== false && row.subagents?.includes(slug))) return 'agentUsedAsSubagent'
     return this.save('experts', { ...resolveExpert(expert), enabled }, slug, revision)
   }
-  /** Remove configuration without deleting sessions or files.
+  /** Remove configuration, restoring the system default first when deleting the selected preset.
+   * A refused deletion retains the entity and reports any accepted default change. Sessions and files remain.
    * @param kind Configuration collection.
    * @param slug User-owned key.
    * @returns Localized failure, or null on acceptance.
@@ -154,10 +256,18 @@ export class WorkbenchController {
     const before = this.form.getSnapshot()
     const data = before.value
     if (data === undefined) return 'notConfigured'
-    if ((kind === 'experts' || kind === 'teams') && this.isDefault(kind, slug)) return 'defaultInUse'
     if (kind === 'experts' && data.teams.some(team => team.members.includes(slug))) return 'expertInTeam'
+    if (kind === 'experts' && data.experts.some(expert => expert.subagents?.includes(slug))) return 'agentUsedAsSubagent'
+    const restoresDefault = (kind === 'experts' || kind === 'teams') && this.isDefault(kind, slug)
     const next = data[kind].filter(row => row.slug !== slug)
+    let restoredDefault = false
     try {
+      if (restoresDefault) {
+        const failure = await this.ports.restoreDefault(`workbench-${slug}`)
+        if (failure) return failure
+        restoredDefault = true
+        await this.load()
+      }
       const ops: import('@deepseek-ai/dsh-api-remotes/client').SettingsPathOpView[] = [
         { op: 'set' as const, path: [kind], value: next },
       ]
@@ -165,9 +275,10 @@ export class WorkbenchController {
         const experts = data.experts.map(expert => ({ ...expert, [kind]: expert[kind].filter(key => key !== slug) }))
         ops.push({ op: 'set', path: ['experts'], value: experts })
       }
-      return (await this.form.mutate(ops, before.revision)) ? null : 'saveError'
+      return (await this.form.mutate(ops, before.revision)) ? null
+        : restoredDefault ? 'agentDeleteFailedDefaultRestored' : 'saveError'
     } catch (_error) {
-      return 'saveError'
+      return restoredDefault ? 'agentDeleteFailedDefaultRestored' : 'saveError'
     }
   }
   /** Import all collections atomically; Host schemas reject malformed data.
@@ -263,6 +374,8 @@ export class WorkbenchController {
     this.abort.abort()
     this.fileAbort?.abort()
     this.generation++
+    this.rosterGeneration++
+    this.libraryGeneration++
   }
 }
 /** Download browser-owned data without keeping object URLs alive.

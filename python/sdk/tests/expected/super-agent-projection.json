@@ -1,0 +1,31 @@
+{
+  "finalResponse": "TASK_RESULT",
+  "auditEvents": [
+    {
+      "type": "super-agent/start",
+      "seq": 3,
+      "time": 0,
+      "data": {
+        "goalId": "goal-sdk-task",
+        "objective": "Review the document"
+      }
+    }
+  ],
+  "auditNotifications": [
+    {
+      "method": "session.event",
+      "event": {
+        "type": "super-agent/start",
+        "seq": 3,
+        "time": 0,
+        "data": {
+          "goalId": "goal-sdk-task",
+          "objective": "Review the document"
+        }
+      }
+    }
+  ],
+  "assistantTexts": [
+    "TASK_RESULT"
+  ]
+}

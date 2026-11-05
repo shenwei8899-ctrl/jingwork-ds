@@ -1,22 +1,11 @@
 .page {
+  box-sizing: border-box;
   height: 100%;
   overflow: auto;
-  padding: clamp(24px, 3vw, 44px);
+  padding: 24px;
   color: var(--dsw-alias-label-primary);
   display: flex;
   flex-direction: column;
-  gap: 26px;
-}
-.header h1 {
-  font-size: 24px;
-  font-weight: 500;
-  margin: 0 0 12px;
-}
-.header p {
-  margin: 0;
-  font-size: 14px;
-  color: var(--dsw-alias-label-secondary);
-  line-height: 1.7;
 }
 .panel {
   border-radius: 28px;
@@ -24,7 +13,7 @@
   background: color-mix(in srgb, var(--dsw-alias-bg-layer-2) 60%, transparent);
   border: 1px solid color-mix(in srgb, var(--dsw-alias-bg-layer-3) 42%, transparent);
   min-height: 560px;
-  flex: 1;
+  flex: 1 0 auto;
   min-width: 0;
 }
 .tabs {
@@ -56,15 +45,11 @@
   flex-wrap: wrap;
   margin: 22px 0 26px;
 }
-.count {
-  color: var(--dsw-alias-label-secondary);
-  font-size: 14px;
-  margin-right: auto;
-}
 .search {
   flex: 1;
   min-width: 160px;
   max-width: 320px;
+  margin-right: auto;
   height: 38px;
   border-radius: 12px;
   background: var(--dsw-alias-bg-layer-3);
@@ -85,23 +70,47 @@
 }
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 440px), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr));
   gap: 22px;
 }
 .card {
-  background: linear-gradient(
-    135deg,
-    var(--dsw-alias-bg-layer-3),
-    color-mix(in srgb, var(--dsw-alias-bg-layer-2) 65%, transparent)
-  );
-  border: 1px solid var(--dsw-alias-border-l4);
-  border-radius: 24px;
-  padding: 24px;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  box-shadow: 0 12px 30px color-mix(in srgb, var(--dsw-alias-label-primary) 4%, transparent);
+}
+.grid .card {
+  background: linear-gradient(
+    125deg,
+    color-mix(in srgb, var(--dsw-alias-bg-layer-3) 96%, var(--dsw-static-blue-50p)) 0%,
+    color-mix(in srgb, var(--dsw-alias-bg-layer-3) 92%, var(--dsw-static-blue-100)) 58%,
+    color-mix(in srgb, var(--dsw-alias-bg-layer-3) 93%, var(--dsw-static-violet-400)) 100%
+  );
+  transition: background 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+.grid .card:focus-within {
+  background: linear-gradient(
+    125deg,
+    color-mix(in srgb, var(--dsw-alias-bg-layer-3) 90%, var(--dsw-static-blue-100)) 0%,
+    color-mix(in srgb, var(--dsw-alias-bg-layer-3) 87%, var(--dsw-static-blue-100)) 58%,
+    color-mix(in srgb, var(--dsw-alias-bg-layer-3) 88%, var(--dsw-static-violet-400)) 100%
+  );
+  border-color: var(--dsw-alias-state-business-primary);
+}
+@media (hover: hover) {
+  .grid .card:hover {
+    background: linear-gradient(
+      125deg,
+      color-mix(in srgb, var(--dsw-alias-bg-layer-3) 90%, var(--dsw-static-blue-100)) 0%,
+      color-mix(in srgb, var(--dsw-alias-bg-layer-3) 87%, var(--dsw-static-blue-100)) 58%,
+      color-mix(in srgb, var(--dsw-alias-bg-layer-3) 88%, var(--dsw-static-violet-400)) 100%
+    );
+    border-color: var(--dsw-alias-state-business-primary);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .grid .card {
+    transition: none;
+  }
 }
 .highlight {
   border-color: var(--dsw-alias-state-business-primary);
@@ -119,7 +128,7 @@
   place-items: center;
   border-radius: 16px;
   font-size: 22px;
-  background: var(--dsw-alias-bg-layer-1);
+  background: transparent;
   color: var(--dsw-alias-state-business-primary);
 }
 .identity {
@@ -343,6 +352,20 @@
   font-weight: 500;
   margin: 0 0 8px;
 }
+.knowledgeHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.knowledgeHeading .editorSectionTitle {
+  min-width: 0;
+  margin: 0;
+}
+.knowledgeHeading > button {
+  flex-shrink: 0;
+}
 .screenReaderHeading {
   position: absolute;
   width: 1px;
@@ -399,7 +422,7 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 28px 24px;
 }
-.fullField {
+.basicFields > label:last-child {
   grid-column: 1 / -1;
 }
 .basicFields input {
@@ -408,9 +431,6 @@
 .basicFields label > span {
   height: auto;
   min-height: 40px;
-}
-.basicFields label > .hint {
-  min-height: 0;
 }
 .form {
   min-width: 0;
@@ -424,7 +444,7 @@
   font-weight: 500;
   margin: 0 0 4px;
 }
-.form label:not(.option) {
+.form label:not(.option):not(.knowledgeCard) {
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -433,7 +453,7 @@
 .form label > span {
   min-width: 0;
 }
-.form label:not(.option) > span {
+.form label:not(.option):not(.knowledgeCard) > span {
   width: 100%;
   box-sizing: border-box;
 }
@@ -496,6 +516,56 @@
   font-size: 14px;
   line-height: 1.8;
 }
+.knowledgeGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+  align-items: stretch;
+  gap: 12px;
+}
+.knowledgeCard {
+  box-sizing: border-box;
+  min-width: 0;
+  height: 72px;
+  padding: 10px;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14px;
+  line-height: 1.5;
+  cursor: pointer;
+}
+.knowledgeCard input {
+  flex-shrink: 0;
+  margin: 3px 0 0;
+}
+.knowledgeCardContent {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 2px;
+}
+.knowledgeCardContent strong {
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.knowledgeCardContent small {
+  display: block;
+  overflow: hidden;
+  color: var(--dsw-alias-label-secondary);
+  font-size: 13px;
+  line-height: 1.5;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.knowledgeCardSelected {
+  border-color: var(--dsw-alias-state-business-primary);
+  background: color-mix(in srgb, var(--dsw-alias-state-business-primary) 4%, var(--dsw-alias-bg-layer-3));
+}
 .wizardFooter {
   display: flex;
   flex-wrap: wrap;
@@ -550,7 +620,6 @@
 @media (max-width: 700px) {
   .page {
     padding: 20px;
-    gap: 20px;
   }
   .panel {
     padding: 20px;
@@ -562,15 +631,9 @@
   .tabs button {
     font-size: 14px;
   }
-  .count {
-    width: 100%;
-  }
   .search {
     max-width: none;
     flex-basis: 100%;
-  }
-  .card {
-    padding: 18px;
   }
   .editorHeader {
     padding: 14px 20px;
@@ -614,7 +677,6 @@
     padding: 24px 20px;
   }
   .basicFields {
-    grid-template-columns: minmax(0, 1fr);
     gap: 24px;
   }
   .wizardFooter {
@@ -661,4 +723,373 @@
 
 :global(html[data-platform='darwin']) .editorHeader {
   min-height: max(72px, calc(var(--dsh-frame-top-clearance, 0px) + 20px));
+}
+
+.enterprisePanel {
+  container-type: inline-size;
+  padding: 24px;
+}
+.enterpriseIntro {
+  margin: 16px 0 0;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--dsw-alias-label-secondary);
+}
+.enterprisePanel .toolbar {
+  margin: 20px 0 24px;
+}
+.enterprisePanel .search {
+  max-width: 260px;
+  border-radius: var(--dsw-radius-full, 999px);
+}
+.enterprisePanel .refresh {
+  border-radius: var(--dsw-radius-full, 999px);
+}
+.enterprisePanel .grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+.enterpriseCard {
+  box-sizing: border-box;
+  min-height: 220px;
+}
+.enterpriseCard .cardHeader {
+  align-items: center;
+  gap: 12px;
+}
+.enterpriseCard .avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 0;
+  background: transparent;
+}
+.enterpriseCard .avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.enterpriseCard .identity h2 {
+  font-size: 16px;
+  margin-bottom: 2px;
+}
+.enterpriseCard .identifier {
+  font-size: 12px;
+  gap: 2px;
+}
+.enterpriseCard .identifier button {
+  height: 22px;
+}
+.enterpriseCard .badges {
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+.enterpriseCard .ready {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: var(--dsw-radius-full, 999px);
+  color: var(--dsw-alias-state-success-primary);
+  background: color-mix(in srgb, var(--dsw-alias-state-success-primary) 10%, transparent);
+}
+.enterpriseCard .ready::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.enterpriseBadge {
+  padding: 0 8px;
+  border: 1px solid var(--dsw-alias-border-l4);
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 20px;
+}
+.enterpriseCard .description {
+  flex: none;
+  font-size: 13px;
+  line-height: 1.7;
+  min-height: 44px;
+}
+.enterpriseMetadata {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  color: var(--dsw-alias-label-secondary);
+  font-size: 12px;
+  line-height: 1.7;
+}
+.enterpriseMetadata span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.enterpriseCard .cardFooter {
+  margin-top: auto;
+  align-items: center;
+  padding-top: 4px;
+}
+.enterpriseCard .cardActions:empty {
+  display: none;
+}
+.enterpriseAccount {
+  color: var(--dsw-alias-label-secondary);
+  font-size: 12px;
+}
+.enterpriseCard .enterpriseStart {
+  min-height: 34px;
+  border-radius: var(--dsw-radius-full, 999px);
+  padding-inline: 14px;
+  margin-left: auto;
+}
+.table .enterpriseCard {
+  min-height: 0;
+}
+.table .enterpriseMetadata,
+.table .enterpriseAccount {
+  display: none;
+}
+@container (max-width: 620px) {
+  .enterprisePanel .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .enterprisePanel .toolbar {
+    margin-bottom: 24px;
+  }
+}
+@media (max-width: 700px) {
+  .enterprisePanel {
+    padding: 18px;
+  }
+  .enterprisePanel .search {
+    max-width: none;
+  }
+}
+
+.editorAvatar img,
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+.avatarUpload {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 6px 12px;
+  margin-block: 6px;
+  border: 1px solid var(--dsw-alias-bg-layer-3);
+  border-radius: 8px;
+  background: var(--dsw-alias-bg-layer-1);
+  cursor: pointer;
+}
+.avatarUpload:focus-within {
+  outline: 2px solid var(--dsw-alias-state-business-primary);
+  outline-offset: 2px;
+}
+.homeConfig {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border-block: 1px solid var(--dsw-alias-bg-layer-3);
+  padding-block: 24px;
+}
+.shortcutHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.shortcutExample,
+.shortcutEditor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  background: var(--dsw-alias-bg-layer-1);
+  border-radius: 12px;
+}
+.form select {
+  background: var(--dsw-alias-bg-layer-1);
+  color: var(--dsw-alias-label-primary);
+  border: 1px solid var(--dsw-alias-bg-layer-3);
+  border-radius: 8px;
+  padding: 10px;
+  max-width: 100%;
+}
+
+.skillGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+  gap: 12px;
+}
+.skillGrid .option {
+  margin: 0;
+  min-width: 0;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+.skillGrid .option:has(input:checked) {
+  background: var(--dsw-alias-bg-layer-2);
+}
+.form .skillUpload {
+  gap: 8px;
+}
+
+.personalPanel .grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr));
+  gap: 20px;
+}
+.personalPanel .grid .cardHeader {
+  gap: 12px;
+}
+.personalPanel .grid .description {
+  min-height: 0;
+  flex: none;
+}
+.personalPanel .grid .cardFooter {
+  margin-top: auto;
+  gap: 8px;
+}
+
+.grid .identity h2 {
+  font-size: 16px;
+}
+.grid .cardHeader {
+  gap: 12px;
+}
+.grid .card.highlight {
+  border: 0.5px solid var(--dsw-alias-state-business-primary);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--dsw-alias-settings-card-fill) 91%, var(--dsw-alias-state-business-primary) 9%),
+    color-mix(in srgb, var(--dsw-alias-settings-card-fill) 86%, var(--dsw-alias-state-business-primary) 14%)
+  );
+  box-shadow: var(--dsw-elevation-prominent);
+}
+.grid .cardHeader {
+  align-items: center;
+}
+.grid .avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--dsw-radius-lg);
+  background: color-mix(in srgb, var(--dsw-alias-state-business-primary) 8%, var(--dsw-alias-bg-layer-3));
+}
+.grid .identity h2 {
+  margin-bottom: 4px;
+  font-size: 18px;
+  line-height: 1.4;
+}
+.grid .identifier {
+  gap: 6px;
+  font-size: 14px;
+}
+.grid .copyId {
+  width: 28px;
+  min-width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: var(--dsw-radius-sm);
+  font-size: 0;
+}
+.grid .copyId svg {
+  flex: 0 0 16px;
+}
+.grid .badges {
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+.grid .status,
+.grid .ready {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  box-sizing: border-box;
+  padding-inline: 12px;
+  border-radius: var(--dsw-radius-full);
+  corner-shape: round;
+  font-size: 13px;
+  line-height: 1.4;
+}
+.grid .status {
+  border: 0.5px solid var(--dsw-alias-settings-card-stroke);
+  background: var(--dsw-alias-bg-layer-3);
+}
+.grid .card:not(.enterpriseCard) .ready {
+  gap: 7px;
+  color: var(--dsw-alias-state-success-primary);
+  background: color-mix(in srgb, var(--dsw-alias-state-success-primary) 10%, var(--dsw-alias-bg-layer-3));
+}
+.grid .card:not(.enterpriseCard) .ready::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  flex: 0 0 7px;
+  border-radius: 50%;
+  corner-shape: round;
+  background: currentColor;
+}
+.grid .description {
+  display: -webkit-box;
+  min-height: 0;
+  flex: 1;
+  overflow: hidden;
+  font-size: 16px;
+  line-height: 1.65;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+.grid .cardFooter {
+  align-items: center;
+  gap: 12px;
+  margin-top: auto;
+}
+.grid .cardActions {
+  gap: 8px;
+}
+.grid .cardActions button:has(svg) {
+  width: 48px;
+  min-width: 48px;
+  height: 48px;
+  padding: 0;
+  justify-content: center;
+  border: 0;
+  border-radius: var(--dsw-radius-lg);
+  background: color-mix(in srgb, var(--dsw-alias-bg-layer-3) 84%, transparent);
+  box-shadow: var(--dsw-elevation-soft);
+  font-size: 0;
+}
+.grid .cardActions button:has(svg) svg {
+  flex: 0 0 20px;
+}
+.grid .agentStart {
+  min-height: 48px;
+  flex-shrink: 0;
+  padding-inline: 18px;
+  border-radius: var(--dsw-radius-md);
+  color: var(--dsw-alias-state-business-primary);
+  border-color: color-mix(in srgb, var(--dsw-alias-state-business-primary) 42%, var(--dsw-alias-settings-card-stroke));
+  background: color-mix(in srgb, var(--dsw-alias-state-business-primary) 5%, var(--dsw-alias-bg-layer-3));
+}
+.grid .agentStart svg {
+  flex-shrink: 0;
+}
+@media (max-width: 700px) {
+  .personalPanel .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .grid .card {
+    min-height: 0;
+    padding: 20px;
+  }
+  .grid .cardActions button:has(svg) {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+  }
 }

@@ -147,6 +147,7 @@ Every package below exports a Cordis plugin that a bundle patch can name in a Lo
 | `@deepseek-ai/dsh-agent-instructions` | yes | Workspace context loader for AGENTS.md/CLAUDE.md instruction files |
 | `@deepseek-ai/dsh-file-reference-local` | yes | Local-filesystem ctx.fileReferences provider with bounded fuzzy indexes |
 | `@deepseek-ai/dsh-harness-dev-context` | no | Model context naming the DeepSeek Harness checkout and Web GUI URL without letting either change the system prompt |
+| `@deepseek-ai/dsh-knowledge` | yes | Literal reference material in an agent's scoped system prompt |
 | `@deepseek-ai/dsh-session-reference` | yes | Cross-session snapshot references and durable untrusted model context (ctx.sessionReferenceResolver) |
 | `@deepseek-ai/dsh-time-context` | yes | Durable per-step context with the current time and elapsed time |
 | `@deepseek-ai/dsh-tmux-context` | yes | Opt-in durable per-step context with this agent's tmux pane and window location |
@@ -272,6 +273,7 @@ Every package below exports a Cordis plugin that a bundle patch can name in a Lo
 | `@deepseek-ai/dsh-command-goal` | no | Human-facing slash command for persisted same-session goals |
 | `@deepseek-ai/dsh-goal` | yes | Event-sourced same-session goal state and lifecycle service for the DeepSeek Harness |
 | `@deepseek-ai/dsh-goal-round-driver` | no | Race-fenced same-session goal-round driver |
+| `@deepseek-ai/dsh-super-agent` | no | Chat task orchestration with persistent goals and delegated execution |
 | `@deepseek-ai/dsh-tool-goal` | yes | Model-facing same-session goal tools with execution-time authority checks |
 
 ## guard

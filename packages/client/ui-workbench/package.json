@@ -23,7 +23,12 @@
       "default": "./lib/client.js"
     },
     "./src/*": "./src/*",
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./assets/*": "./lib/assets/*",
+    "./connector": {
+      "types": "./lib/types/connector.d.ts",
+      "default": "./lib/connector.js"
+    }
   },
   "dsh": {
     "client": {
@@ -45,38 +50,57 @@
   },
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/cordis": "workspace:~"
+    "@deepseek-ai/cordis": "workspace:~",
+    "@deepseek-ai/dsh-credentials": "workspace:*",
+    "@deepseek-ai/dsh-mcp-client": "workspace:*"
   },
   "devDependencies": {
+    "@deepseek-ai/cordis": "workspace:~",
     "@deepseek-ai/dsh-agent-preset-registry": "workspace:*",
     "@deepseek-ai/dsh-api-remotes": "workspace:*",
+    "@deepseek-ai/dsh-api-session-controller": "workspace:*",
     "@deepseek-ai/dsh-api-workspace-files": "workspace:*",
+    "@deepseek-ai/dsh-app-boot": "workspace:*",
     "@deepseek-ai/dsh-client-locale": "workspace:*",
     "@deepseek-ai/dsh-client-store": "workspace:*",
-    "@deepseek-ai/dsh-client-ui-primitives": "workspace:*",
-    "@deepseek-ai/dsh-client-ui-slots": "workspace:*",
+    "@deepseek-ai/dsh-client-test-runtime": "workspace:*",
+    "@deepseek-ai/dsh-client-ui-conversation": "workspace:*",
+    "@deepseek-ai/dsh-client-ui-deliverables": "workspace:*",
     "@deepseek-ai/dsh-client-ui-layout": "workspace:*",
+    "@deepseek-ai/dsh-client-ui-primitives": "workspace:*",
+    "@deepseek-ai/dsh-client-ui-renderer": "workspace:*",
+    "@deepseek-ai/dsh-client-ui-settings": "workspace:*",
     "@deepseek-ai/dsh-client-ui-sidebar": "workspace:*",
     "@deepseek-ai/dsh-client-ui-sidebar-right": "workspace:*",
-    "@deepseek-ai/dsh-client-ui-settings": "workspace:*",
+    "@deepseek-ai/dsh-client-ui-slots": "workspace:*",
     "@deepseek-ai/dsh-client-ui-workspace": "workspace:*",
+    "@deepseek-ai/dsh-credentials": "workspace:*",
+    "@deepseek-ai/dsh-llm": "workspace:*",
+    "@deepseek-ai/dsh-mcp-client": "workspace:*",
     "@deepseek-ai/dsh-session": "workspace:*",
-    "@deepseek-ai/dsh-util-workspace-path": "workspace:*",
+    "@deepseek-ai/dsh-session-title": "workspace:*",
     "@deepseek-ai/dsh-settings": "workspace:*",
     "@deepseek-ai/dsh-skill": "workspace:*",
-    "@deepseek-ai/cordis": "workspace:~",
-    "react": "^18.2.0",
-    "@deepseek-ai/dsh-client-ui-renderer": "workspace:*",
-    "@deepseek-ai/dsh-client-ui-conversation": "workspace:*",
+    "@deepseek-ai/dsh-tools": "workspace:*",
     "@deepseek-ai/dsh-util-crypto": "workspace:*",
+    "@deepseek-ai/dsh-util-workspace-path": "workspace:*",
+    "@types/mailparser": "^3.9.0",
+    "@types/nodemailer": "^8.0.2",
+    "react": "^18.2.0",
     "yaml": "^2.4.2"
   },
   "files": [
     "lib/index.js",
     "lib/client.js",
-    "lib/types/**/*.d.ts"
+    "lib/assets",
+    "lib/types/**/*.d.ts",
+    "lib/connector.js"
   ],
   "dependencies": {
-    "@deepseek-ai/schemastery": "workspace:~"
+    "@deepseek-ai/schemastery": "workspace:~",
+    "imapflow": "^2.10.0",
+    "mailparser": "^3.14.1",
+    "nodemailer": "^10.3.1",
+    "zod": "4.4.3"
   }
 }

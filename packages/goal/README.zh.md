@@ -28,6 +28,7 @@ goal 组让一个 agent（智能体）会话在重启、恢复和 fork 后继续
 | [`tool-goal`](tool-goal/README.zh.md) | 模型工具 `get_goal`、`create_goal`、`update_goal` | 注册到 `ctx.tools` |
 | [`command-goal`](command-goal/README.zh.md) | UI 命令平面中的用户 `/goal` 命令 | 注册到 `ctx.commands` |
 | [`goal-round-driver`](goal-round-driver/README.zh.md) | 自动续行：把进行中的目标变成连续的 Round | 无服务键 |
+| [`super-agent`](super-agent/README.zh.md) | 带进度和执行器中断的持久化聊天任务 | 无服务键 |
 
 -----
 

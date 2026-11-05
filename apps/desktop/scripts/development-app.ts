@@ -26,20 +26,24 @@ function quote(value: string): string { return `'${value.replaceAll("'", "'\\''"
  */
 export function prepareDevelopmentApp(options: DevelopmentAppOptions): string {
   const source = dirname(dirname(dirname(options.electron)))
-  const bundle = join(options.directory, 'Harness Dev.app')
+  const bundle = join(options.directory, 'JingWork.app')
   const executable = join(bundle, 'Contents', 'MacOS', 'HarnessDev')
   const stamp = join(bundle, 'Contents', 'Resources', 'dsh-development.json')
+  const icon = join(options.appRoot, 'resources', 'icon-jingwork.icns')
   const launcher = developmentLauncher(options, bundle)
-  const identity = JSON.stringify({ ...options, launcher, plist: readFileSync(join(source, 'Contents', 'Info.plist'), 'utf8') })
+  const identity = JSON.stringify({ ...options, launcher, icon: createHash('sha256').update(readFileSync(icon)).digest('hex'),
+    plist: readFileSync(join(source, 'Contents', 'Info.plist'), 'utf8') })
   if (!existsSync(stamp) || readFileSync(stamp, 'utf8') !== identity) {
     rmSync(bundle, { recursive: true, force: true })
     execFileSync('/usr/bin/ditto', [source, bundle])
+    writeFileSync(join(bundle, 'Contents', 'Resources', 'jingwork.icns'), readFileSync(icon))
     const plist = join(bundle, 'Contents', 'Info.plist')
     const values = {
       CFBundleIdentifier: `com.deepseek.harness.dev.${createHash('sha256').update(options.appRoot).digest('hex').slice(0, 12)}`,
-      CFBundleName: 'Harness Dev',
-      CFBundleDisplayName: 'Harness Dev',
+      CFBundleName: 'JingWork',
+      CFBundleDisplayName: 'JingWork',
       CFBundleExecutable: 'HarnessDev',
+      CFBundleIconFile: 'jingwork.icns',
       CFBundleURLTypes: [{ CFBundleURLName: 'DeepSeek Harness', CFBundleURLSchemes: ['dsh'], CFBundleTypeRole: 'Viewer' }],
     }
     for (const [key, value] of Object.entries(values)) {

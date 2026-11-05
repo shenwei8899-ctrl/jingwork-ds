@@ -1,13 +1,13 @@
-/** Parse repository skill metadata for the workbench's read-only browser catalog. */
+/** Package repository skill definitions for the workbench catalog and assistant editor. */
 import { readdirSync, readFileSync } from 'node:fs'
 import { join, posix } from 'node:path'
 import { parse as parseYaml } from 'yaml'
 import type { BuiltinSkill } from '../src/types.ts'
 
-/** Parse one skill's frontmatter without embedding its instruction body.
+/** Parse one skill's frontmatter and retain its instruction body.
  * @param raw Complete SKILL.md source text.
  * @param path Repository-relative path used by the display catalog and diagnostics.
- * @returns Validated display metadata and invocation flags.
+ * @returns Validated display metadata, instructions and invocation flags.
  * @throws When frontmatter, required metadata or invocation flags are invalid.
  */
 export function parseBuiltinSkill(raw: string, path: string): BuiltinSkill {
@@ -30,13 +30,21 @@ export function parseBuiltinSkill(raw: string, path: string): BuiltinSkill {
   if (typeof modelDisabled !== 'boolean' || typeof userInvocable !== 'boolean') {
     throw new Error(`workbench skill ${path}: invocation flags must be boolean`)
   }
-  return { name, description: description.trim(), path, userInvocable, modelInvocable: !modelDisabled }
+  return {
+    content: raw.slice(frontmatter[0].length).trim(),
+    name,
+    description: description.trim(),
+    path,
+    userInvocable,
+    modelInvocable: !modelDisabled,
+  }
 }
 
-/** Build a stable catalog from every immediate directory-bundle skill.
+/**
+ * Build a stable catalog from every immediate directory-bundle skill.
  * @param directory Local source directory; this path never reaches browser output.
  * @param localizedSlugs Skill identifiers covered by the owning UI dictionaries.
- * @returns Sorted, uniquely named metadata with portable repository-relative paths.
+ * @returns Sorted, uniquely named definitions with portable repository-relative paths.
  * @throws When a skill is unreadable, malformed, duplicated or lacks localization.
  */
 export function readBuiltinSkillCatalog(directory: string, localizedSlugs: readonly string[]): readonly BuiltinSkill[] {

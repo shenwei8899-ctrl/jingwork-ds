@@ -5,6 +5,7 @@ import { afterEach, expect, it, vi } from 'vitest'
 import type { BrowserWindowConstructorOptions } from 'electron'
 import type { DesktopLocale } from '../src/locale.ts'
 import type { AccountView } from '@deepseek-ai/dsh-deepseek-account/types'
+import type { JingworkLoginConfig } from '../src/jingwork-auth.ts'
 import type { WelcomeOperations } from '../src/welcome-api.ts'
 import { DESKTOP_IPC } from '../src/ipc.ts'
 
@@ -32,6 +33,9 @@ const state = vi.hoisted(() => ({
   welcomeLocale: undefined as DesktopLocale | undefined,
   preference: 'zh',
   hasApiKey: false,
+  jingwork: undefined as JingworkLoginConfig | undefined,
+  jingworkRestore: vi.fn(async () => false),
+  jingworkEnter: undefined as (() => Promise<void>) | undefined,
   handlers: new Map<string, (...args: unknown[]) => unknown>(),
   listeners: new Map<string, (...args: unknown[]) => void>(),
   contents: undefined as { mainFrame: { url: string } } | undefined,
@@ -155,6 +159,17 @@ vi.mock('../src/update-coordinator.ts', () => ({ DesktopUpdateCoordinator: class
   check = vi.fn(async () => this.state)
   dispose = vi.fn()
 } }))
+vi.mock('../src/jingwork-auth.ts', () => ({
+  readJingworkLoginConfig: () => state.jingwork,
+  JingworkDesktopAuth: class { restore = state.jingworkRestore },
+}))
+vi.mock('../src/jingwork-window.ts', () => ({
+  openJingworkWelcome: (_locale: DesktopLocale, _auth: unknown, enter: () => Promise<void>) => {
+    state.jingworkEnter = enter
+    return { once: vi.fn(), close: state.closeWelcome, isDestroyed: () => false,
+      show: vi.fn(), focus: vi.fn(), webContents: { send: vi.fn() } }
+  },
+}))
 vi.mock('../src/welcome-window.ts', () => ({
   openWelcomeWindow: async (locale: DesktopLocale, operations: WelcomeOperations) => {
     state.welcomeLocale = locale
@@ -166,6 +181,8 @@ vi.mock('../src/welcome-window.ts', () => ({
 }))
 
 afterEach(() => {
+  state.jingwork = undefined
+  state.jingworkEnter = undefined
   vi.clearAllTimers()
   vi.useRealTimers()
   vi.unstubAllEnvs()
@@ -300,4 +317,42 @@ it.each([false, true])('starts welcome onboarding without carrying update focus 
   expect(state.showWorkspace).toHaveBeenCalledOnce()
   expect(state.focusWorkspace).toHaveBeenCalledOnce()
 
+})
+
+
+it.each([false, true])('uses Jingwork authorization independently of model API keys (cached account=%s)', async (cached) => {
+  vi.resetModules()
+  vi.clearAllMocks()
+  state.jingwork = { url: 'http://127.0.0.1:45173', requestTimeoutMs: 15000 }
+  state.jingworkRestore.mockResolvedValue(cached)
+  state.jingworkEnter = undefined
+  state.hasApiKey = true
+  state.operations = undefined
+  state.accountState.mockResolvedValue({ status: 'signed-out', attempt: null, links: { usageUrl: '', topUpUrl: '' } })
+  vi.useFakeTimers()
+  vi.stubEnv('DSH_CLIENT_VERSION', '1.2.3')
+  vi.stubEnv('DSH_DESKTOP_DEV_PROJECT_DIR', '/development-profile')
+  vi.stubEnv('DSH_DESKTOP_NODE_BINARY', '/runtime/node')
+  vi.stubEnv('DSH_DESKTOP_PNPM_ENTRY', '/runtime/pnpm')
+  vi.stubEnv('DSH_DESKTOP_DSH_DIR', '/runtime/dsh')
+  vi.stubEnv('DSH_DESKTOP_PRIMARY_RUNTIME_DIR', '/runtime/primary-runtime')
+  vi.stubEnv('DSH_DESKTOP_HOST_INSPECT_PORT', undefined)
+  vi.stubEnv('DSH_DESKTOP_OPEN_DEVTOOLS', '0')
+  vi.stubEnv('DSH_DESKTOP_MANDATORY_UPDATE_CONFIG', undefined)
+  vi.stubEnv('DSH_DESKTOP_UPDATE_JOURNAL_DIR', undefined)
+  await import('../src/main.ts')
+  await vi.waitFor(() => { expect(state.jingworkRestore).toHaveBeenCalledOnce() })
+  if (cached) {
+    await vi.waitFor(() => { expect(state.showWorkspace).toHaveBeenCalledOnce() })
+    expect(state.jingworkEnter).toBeUndefined()
+  } else {
+    await vi.waitFor(() => { expect(state.jingworkEnter).toBeDefined() })
+    expect(state.showWorkspace).not.toHaveBeenCalled()
+    state.accountListener!({ status: 'credential-stored', links: { usageUrl: '', topUpUrl: '' },
+      attempt: { id: 'legacy' as NonNullable<AccountView['attempt']>['id'], phase: 'succeeded' } })
+    expect(state.showWorkspace).not.toHaveBeenCalled()
+    await state.jingworkEnter!()
+    expect(state.showWorkspace).toHaveBeenCalledOnce()
+  }
+  expect(state.operations).toBeUndefined()
 })

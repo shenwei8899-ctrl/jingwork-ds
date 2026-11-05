@@ -1,0 +1,18 @@
+- region "Image repair":
+  - heading "Image repair" [level=3]
+  - article:
+    - button "Preview broken.png":
+      - status: Thumbnail unavailable. Try preview or download.
+    - strong: broken.png
+    - text: 1 KB
+    - button "Preview"
+    - button "Download"
+- region "Library fixture":
+  - heading "Library fixture" [level=3]
+  - article:
+    - button "Preview 缩略图 sample.png":
+      - img "缩略图 sample.png"
+    - strong: 缩略图 sample.png
+    - text: 1 KB
+    - button "Preview"
+    - button "Download"

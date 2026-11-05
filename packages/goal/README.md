@@ -28,6 +28,7 @@ The goal group lets one agent session pursue a durable completion objective acro
 | [`tool-goal`](tool-goal/README.md) | Model tools `get_goal`, `create_goal`, `update_goal` | registers on `ctx.tools` |
 | [`command-goal`](command-goal/README.md) | Human `/goal` command in UI command planes | registers on `ctx.commands` |
 | [`goal-round-driver`](goal-round-driver/README.md) | Automatic continuation: turns an active goal into sequential Rounds | no service key |
+| [`super-agent`](super-agent/README.md) | Persistent chat tasks with progress and worker interruption | no service key |
 
 -----
 

@@ -7,14 +7,19 @@
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-workspace-changes/types'
 import { registerPresentOpen } from './present-open.ts'
+import { deliverableFilesProjectionDefinition } from './projection.ts'
 
 /** Services required for change summaries and authenticated native opens. */
-export const inject = ['connection', 'sessionQuery', 'sessionController', 'workspaceFiles', 'fs', 'sandboxPolicy', 'workspaceChanges']
+export const inject = [
+  'connection', 'sessionQuery', 'sessionController', 'sessionProjections', 'workspaceFiles', 'fs', 'sandboxPolicy',
+  'workspaceChanges',
+]
 
 /**
  * Register native opens for declared files.
  * @param ctx - host context carrying file and connection services.
  */
-export function apply(ctx: Context): void {
+export async function apply(ctx: Context): Promise<void> {
+  await ctx.sessionProjections.register(deliverableFilesProjectionDefinition)
   registerPresentOpen(ctx)
 }

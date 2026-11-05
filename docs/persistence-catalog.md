@@ -64,6 +64,7 @@ The [format references](persistence-changes/historical-formats/README.md) cover 
 | `event:subagent/catalog` | event | `53750b9abf61efb7992b0aadc3e247ec927449c63266df28230fd1139f5590ac` | [`{ type: "subagent/catalog" }`](#persistence-type-sha256-53750b9abf61efb7992b0aadc3e247ec927449c63266df28230fd1139f5590ac) |
 | `event:subagent/descriptor` | event | `b79ada42962cad0190a9d465805260567621fa3a4abd757eb31e6016b52d5ab5` | [`{ type: "subagent/descriptor" }`](#persistence-type-sha256-b79ada42962cad0190a9d465805260567621fa3a4abd757eb31e6016b52d5ab5) |
 | `event:subagent/model-selection-policy` | event | `a6567ccb2e530606b775371eb4fa31468d72084339968e8b0440a516a23b39dc` | [`{ type: "subagent/model-selection-policy" }`](#persistence-type-sha256-a6567ccb2e530606b775371eb4fa31468d72084339968e8b0440a516a23b39dc) |
+| `event:super-agent/start` | event | `97cbebea5290d1606c09a2c63368409e327b942bf8f34eb1cc2286d7e39ba4c9` | [`{ type: "super-agent/start" }`](#persistence-type-sha256-97cbebea5290d1606c09a2c63368409e327b942bf8f34eb1cc2286d7e39ba4c9) |
 | `event:system/message` | event | `69081694be231d56fd9580ba14645fd5e35373202605d5c5c841a9435b5fa3b1` | [`{ type: "system/message" }`](#persistence-type-sha256-69081694be231d56fd9580ba14645fd5e35373202605d5c5c841a9435b5fa3b1) |
 | `event:team/member` | event | `4fb59762612c3e3ac3a3bd4f84c9c148d3c3893bd422ba2b201cc039fabd49bc` | [`{ type: "team/member" }`](#persistence-type-sha256-4fb59762612c3e3ac3a3bd4f84c9c148d3c3893bd422ba2b201cc039fabd49bc) |
 | `event:team/message/delivered` | event | `48f9c19417a1abbedfa59f4667bba36b93ac2db407adf5e84cb3ba0de30942cb` | [`{ type: "team/message/delivered" }`](#persistence-type-sha256-48f9c19417a1abbedfa59f4667bba36b93ac2db407adf5e84cb3ba0de30942cb) |
@@ -975,6 +976,19 @@ Source: [`packages/subagent/subagent/src/descriptor.ts:38`](../packages/subagent
 ```
 
 Source: [`packages/subagent/tool-subagent/src/model-selection-state.ts:17`](../packages/subagent/tool-subagent/src/model-selection-state.ts)
+
+### `super-agent/*`
+
+<a id="super-agentstart--log-only"></a>
+
+#### `super-agent/start` — log-only
+
+```ts persistence-catalog
+/** Associates a chat task with its persisted completion goal. */
+'super-agent/start': { readonly goalId: GoalId; readonly objective: string }
+```
+
+Source: [`packages/goal/super-agent/src/types.ts:20`](../packages/goal/super-agent/src/types.ts)
 
 ### `system/*`
 
@@ -2642,6 +2656,14 @@ SHA-256: `0a8a062bc9c3c0d97fd97742262f2ea53dd32297f834e81114870d38ac3dc6da`
 SHA-256: `511801b0a6470d98566e8385d3dffddb2b67f79fcf73ed6056f46c3cc0a245a7`
 
 `"success"`
+
+<a id="persistence-type-sha256-04e2b06b328dbf0f9babd0745b696c0a6c4b92add85c5da79b9a801ee0520645"></a>
+
+### `"super-agent/start"`
+
+SHA-256: `04e2b06b328dbf0f9babd0745b696c0a6c4b92add85c5da79b9a801ee0520645`
+
+`"super-agent/start"`
 
 <a id="persistence-type-sha256-8af841fc9b265ade3441caf9fe40dd24db24226befba48150e6d0eeccc1389c3"></a>
 
@@ -6316,6 +6338,19 @@ Sources: [`packages/llm/llm/src/types.ts:168`](../packages/llm/llm/src/types.ts)
 | `failure` | required | [`LlmFailure`](#persistence-type-sha256-5f2117d1856a5ab43c28371faa978ebfaa48f8c7d734ea3fc94842210df83dca) |
 | `kind` | required | `"error"` |
 
+<a id="persistence-type-sha256-4ffa13464dacdfb2be04cfa47519efbdf43bb6faa116b0ff4cbb89d32281c8fc"></a>
+
+### `{ goalId, objective }`
+
+SHA-256: `4ffa13464dacdfb2be04cfa47519efbdf43bb6faa116b0ff4cbb89d32281c8fc`
+
+Sources: [`packages/goal/super-agent/src/types.ts:20`](../packages/goal/super-agent/src/types.ts)
+
+| Property | Presence | Type |
+|---|---|---|
+| `goalId` | required | `string` |
+| `objective` | required | `string` |
+
 <a id="persistence-type-sha256-ad0c38a0adb82a94c925456df41586d9b5f9202fca18593eae2213d4445b4585"></a>
 
 ### `{ header, reason, startsSeries? }`
@@ -8850,6 +8885,22 @@ SHA-256: `a6567ccb2e530606b775371eb4fa31468d72084339968e8b0440a516a23b39dc`
 | `seq` | required | `number` |
 | `time` | required | `number` |
 | `type` | required | `"subagent/model-selection-policy"` |
+
+<a id="persistence-type-sha256-97cbebea5290d1606c09a2c63368409e327b942bf8f34eb1cc2286d7e39ba4c9"></a>
+
+<a id="persistence-type-eventsuper-agentstart"></a>
+
+### `{ type: "super-agent/start" }`
+
+SHA-256: `97cbebea5290d1606c09a2c63368409e327b942bf8f34eb1cc2286d7e39ba4c9`
+
+| Property | Presence | Type |
+|---|---|---|
+| `data` | required | [`{ goalId, objective }`](#persistence-type-sha256-4ffa13464dacdfb2be04cfa47519efbdf43bb6faa116b0ff4cbb89d32281c8fc) |
+| `ignorable` | optional | `true` |
+| `seq` | required | `number` |
+| `time` | required | `number` |
+| `type` | required | `"super-agent/start"` |
 
 <a id="persistence-type-sha256-69081694be231d56fd9580ba14645fd5e35373202605d5c5c841a9435b5fa3b1"></a>
 

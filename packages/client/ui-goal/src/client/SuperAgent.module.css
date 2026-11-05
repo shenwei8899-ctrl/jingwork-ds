@@ -1,0 +1,75 @@
+/* Task controls share the composer and dock typography and theme tokens. */
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: var(--dsw-radius-md);
+  background: transparent;
+  color: var(--dsw-alias-label-secondary);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.toggle[aria-pressed='true'] {
+  background: var(--dsw-alias-interactive-bg-hover);
+  color: var(--dsw-alias-label-primary);
+}
+
+.toggle:disabled, .actions button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.card {
+  box-sizing: border-box;
+  width: calc(100% - 2 * var(--dsh-composer-side-clearance) - 4 * var(--dsh-composer-dock-inset));
+  max-width: calc(var(--dsh-composer-card-max-width) - 4 * var(--dsh-composer-dock-inset));
+  margin: 0 auto;
+  padding: 10px 12px;
+  border-radius: var(--dsw-radius-md);
+  background: var(--dsw-specific-menu);
+  box-shadow: var(--dsw-elevation-panel);
+  color: var(--dsw-alias-label-primary);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.header, .title, .actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.title { font-weight: 500; }
+.actions { margin-inline-start: auto; }
+.actions button {
+  border: 0;
+  border-radius: var(--dsw-radius-md);
+  padding: 2px 6px;
+  background: transparent;
+  color: var(--dsw-alias-label-secondary);
+  font: inherit;
+  cursor: pointer;
+}
+
+.objective, .blocker, .error {
+  margin: 8px 0 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.card details { margin-top: 8px; }
+.card summary { cursor: pointer; }
+.steps { margin: 8px 0 0; padding: 0; list-style: none; }
+.steps li { display: flex; gap: 10px; overflow-wrap: anywhere; }
+.stepStatus { flex: none; color: var(--dsw-alias-label-secondary); }
+.error { color: var(--dsw-alias-state-error-primary); }
+
+@media (hover: hover) {
+  .toggle:hover, .actions button:hover { background: var(--dsw-alias-interactive-bg-hover); }
+}

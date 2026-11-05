@@ -404,6 +404,9 @@
       name: '@deepseek-ai/dsh-client-ui-schedule'
 
     # Goal surface: GoalBar in the input dock over the goal session projection.
+    - id: super-agent
+      name: '@deepseek-ai/dsh-super-agent'
+
     - id: ui-goal
       name: '@deepseek-ai/dsh-client-ui-goal'
 

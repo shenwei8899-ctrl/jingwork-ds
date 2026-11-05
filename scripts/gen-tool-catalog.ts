@@ -82,6 +82,7 @@ import McpResources from '@deepseek-ai/dsh-mcp-resources'
 import * as ToolSubagent from '@deepseek-ai/dsh-tool-subagent'
 import * as ToolSubagentOar from '@deepseek-ai/dsh-experimental-tool-subagent-oar'
 import * as ToolWeb from '@deepseek-ai/dsh-tool-web'
+import * as Knowledge from '@deepseek-ai/dsh-knowledge'
 import WorkflowEngine from '@deepseek-ai/dsh-workflow'
 import type { WorkflowRun, WorkflowStartRequest } from '@deepseek-ai/dsh-workflow'
 import * as ToolRalph from '@deepseek-ai/dsh-tool-ralph'
@@ -189,6 +190,16 @@ export interface ToolPackage {
  * guard proves it is exhaustive against the on-disk glob.
  */
 const TOOL_PACKAGES: ToolPackage[] = [
+  {
+    pkg: '@deepseek-ai/dsh-knowledge', dir: 'knowledge', source: 'packages/context/knowledge/src/retrieval.ts',
+    requires: ['ctx.tools', 'ctx.systemPrompt'], writes: ['tool/call', 'tool/result'],
+    async mount(ctx) {
+      await ctx.plugin(Knowledge, { content: '', retrieval: {
+        bases: ['selected-knowledge-base'], urlEnv: 'DSH_KNOWLEDGE_URL', tokenEnv: 'DSH_KNOWLEDGE_TOKEN',
+        timeoutMs: 15000, maxBytes: 262144,
+      } })
+    },
+  },
   {
     pkg: '@deepseek-ai/dsh-plugin-manager',
     dir: 'plugin-manager',

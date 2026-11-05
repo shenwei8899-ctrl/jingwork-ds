@@ -730,11 +730,13 @@ export interface Config {
 
 - `inject`: `settings` · `agentPresets` · `skills`
 - `refs`: `Volatile` (`@deepseek-ai/cordis`)
-- `source`: [`packages/client/ui-workbench/src/index.ts:13`](../packages/client/ui-workbench/src/index.ts)
+- `source`: [`packages/client/ui-workbench/src/index.ts:15`](../packages/client/ui-workbench/src/index.ts)
 
 ```ts config-catalog
 /** Workbench configuration is edited through the shared Settings revision fence. */
 export interface Config {
+  /** Deployment limits for backend knowledge queries. */
+  knowledgeRetrieval: KnowledgeRetrievalPolicy
   /** Individual expert definitions and capability assignments. */
   experts: Volatile<WorkbenchData['experts']>
   /** Coordinator instructions and expert membership. */
@@ -743,6 +745,14 @@ export interface Config {
   skills: Volatile<WorkbenchData['skills']>
   /** MCP server settings; credentials remain in the Host environment. */
   connectors: Volatile<WorkbenchData['connectors']>
+}
+
+/** Deployment limits applied to backend knowledge retrieval. */
+export interface KnowledgeRetrievalPolicy {
+  /** Per-query timeout in milliseconds. */
+  timeoutMs: number
+  /** Maximum response bytes supplied to the model. */
+  maxBytes: number
 }
 
 /** Profile-scoped configuration persisted by Settings. */
@@ -771,6 +781,29 @@ export type Expert = {
   description: string
   /** Role instructions included in the preset persona. */
   instructions: string
+  /** Literal Markdown reference material; missing legacy values resolve to empty text. */
+  knowledge?: string
+  /** Backend knowledge base identifiers selected for retrieval. */
+  knowledgeBases?: string[]
+  /** Optional uploaded raster avatar, stored as a validated data URL. */
+  avatar?: string
+  /** Optional card accent in hexadecimal RGB notation. */
+  color?: string
+  /** Welcome heading displayed before the first message. */
+  welcomeMessage?: string
+  /** Chat-home shortcuts; omission displays no cards. */
+  quickPrompts?: AgentQuickPrompt[]
+  /** Default provider and model for a Session with no recorded model choice. */
+  model?: {
+    /** Registered provider route. */
+    provider: string
+    /** Model identifier owned by the provider. */
+    model: string
+  }
+  /** Enabled runtime tool groups; omission retains the standard tool set. */
+  tools?: AgentToolGroup[]
+  /** Allowed child expert keys; omission retains inherited delegation. */
+  subagents?: string[]
   /** Custom skill keys whose content augments the persona. */
   skills: string[]
   /** MCP connector keys assigned to this expert. */
@@ -809,6 +842,8 @@ export type Connector = {
   slug: string
   /** Display name shown in the workbench. */
   name: string
+  /** Bundled adapter identity, absent for a custom MCP server. */
+  builtin?: string
   /** MCP server transport. */
   transport: 'streamable-http' | 'stdio'
   /** HTTP endpoint; unused for a local process. */
@@ -823,6 +858,21 @@ export type Connector = {
 
 /** Assistant ownership category within the profile. */
 export type ExpertCategory = 'personal' | 'enterprise' | 'builtin'
+
+/** A chat-home shortcut with editable display text and submitted prompt. */
+export type AgentQuickPrompt = {
+  /** Stable key retained while editing and reordering cards. */
+  id: string
+  /** Card heading. */
+  title: string
+  /** Supporting card text. */
+  description: string
+  /** User message inserted into the composer. */
+  prompt: string
+}
+
+/** Runtime capability groups supported by the assistant preset. */
+export type AgentToolGroup = 'files' | 'web' | 'shell' | 'tasks' | 'interaction'
 ```
 <!-- END GENERATED config-catalog:@deepseek-ai/dsh-client-ui-workbench -->
 
@@ -2019,6 +2069,39 @@ export interface Config {
 }
 ```
 <!-- END GENERATED config-catalog:@deepseek-ai/dsh-jobs-local -->
+
+<!-- BEGIN GENERATED config-catalog:@deepseek-ai/dsh-knowledge -->
+<a id="deepseek-aidsh-knowledge"></a>
+
+## `@deepseek-ai/dsh-knowledge`
+
+- `inject`: `systemPrompt`
+- `source`: [`packages/context/knowledge/src/index.ts:15`](../packages/context/knowledge/src/index.ts)
+
+```ts config-catalog
+/** Optional literal reference material and backend retrieval assignments. */
+export interface Config {
+  /** Markdown reference text; braces remain literal rather than interpolating prompt variables. */
+  content: string
+  /** Optional backend retrieval assignment. */
+  retrieval?: KnowledgeRetrievalConfig | undefined
+}
+
+/** Retrieval configuration, resolved by the knowledge plugin. */
+export interface KnowledgeRetrievalConfig {
+  /** Selected backend identifiers allowed for this agent. */
+  bases: string[]
+  /** Environment variable containing the private relay origin. */
+  urlEnv: string
+  /** Environment variable containing the private relay token. */
+  tokenEnv: string
+  /** Per-query timeout. */
+  timeoutMs: number
+  /** Maximum returned response bytes. */
+  maxBytes: number
+}
+```
+<!-- END GENERATED config-catalog:@deepseek-ai/dsh-knowledge -->
 
 <!-- BEGIN GENERATED config-catalog:@deepseek-ai/dsh-llm-deepseek-account -->
 <a id="deepseek-aidsh-llm-deepseek-account"></a>
@@ -3876,7 +3959,7 @@ export interface Config {
 
 ## `@deepseek-ai/dsh-system-prompt`
 
-- `source`: [`packages/core/system-prompt/src/index.ts:265`](../packages/core/system-prompt/src/index.ts)
+- `source`: [`packages/core/system-prompt/src/index.ts:266`](../packages/core/system-prompt/src/index.ts)
 
 ```ts config-catalog
 /** Plugin config: the deployment-authored fragment of the system prompt (see {@link Config.personaPrefix} for its contract). */
@@ -5033,6 +5116,7 @@ These load from a `cordis.yml` entry with no `config:` block; they declare no co
 | `@deepseek-ai/dsh-storage` | — | [`packages/storage/storage/src/index.ts`](../packages/storage/storage/src/index.ts) |
 | `@deepseek-ai/dsh-subprocess-local` | — | [`packages/subprocess/subprocess-local/src/index.ts`](../packages/subprocess/subprocess-local/src/index.ts) |
 | `@deepseek-ai/dsh-subprocess-ssh` | `ssh` | [`packages/ssh/subprocess-ssh/src/index.ts`](../packages/ssh/subprocess-ssh/src/index.ts) |
+| `@deepseek-ai/dsh-super-agent` | `commands` · `goals` · `agents` · `subagents` · `sessionProjections` · `systemPrompt` · `tools` | [`packages/goal/super-agent/src/index.ts`](../packages/goal/super-agent/src/index.ts) |
 | `@deepseek-ai/dsh-terminal` | — | [`packages/terminal/terminal/src/index.ts`](../packages/terminal/terminal/src/index.ts) |
 | `@deepseek-ai/dsh-tool-call-timeout-policy` | `tools` | [`packages/guard/timeout-policy/src/index.ts`](../packages/guard/timeout-policy/src/index.ts) |
 | `@deepseek-ai/dsh-tool-cordis` | `tools` · `cordisInspect` | [`packages/extensions/tool-cordis/src/index.ts`](../packages/extensions/tool-cordis/src/index.ts) |

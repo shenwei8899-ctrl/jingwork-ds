@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Super Agent",
+    "description": "Coordina tareas en el chat con progreso persistente y ejecución delegada."
+  }
+}

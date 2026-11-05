@@ -12,31 +12,59 @@ import {
   LibraryIcon,
   type WorkbenchFace,
 } from './page.tsx'
+import { JingworkBrandMark, JingworkBrandName } from './Brand.tsx'
+import { AgentHome } from './AgentHome.tsx'
 import { AssistantsPage } from './assistants.tsx'
+import { AssistantsFactory, LibraryFactory, ResourcesFactory } from './factories.tsx'
+import { KnowledgePage } from './KnowledgePage.tsx'
 import { AssistantNotice, createAssistantNoticeStore } from './assistant-notice.tsx'
 import { PreviewNavigation, type PreviewFace } from './preview-navigation.tsx'
 import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
+import { connectorCredentialRef } from '../connector-catalog.ts'
 import { WorkbenchController } from './controller.ts'
 import { zh, en, type WorkbenchKey } from './locales.ts'
+
+type WorkbenchFactoryDefinition = {
+  scope: 'root'
+  inject: WorkbenchFace
+  locale: 'workbench'
+  store: ReturnType<typeof createAssistantNoticeStore>
+}
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface LocaleNamespaceMap {
     workbench: WorkbenchKey
   }
+  interface SlotFactoryMap {
+    /** Assistant catalog and creation flow over the profile's workbench settings. */
+    'workbench.assistants': WorkbenchFactoryDefinition
+    /** One editable resource collection backed by the profile's workbench settings. */
+    'workbench.resources': WorkbenchFactoryDefinition & {
+      props: { kind: 'experts' | 'skills' | 'connectors' }
+    }
+    /** Workspace file browsing through existing access and preview commands. */
+    'workbench.library': WorkbenchFactoryDefinition
+    /** Reference material saved with each configured assistant. */
+    'workbench.knowledge': WorkbenchFactoryDefinition
+  }
 }
 /** Required browser services. */
 export const inject = [
   'slots',
+  'sessions',
+  'conversation',
   'locale',
   'configForms',
   'remote',
   'remote.agentPresets',
+  'remote.credentials',
+  'remote.session',
   'remote.workspaceFiles',
   'uiWorkspace',
   'sidebarRight',
   'layout',
 ]
-/** Register the four workbench pages and their sidebar entries.
+/** Register workbench pages and the assistant, capability and library navigation entries.
  * @param ctx Browser plugin context.
  */
 export function apply(ctx: Context): void {
@@ -44,8 +72,46 @@ export function apply(ctx: Context): void {
     () => ctx.locale.register('workbench', { zh, en, ja: en, es: en, fr: en, de: en, ru: en, pt: en }),
     'workbench: dictionaries',
   )
+  ctx.slots.inject('sidebar.brand.mark', () =>
+    ctx.slots.inject('sidebar.brand.name', function* () {
+      yield ctx.slots.register({ name: 'sidebar.brand.mark' }, JingworkBrandMark)
+      yield ctx.slots.register({ name: 'sidebar.brand.name', locale: 'workbench' }, JingworkBrandName)
+    }))
+  ctx.slots.inject('conversation.hero.brand.mark', () =>
+    ctx.slots.register({ name: 'conversation.hero.brand.mark' }, JingworkBrandMark))
+  const jingwork = (globalThis as typeof globalThis & {
+    dshJingwork?: {
+      knowledgeBases: () => Promise<{ id: string; name: string; description: string }[]>
+      agents: () => Promise<{ id: string; name: string; description: string }[]>
+      openAgent: (id: string) => Promise<string>
+      logOperation?: (operation: string, outcome: 'success' | 'failed') => Promise<void>
+    }
+  }).dshJingwork
+  const audit = (operation: string, result: unknown): void => {
+    void jingwork?.logOperation?.(operation, result === null ? 'success' : 'failed').catch((_error: unknown) => {
+      console.warn('Desktop operation log could not be queued. Check native log storage.')
+    })
+  }
+  const enterprisePrefix = 'jingwork-enterprise:'
+  const presetSettings = ctx.configForms.get<{ default: string; selectedDefault?: string }>('agent-preset-registry')
   const controller = new WorkbenchController({
+    restoreDefault: async (preset) => {
+      const snapshot = presetSettings.getSnapshot()
+      if (snapshot.value?.selectedDefault !== preset || snapshot.value.default === preset) return 'defaultInUse'
+      const accepted = await presetSettings.mutate([{ op: 'unset', path: ['selectedDefault'] }], snapshot.revision)
+      return accepted ? null : 'saveError'
+    },
+    ...(jingwork === undefined ? {} : {
+      listKnowledgeBases: () => jingwork.knowledgeBases(),
+      listEnterprise: async () => (await jingwork.agents()).map(agent => ({
+        slug: enterprisePrefix + agent.id, name: agent.name, description: agent.description,
+        category: 'enterprise' as const, enabled: true, instructions: '', skills: [], connectors: [],
+      })),
+    }),
     form: ctx.configForms.get('ui-workbench'),
+    listSessions: (...args) => ctx.remote.session.list(...args),
+    readSessionProjections: (...args) => ctx.remote.session.projections(...args),
+    listModels: () => ctx.remote.session.modelCatalog(),
     listPresets: () => ctx.remote.agentPresets.list(),
     listFiles: (...args) => ctx.remote.workspaceFiles.list(...args),
     statFile: (...args) => ctx.remote.workspaceFiles.stat(...args),
@@ -71,8 +137,82 @@ export function apply(ctx: Context): void {
       AssistantNotice,
     ),
   )
-  const presetSettings = ctx.configForms.get('agent-preset-registry')
   const t = ctx.locale.bind('workbench')
+  const face = (page: WorkbenchFace['page']): WorkbenchFace => ({
+    page,
+    hooks: { form: controller.form, catalog: controller.source },
+    saveConnectorCredentials: async (slug, value) => {
+      try {
+        const result = await ctx.remote.credentials.set(connectorCredentialRef(slug), JSON.stringify(value))
+        return result.ok ? null : 'connectorCredentialError'
+      } catch (_error: unknown) {
+        return 'connectorCredentialError'
+      }
+    },
+    setEnabled: async (...args) => {
+      const result = await controller.setEnabled(...args)
+      audit('settings_change', result)
+      return result
+    },
+    setDefault: async (slug) => {
+      try {
+        const accepted = await presetSettings.set('selectedDefault', `workbench-${slug}`)
+        if (!accepted) { audit('settings_change', 'saveError'); return 'saveError' }
+        await controller.load()
+        audit('settings_change', null)
+        return null
+      } catch (_error) {
+        audit('settings_change', 'saveError')
+        return 'saveError'
+      }
+    },
+    load: () => controller.load(),
+    loadLibrary: () => controller.loadLibrary(),
+    save: async (...args) => {
+      const result = await controller.save(...args)
+      audit(args[0] === 'experts' ? 'agent_save' : 'settings_change', result)
+      return result
+    },
+    remove: async (...args) => {
+      const result = await controller.remove(...args)
+      audit(args[0] === 'experts' ? 'agent_remove' : 'settings_change', result)
+      return result
+    },
+    importData: async (raw) => {
+      const result = await controller.import(raw)
+      audit('config_import', result)
+      return result
+    },
+    files: (...args) => controller.files(...args),
+    preview: (...args) => controller.preview(...args),
+    download: (...args) => controller.download(...args),
+    start: (slug) => {
+      if (jingwork !== undefined && slug.startsWith(enterprisePrefix)) {
+        return jingwork.openAgent(slug.slice(enterprisePrefix.length)).then((agentPreset) => {
+          ctx.uiWorkspace.startSession(undefined, { agentPreset })
+          audit('session_start', null)
+        })
+      }
+      ctx.uiWorkspace.startSession(undefined, { agentPreset: `workbench-${slug}` })
+      audit('session_start', null)
+    },
+  })
+  ctx.slots.registerFactory({
+    name: 'workbench.assistants', scope: 'root', locale: 'workbench', store: notices,
+    inject: () => face('assistants'),
+  }, AssistantsFactory)
+  ctx.slots.registerFactory({
+    name: 'workbench.resources', scope: 'root', locale: 'workbench', store: notices,
+    inject: () => face('capabilities'),
+  }, ResourcesFactory)
+  ctx.slots.registerFactory({
+    name: 'workbench.library', scope: 'root', locale: 'workbench', store: notices,
+    inject: () => face('library'),
+  }, LibraryFactory)
+  ctx.slots.registerFactory({
+    name: 'workbench.knowledge', scope: 'root', locale: 'workbench', store: notices,
+    inject: () => face('assistants'),
+  }, KnowledgePage)
   const pages = ['assistants', 'experts', 'capabilities', 'library'] as const
   for (const [order, page] of pages.entries()) {
     const id = `workbench-${page}` as MainPanelId
@@ -89,43 +229,33 @@ export function apply(ctx: Context): void {
           key: id,
           locale: 'workbench',
           store: notices,
-          inject: (): WorkbenchFace => ({
-            page,
-            hooks: { form: controller.form, catalog: controller.source },
-            setEnabled: (...args) => controller.setEnabled(...args),
-            setDefault: async (slug) => {
-              try {
-                const accepted = await presetSettings.set('selectedDefault', `workbench-${slug}`)
-                if (!accepted) return 'saveError'
-                await controller.load()
-                return null
-              } catch (_error) {
-                return 'saveError'
-              }
-            },
-            load: () => controller.load(),
-            save: (...args) => controller.save(...args),
-            remove: (...args) => controller.remove(...args),
-
-            importData: raw => controller.import(raw),
-            files: (...args) => controller.files(...args),
-            preview: (...args) => controller.preview(...args),
-            download: (...args) => controller.download(...args),
-            start: (slug) => {
-              ctx.uiWorkspace.startSession(undefined, { agentPreset: `workbench-${slug}` })
-            },
-          }),
+          inject: () => face(page),
         },
         page === 'assistants' ? AssistantsPage : WorkbenchPage,
       ),
     )
-    ctx.slots.inject('sidebar.panellist', () =>
-      ctx.slots.register(
-        { name: 'sidebar.panellist', id, order: order - 40, locale: 'workbench', label: () => t(page) },
-        Icon,
-      ),
-    )
+    if (page !== 'experts') {
+      ctx.slots.inject('sidebar.panellist', () =>
+        ctx.slots.register(
+          { name: 'sidebar.panellist', id, order: order - 40, locale: 'workbench', label: () => t(page) },
+          Icon,
+        ),
+      )
+    }
   }
+  ctx.slots.inject('conversation.input.dock', () => ctx.slots.register({
+    name: 'conversation.input.dock', id: 'workbench-agent-home', locale: 'workbench',
+    inject: sessionId => ({
+      hooks: { form: controller.form },
+      sendPrompt: (prompt: string) => {
+        const scope = ctx.sessions.scope(sessionId)
+        if (!scope) throw new Error('Session is no longer available')
+        const input = ctx.conversation.input.for(scope)
+        input.setDraft(prompt)
+        input.submit('queue', 'click')
+      },
+    }),
+  }, AgentHome))
   ctx.slots.inject('conversation.input.overlay', () =>
     ctx.slots.register(
       {

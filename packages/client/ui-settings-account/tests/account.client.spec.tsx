@@ -754,3 +754,16 @@ it.each(['desktopOnboardingVisible', 'onboarding'] as const)('defers bonus displ
   await vi.waitFor(() => { expect(operations.bonusNoticeShown).toHaveBeenCalledExactlyOnceWith(notice.orderId) })
   expect(screen.getByText(notice.message)).toBeTruthy()
 })
+
+it('shows Jingwork identity and sign-out without offering another account login', async () => {
+  const { JingworkAccountMenu } = await import('../src/client/JingworkAccountMenu.tsx')
+  const signOut = vi.fn(async () => {})
+  render(<JingworkAccountMenu {...({} as GlobalStandardProps)}
+    useIdentity={selector => selector('jingwork-user')} signOut={signOut} wide settingsOpen={false}
+    openOnboarding={() => {}} openSettings={() => {}} t={key => zh[key as AccountKey]} />)
+  fireEvent.click(screen.getByRole('button', { name: zh.menu }))
+  expect(document.body.textContent).toMatchInlineSnapshot('"jingwork-user设置退出登录"')
+  expect(screen.queryByText(zh.signIn)).toBeNull()
+  fireEvent.click(screen.getByRole('menuitem', { name: zh.signOut }))
+  await vi.waitFor(() => { expect(signOut).toHaveBeenCalledOnce() })
+})

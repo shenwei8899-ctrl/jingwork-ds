@@ -43,6 +43,8 @@ Records lazily requests 20 saved deliveries, supports newest-first pagination, r
 
 An open conversation's header clock remains hidden before the first successful read or while no active related tasks exist. One task opens its right Sidebar tab; several open the existing popover. Idle, unarchived Session rows with active related tasks retain their clock mark and hover list. `schedule_create` continues to render a Turn-level card with a task title, repeat description, and Open action. Persisted legacy and current tool results both render; an authoritative read newer than the card resolves later edits or deletion.
 
+The `schedule.manager` Component Factory renders this task manager in other presentation hosts. Its catalog, task commands and access lifetime are shared with the normal Tasks page.
+
 ### Time-zone data source
 
 Time-zone enumeration and localized names use the browser's embedded ICU/CLDR data through `Intl`. There is no runtime download. The editor retains a stored alias even when enumeration omits it, and uses the system zone plus UTC when enumeration is unavailable.

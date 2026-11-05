@@ -20,6 +20,7 @@ import { BrowserLogin } from './browser-login.ts'
 import { AccountOnboarding } from './AccountOnboarding.tsx'
 import { AccountPlatformHost, type AccountPlatformHostInjected } from './AccountPlatformHost.tsx'
 import { AccountMenu } from './AccountMenu.tsx'
+import { JingworkAccountMenu, type JingworkAccountMenuInjected } from './JingworkAccountMenu.tsx'
 import { createPlatformPages, type PlatformPages } from './platform-pages.ts'
 import { AccountSection, type AccountSnapshot, type AccountSectionInjected } from './AccountSection.tsx'
 import { createBonusNoticeController } from './bonus-notices.ts'
@@ -48,6 +49,32 @@ export function apply(ctx: Context): void {
   const desktop = 'dshDesktop' in globalThis
   ctx.effect(() => ctx.locale.register('settings.account', { en, zh, ja, es, fr, de, ru, pt }), 'account: dictionaries')
   const t = ctx.locale.bind('settings.account')
+  const jingwork = (globalThis as typeof globalThis & {
+    dshJingwork?: { name: () => Promise<string | null>; signOut: () => Promise<void> }
+  }).dshJingwork
+  if (jingwork !== undefined) {
+    let name: string | null = null
+    const listeners = new Set<() => void>()
+    ctx.effect(() => {
+      let disposed = false
+      void jingwork.name().then((value) => {
+        if (disposed) return
+        name = value
+        for (const listener of listeners) listener()
+      }).catch((error: unknown) => { console.error('Jingwork account presentation failed', error) })
+      return () => { disposed = true }
+    }, 'account: native Jingwork identity')
+    ctx.slots.inject('settings.launcher', () => ctx.slots.register({
+      name: 'settings.launcher', locale: 'settings.account',
+      inject: (): JingworkAccountMenuInjected => ({
+        hooks: { identity: { getSnapshot: () => name,
+          subscribe: (listener) => { listeners.add(listener); return () => { listeners.delete(listener) } } } },
+        signOut: () => jingwork.signOut(),
+      }),
+    }, JingworkAccountMenu))
+    return
+  }
+
   const page = globalThis as Partial<Record<typeof CONTACT_CONFIG_GLOBAL, unknown>>
   const config = ContactConfig(page[CONTACT_CONFIG_GLOBAL] ?? {})
   let snapshot: AccountSnapshot = {

@@ -6,8 +6,8 @@
   en: 6aecdf527721e4b0
   zh: 7716f97462363fa2
 /deepseek-ai-dsh-client-ui-workbench:
-  en: 3be9e51fda82cf31
-  zh: 9c242e4cc0030bdd
+  en: 7b85ac6c41df70df
+  zh: f104b435c9750bc0
 /deepseek-ai-dsh-client-ui-workbench/summary:
   en: 7060cce4e78e85a5
   zh: 2bca4c4d0d1d98a7
@@ -15,26 +15,26 @@
   en: 122f0d41696980b1
   zh: 528864635b577290
 /deepseek-ai-dsh-client-ui-workbench/use-this-package:
-  en: 29735a5b69dfbcc4
-  zh: 70d15a335c8ea133
+  en: 9fd98b9c3bd5438c
+  zh: 2b8e687b29152696
 /deepseek-ai-dsh-client-ui-workbench/understand-the-implementation:
-  en: 0e6249d96062cb1d
-  zh: 59ed2aacf133263c
+  en: 0da1a856e91765f0
+  zh: b1e05e3a121bd265
 /deepseek-ai-dsh-client-ui-workbench/model-experience:
   en: 215e7ba838619b7b
   zh: a311da3843709f90
-/deepseek-ai-dsh-client-ui-workbench/model-experience/expert-instructions-and-skills:
-  en: 22b597f650b40291
-  zh: 6a9f83fa317b05d2
-/deepseek-ai-dsh-client-ui-workbench/model-experience/expert-instructions-and-skills/what-the-model-sees:
-  en: e76e05bf85e072b3
-  zh: f723653ad6dce954
-/deepseek-ai-dsh-client-ui-workbench/model-experience/expert-instructions-and-skills/token-effect:
-  en: dabb89fb0582fa05
-  zh: 6507bd4c224dde56
-/deepseek-ai-dsh-client-ui-workbench/model-experience/expert-instructions-and-skills/kv-cache-effect:
-  en: 73c1f2a8ebf911af
-  zh: b8471df380abda51
+/deepseek-ai-dsh-client-ui-workbench/model-experience/expert-instructions-skills-and-knowledge:
+  en: a4b44e3c0c6b1184
+  zh: 3816af3ae365bee6
+/deepseek-ai-dsh-client-ui-workbench/model-experience/expert-instructions-skills-and-knowledge/what-the-model-sees:
+  en: f19b98a7f1eae0f2
+  zh: 90a6bd922cacea54
+/deepseek-ai-dsh-client-ui-workbench/model-experience/expert-instructions-skills-and-knowledge/token-effect:
+  en: 3238ca1750e43a5b
+  zh: be551c2d3a3190fc
+/deepseek-ai-dsh-client-ui-workbench/model-experience/expert-instructions-skills-and-knowledge/kv-cache-effect:
+  en: 641b94dd7e5ecbf8
+  zh: f7c300356ecf4bb5
 /deepseek-ai-dsh-client-ui-workbench/model-experience/tool-selection:
   en: 595f3383ac207b91
   zh: 1c5dafd308c9a301
@@ -45,11 +45,11 @@
   en: 4df3a57a569f059c
   zh: c7513e48deed3413
 /deepseek-ai-dsh-client-ui-workbench/model-experience/tool-selection/kv-cache-effect:
-  en: 4cd06dc5450f0818
-  zh: 613c3addedec115c
+  en: 4ec73c1756c72655
+  zh: 8963b0ea4be7f753
 /deepseek-ai-dsh-client-ui-workbench/known-limitations-and-deferred-work:
-  en: c76eb897e8383072
-  zh: 2814074799661d94
+  en: f0436687c98d721c
+  zh: c9827569bbce7e17
 /deepseek-ai-dsh-client-ui-workbench/known-limitations-and-deferred-work/dev-note:
   en: 5a42766a829fc7e0
   zh: b66b2419c459174e

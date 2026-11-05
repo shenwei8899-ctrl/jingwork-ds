@@ -17,6 +17,8 @@ import {
 import type { InjectFace, PropsLocale, TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
 import type { GoalActionResult, GoalBarActions, GoalBarInjected } from './slots.ts'
 import type { GoalKey } from './locales.ts'
+import type {} from '@deepseek-ai/dsh-super-agent/types'
+import { SuperAgentCard } from './SuperAgent.tsx'
 import css from './GoalBar.module.css'
 
 export interface GoalBarProps extends GoalBarActions {
@@ -181,8 +183,9 @@ export type GoalDockProps =
 
 /** Dock adapter: overlays process-local activation on the durable goal projection. */
 export function GoalDock({
-  useProjection, useGoalActivation, onEdit, onPause, onResume, onClear, t,
+  useProjection, useGoalActivation, onEdit, onPause, onResume, onClear, onTaskControl, t,
 }: GoalDockProps) {
+  const task = useProjection('superAgent')
   const projection = useProjection('goal')
   const goal = projection === undefined || projection === null ? projection : projection.goal
   const goalId = goal?.id
@@ -191,6 +194,9 @@ export function GoalDock({
     next.id === goalId && next.revision === revision ? next.activation : undefined
   ))
 
+  if (task != null && (goal == null || task.goalId === goal.id)) {
+    return <SuperAgentCard key={task.goalId} task={task} activation={activation} control={onTaskControl} t={t} />
+  }
   return (
     <GoalBar
       goal={goal}

@@ -783,3 +783,20 @@ it('applies API-key defaults through the desktop slot and shared configuration o
   expect(values['ui-settings']).toEqual({ enabled: true })
   expect(values['ui-chat']).toMatchObject({ transcriptView: 'standard' })
 }, 60_000)
+
+
+it('uses the native Jingwork identity without starting DeepSeek account surfaces', async ({ start }) => {
+  const name = vi.fn(async () => 'jingwork-user')
+  const signOut = vi.fn(async () => {})
+  vi.stubGlobal('dshDesktop', { protocolVersion: 1 })
+  vi.stubGlobal('dshJingwork', { name, signOut })
+  const c = await start()
+  const nativeFace: object = c.ctx.slots.entries('settings.launcher')[0]!.inject!()
+  const injected = nativeFace as
+    import('../src/client/JingworkAccountMenu.tsx').JingworkAccountMenuInjected
+  await vi.waitFor(() => { expect(injected.hooks.identity.getSnapshot()).toBe('jingwork-user') })
+  expect(c.ctx.slots.entries('shell.overlay').some(entry => entry.component === AccountPlatformHost)).toBe(false)
+  expect(platformHostEntry(c)).toBeUndefined()
+  await injected.signOut()
+  expect(signOut).toHaveBeenCalledOnce()
+})

@@ -11,6 +11,8 @@ Desktop product events use the optional [product analytics service](../product-a
 
 Server-expired account credentials clear the displayed account details and emit a localized sign-in reminder toast once; account snapshot replay does not repeat it.
 
+When native Jingwork login is configured, the sidebar reads its validated public identity through the desktop bridge and signs out of that local session. DeepSeek account authorization and credit onboarding are excluded from this account menu.
+
 ## Summary
 
 The Account settings section displays DeepSeek login state and offers browser sign-in and cancellation; the sidebar account menu provides Platform sign-out. Desktop users also receive a resumable introduction to account credit and presentation preferences.

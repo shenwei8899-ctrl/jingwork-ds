@@ -1,9 +1,10 @@
 /** Read-only repository skill descriptions, localized independently from instruction files. */
 import { useState } from 'react'
-import { Button, Modal } from '@deepseek-ai/dsh-client-ui-primitives'
+import { Button, Modal, IconAppsAddOutlineRegular } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
 import { builtinSkills } from './builtin-skills.ts'
 import { BUILTIN_SKILL_COPY } from './builtin-skill-copy.ts'
+import cardStyles from './card.module.css'
 import css from './page.module.css'
 
 type Props = Pick<PropsLocale<'workbench'>, 't'> & { query: string }
@@ -33,14 +34,18 @@ export function BuiltinSkills({ t, query }: Props) {
           <span>{skills.length}</span>
         </div>
         <p className={css.skillHint}>{t('builtinSkillHint')}</p>
-        <div className={css.grid}>
+        <div className={css.skillGrid}>
           {matching.map(skill => (
-            <article className={css.card} key={skill.name} data-builtin-skill={skill.name}>
-              <small className={css.skillMeta}>{t('builtinSkillLabel')}</small>
-              <h3 className={css.skillTitle}>{skill.title}</h3>
-              <code className={css.skillMeta}>{skill.name}</code>
-              <p>{skill.summary}</p>
-              <div className={css.cardactions}>
+            <article className={`${cardStyles.surface} ${cardStyles.catalogSurface} ${css.card} ${css.skillCard}`} key={skill.name} data-builtin-skill={skill.name}>
+              <div className={css.skillCardHeader}>
+                <span className={css.skillIcon} aria-hidden="true"><IconAppsAddOutlineRegular size={26} /></span>
+                <div className={css.skillIdentity}>
+                  <h3 className={css.skillTitle}>{skill.title}</h3>
+                  <span className={css.skillBadge}>{t('builtinSkillLabel')}</span>
+                </div>
+              </div>
+              <p className={css.skillDescription}>{skill.summary}</p>
+              <div className={css.skillFooter}>
                 <Button onClick={() =>{  setSelectedName(skill.name) }}>{t('viewSkillDetails')}</Button>
               </div>
             </article>

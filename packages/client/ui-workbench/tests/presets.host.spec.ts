@@ -23,7 +23,8 @@ describe('workbench configuration', () => {
     const data = defaultWorkbench()
     data.experts[0] = legacy
     const parsed = validateWorkbench(data)
-    expect(resolveExpert(parsed.experts[0]!)).toMatchObject({ category: 'personal', enabled: true })
+    expect(parsed.experts[0]!.knowledge).toBe('')
+    expect(resolveExpert(legacy)).toMatchObject({ category: 'personal', enabled: true, knowledge: '' })
     expect(defaultWorkbench().experts.every(expert => expert.category === 'builtin' && expert.enabled)).toBe(true)
     expect(workbenchPresets(parsed)).toHaveLength(7)
   })
@@ -42,6 +43,41 @@ describe('workbench configuration', () => {
     const data = defaultWorkbench()
     expect(() => validateWorkbench({ ...data, experts: [{ ...data.experts[0], category: 'market' }] })).toThrow()
     expect(() => validateWorkbench({ ...data, experts: [{ ...data.experts[0], enabled: 'false' }] })).toThrow()
+  })
+  it('retains literal reference text and rejects invalid or oversized imported material', () => {
+    const data = defaultWorkbench()
+    const knowledge = '## Product facts\nThe reference code is {{literal}}.'
+    data.experts[0]!.knowledge = knowledge
+    expect(validateWorkbench(data).experts[0]!.knowledge).toBe(knowledge)
+    expect(resolveExpert(data.experts[0]!).knowledge).toBe(knowledge)
+    expect(() => validateWorkbench({ ...data, experts: [{ ...data.experts[0], knowledge: {} }] })).toThrow()
+    expect(() => validateWorkbench({ ...data, experts: [{ ...data.experts[0], knowledge: 'x'.repeat(65537) }] })).toThrow()
+  })
+  it('mounts reference material separately for its expert and combines named team references', () => {
+    const data = defaultWorkbench()
+    const researcher = data.experts.find(expert => expert.slug === 'researcher')!
+    const writer = data.experts.find(expert => expert.slug === 'writer')!
+    researcher.knowledge = 'Research code {{literal}}.'
+    writer.knowledge = '\nBrand terminology.\n'
+    const definitions = workbenchPresets(validateWorkbench(data))
+    const preset = (id: string) => definitions.find(row => row.id === `workbench-${id}`)!
+    expect(preset('writer').plugins.find(row => row.id === 'knowledge')).toMatchObject({
+      name: '@deepseek-ai/dsh-knowledge',
+      config: { content: writer.knowledge },
+    })
+    expect(JSON.stringify(preset('writer').plugins.find(row => row.id === 'persona'))).not.toContain('Brand terminology.')
+    expect(preset('assistant').plugins.some(row => row.id === 'knowledge')).toBe(false)
+    expect(preset('content-team').plugins.find(row => row.id === 'knowledge')?.config).toEqual({
+      content: `### ${researcher.name}\n${researcher.knowledge}\n\n### ${writer.name}\n${writer.knowledge}`,
+    })
+    writer.enabled = false
+    expect(workbenchPresets(data).some(row => row.id === 'workbench-content-team')).toBe(false)
+    expect(workbenchPresets(data).some(row => row.id === 'workbench-writer')).toBe(false)
+  })
+  it('omits empty and whitespace-only reference material from a preset', () => {
+    const data = defaultWorkbench()
+    data.experts[0]!.knowledge = ' \n\t'
+    expect(workbenchPresets(validateWorkbench(data))[0]!.plugins.some(row => row.id === 'knowledge')).toBe(false)
   })
   it('includes selected skill contents and assigned enabled MCP servers only', () => {
     const data = defaultWorkbench()
@@ -100,4 +136,64 @@ describe('workbench configuration', () => {
     data.connectors[0]!.transport = 'stdio'
     expect(() => validateWorkbench(data)).toThrow('command')
   })
+})
+
+
+describe('Jingwork-style assistant preferences', () => {
+  it('preserves legacy tool access and applies explicit tool and delegation choices', () => {
+    const data = validateWorkbench(defaultWorkbench())
+    const legacy = data.experts[0]!
+    expect(legacy.tools).toBeUndefined()
+    expect(legacy.subagents).toBeUndefined()
+    expect(workbenchPresets(data)[0]!.plugins.map(row => row.id)).toContain('tool-fs')
+    legacy.tools = ['web']
+    legacy.subagents = ['writer']
+    let plugins = workbenchPresets(validateWorkbench(data))[0]!.plugins
+    expect(plugins.map(row => row.id)).not.toContain('tool-fs')
+    expect(plugins.map(row => row.id)).not.toContain('tool-bash')
+    expect(plugins.map(row => row.id)).toContain('tool-web')
+    expect(plugins.find(row => row.id === 'tool-subagent')?.config).toMatchObject({ allowedAgentPresets: ['workbench-writer'] })
+    legacy.subagents = []
+    plugins = workbenchPresets(validateWorkbench(data))[0]!.plugins
+    expect(plugins.map(row => row.id)).not.toContain('tool-subagent')
+  })
+
+  it('round-trips presentation and model preferences through JSON configuration', () => {
+    const data = defaultWorkbench()
+    Object.assign(data.experts[0]!, {
+      avatar: 'data:image/png;base64,aGVsbG8=', color: '#6C757D',
+      welcomeMessage: 'Welcome', model: { provider: 'mock', model: 'mock' },
+      quickPrompts: [{ id: 'weekly', title: 'Weekly report', description: 'A summary', prompt: 'Help me write a report' }],
+    })
+    const parsed = validateWorkbench(JSON.parse(JSON.stringify(data)))
+    expect(parsed.experts[0]).toMatchObject(data.experts[0]!)
+  })
+
+  it.each([
+    { avatar: 'https://example.com/avatar.svg' },
+    { color: 'red' },
+    { model: { provider: 'mock' } },
+    { quickPrompts: [{ id: 'a', title: '', description: '', prompt: 'hello' }] },
+    { quickPrompts: [{ id: 'a', title: 'Hi', description: '', prompt: '' }] },
+    { tools: ['unknown'] },
+    { tools: ['web', 'web'] },
+    { subagents: ['missing'] },
+    { subagents: ['assistant'] },
+  ])('rejects invalid assistant preferences %j', (patch) => {
+    const data = defaultWorkbench()
+    Object.assign(data.experts[0]!, patch)
+    expect(() => validateWorkbench(data)).toThrow()
+  })
+})
+
+it('preserves selected backend knowledge identifiers through validation and team composition', () => {
+  const data = defaultWorkbench()
+  data.experts[0]!.knowledgeBases = ['product']
+  const parsed = validateWorkbench(data)
+  expect(parsed.experts[0]!.knowledgeBases).toEqual(['product'])
+  const definitions = workbenchPresets(parsed, { timeoutMs: 5000, maxBytes: 4096 })
+  expect(definitions[0]!.plugins.find(plugin => plugin.id === 'knowledge')?.config).toMatchObject({
+    retrieval: { bases: ['product'], timeoutMs: 5000, maxBytes: 4096 },
+  })
+  expect(() => validateWorkbench({ ...data, experts: [{ ...data.experts[0], knowledgeBases: [''] }] })).toThrow()
 })

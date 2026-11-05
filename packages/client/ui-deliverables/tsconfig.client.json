@@ -8,7 +8,9 @@
   "include": [
     "src/client",
     "src/changes.ts",
+    "src/produced-files.ts",
     "src/presented.ts",
+    "src/types.ts",
     "src/css-modules.d.ts"
   ],
   "references": [

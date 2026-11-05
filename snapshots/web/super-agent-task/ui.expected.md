@@ -1,0 +1,74 @@
+- banner:
+  - navigation "Session hierarchy": workspace
+  - text: Standard mode
+  - button "More actions"
+  - button "Open right sidebar"
+  - tablist:
+    - tab "Chat" [selected]
+    - tab "Trajectory"
+  - button "More conversation views"
+- navigation "Turn navigation":
+  - button "Jump to turn 1"
+  - button "Jump to turn 2"
+  - button "Jump to turn 3"
+- group "Command input": /super-agent Draft a two-point checklist for reviewing a document.
+- text: super-agent Super Agent task started.
+- button "Continuing goal {{clock}}":
+  - text: Continuing goal
+  - time: {{clock}}
+- status: Stopped
+- button "Stopped" [disabled] [expanded]
+- button "Updated the plan"
+- paragraph: partial
+- text: Stopped
+- button "Copy"
+- button "Good response"
+- button "Bad response"
+- button "Branch into a new conversation"
+- text: {{clock}} super-agent-resume Super Agent task resumed.
+- button "Continuing goal {{clock}}":
+  - text: Continuing goal
+  - time: {{clock}}
+- status: Stopped
+- button "Stopped" [disabled] [expanded]
+- button "Analysis completed"
+- paragraph: partial
+- text: Stopped
+- button "Copy"
+- button "Good response"
+- button "Bad response"
+- button "Branch into a new conversation"
+- text: {{clock}}
+- group "Command input": /super-agent Draft a two-point checklist for reviewing a document.
+- text: super-agent Super Agent task started.
+- button "Continuing goal {{clock}}":
+  - text: Continuing goal
+  - time: {{clock}}
+- status: Completed
+- button "Completed in {{duration}}"
+- list:
+  - listitem: Check each factual claim against its source.
+  - listitem: Check clarity, structure, and consistency.
+- button "Copy"
+- button "Good response"
+- button "Bad response"
+- button "Branch into a new conversation"
+- text: {{clock}}
+- region "To-dos":
+  - button "To-dos 2 completed"
+- region "Super Agent":
+  - text: Super Agent
+  - status: Completed
+  - paragraph: Draft a two-point checklist for reviewing a document.
+  - group:
+    - text: 2 / 2 steps completed
+    - list:
+      - listitem: Done Identify review criteria
+      - listitem: Done Write the checklist
+- textbox "Message or run a task, / commands, @ files or sessions"
+- button "Add files or run commands"
+- 'button "Access mode, current: Workspace Write"': Workspace Write
+- button "Super Agent"
+- button "Select model, current DeepSeek-V4-Flash": DeepSeek-V4-Flash
+- button "Send message" [disabled]
+- button "3 turns 6 steps"

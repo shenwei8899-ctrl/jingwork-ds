@@ -9,8 +9,14 @@
   en: 6cc2cd9ced70bb09
   zh: 1c0e6cb4ba2ed637
 /tool-schema-catalog/tool-package-map:
-  en: fd4d90071c13dcbd
-  zh: 87867027203f0354
+  en: d36aa75ac4347a35
+  zh: 93e4a1960efb82f4
+/tool-schema-catalog/deepseek-ai-dsh-knowledge:
+  en: ddf669dbfeeefe57
+  zh: ddf669dbfeeefe57
+/tool-schema-catalog/deepseek-ai-dsh-knowledge/knowledge-search:
+  en: df2639667257776f
+  zh: f7e8a88cfd283a08
 /tool-schema-catalog/deepseek-ai-dsh-plugin-manager:
   en: e0143916bb634762
   zh: e0143916bb634762

@@ -77,6 +77,21 @@ function createProductApi(): DshDesktopProductApi {
 }
 
 if (location.protocol === `${SCHEME}:` && location.hostname === 'app') {
+  if (process.isMainFrame && process.argv.includes('--dsh-jingwork-account')) {
+    contextBridge.exposeInMainWorld('dshJingwork', {
+      logOperation: (operation: string, outcome: 'success' | 'failed') =>
+        ipcRenderer.invoke(DESKTOP_IPC.jingworkLogOperation, operation, outcome) as Promise<void>,
+      knowledgeBases: () => ipcRenderer.invoke(DESKTOP_IPC.jingworkKnowledgeBases) as Promise<
+        { id: string; name: string; description: string }[]
+      >,
+      agents: () => ipcRenderer.invoke(DESKTOP_IPC.jingworkAgents) as Promise<
+        { id: string; name: string; description: string }[]
+      >,
+      openAgent: (id: string) => ipcRenderer.invoke(DESKTOP_IPC.jingworkOpenAgent, id) as Promise<string>,
+      name: () => ipcRenderer.invoke(DESKTOP_IPC.jingworkAccount) as Promise<string | null>,
+      signOut: () => ipcRenderer.invoke(DESKTOP_IPC.jingworkSignOut) as Promise<void>,
+    })
+  }
   contextBridge.exposeInMainWorld('dshOnboarding', {
     hasApiKey: () => ipcRenderer.invoke(DESKTOP_IPC.onboardingApiKey) as Promise<boolean>,
     setActive: (active: boolean) => { ipcRenderer.send(DESKTOP_IPC.onboardingActive, active) },

@@ -1,0 +1,49 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write packages/goal/super-agent/README.md
+/:
+  en: 4948985510d041b2
+  zh: b76ad65ab8ab4cba
+/deepseek-ai-dsh-super-agent:
+  en: ba8f48df853dafbd
+  zh: 73be62f564157dfc
+/deepseek-ai-dsh-super-agent/summary:
+  en: 81716178e7d0548b
+  zh: 3f10d609577edf57
+/deepseek-ai-dsh-super-agent/table-of-contents:
+  en: e6747830a09a09aa
+  zh: 37b87d37b5c95878
+/deepseek-ai-dsh-super-agent/use-this-package:
+  en: 2f085570fbe0a6f7
+  zh: 13112df42ac98282
+/deepseek-ai-dsh-super-agent/understand-the-implementation:
+  en: 79b999fe61c076bc
+  zh: 4685b48f048ff292
+/deepseek-ai-dsh-super-agent/further-exploration:
+  en: 5db2c132ae68c51c
+  zh: fbda2821859f033f
+/deepseek-ai-dsh-super-agent/model-experience:
+  en: 215e7ba838619b7b
+  zh: a311da3843709f90
+/deepseek-ai-dsh-super-agent/model-experience/task-orchestration-policy:
+  en: 5be74b1e44d14525
+  zh: 41c8b6cd0d2b4182
+/deepseek-ai-dsh-super-agent/model-experience/task-orchestration-policy/what-the-model-sees:
+  en: bdd39db5bfa52444
+  zh: a331abbf4e4413b0
+/deepseek-ai-dsh-super-agent/model-experience/task-orchestration-policy/what-the-model-sees/task-instructions:
+  en: 063c1b73a616fbda
+  zh: 298c139bbe69ad02
+/deepseek-ai-dsh-super-agent/model-experience/task-orchestration-policy/token-effect:
+  en: 468e27f41ee5637a
+  zh: 0d81902f890840c7
+/deepseek-ai-dsh-super-agent/model-experience/task-orchestration-policy/kv-cache-effect:
+  en: a7c66586c8ef3500
+  zh: 0bf283833b426b84
+/deepseek-ai-dsh-super-agent/known-limitations-and-deferred-work:
+  en: a4b0d9a4d4d90941
+  zh: e4d3869c088491fe
+/deepseek-ai-dsh-super-agent/known-limitations-and-deferred-work/dev-note:
+  en: b836f01bd0bceb4a
+  zh: 8122fa08b2aa95fa

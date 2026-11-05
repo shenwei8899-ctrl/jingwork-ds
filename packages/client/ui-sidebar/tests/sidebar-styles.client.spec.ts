@@ -26,6 +26,15 @@ function declarations(selector: string): Map<string, string> | undefined {
 }
 
 describe('SidebarRoot.module.css', () => {
+  it('keeps New Session neutral until interaction and paints selection without a glass edge', () => {
+    expect(declarations('.newSession')?.get('background')).toBe('transparent')
+    expect(declarations('.newSession')?.get('border')).toBe('0')
+    expect(declarations('.newSession')?.get('box-shadow')).toBe('none')
+    expect(declarations('.newSession:active')?.get('background')).toBe('var(--dsw-specific-sidebar-nav-item-active)')
+    expect(declarations('.collapsed .newSession:active')?.get('background')).toBe('var(--dsw-specific-sidebar-nav-item-active)')
+    expect(declarations('.panelRow.panelActive')?.get('background')).toBe('var(--dsw-specific-sidebar-nav-item-active)')
+  })
+
   it('uses a compact expanded navigation rhythm without shrinking the collapsed rail spacing', () => {
     expect(declarations('.panelList')?.get('gap')).toBe('6px')
     expect(declarations('.collapsed .panelList')?.get('gap')).toBe('12px')
@@ -49,7 +58,7 @@ describe('SidebarRoot.module.css', () => {
   })
 
   it('keeps the reviewed expanded spacing separate from rail and caption controls', () => {
-    expect(declarations('.logoRow')?.get('padding')).toBe('8px 0 12px 12px')
+    expect(declarations('.logoRow')?.get('padding')).toBe('8px 12px 12px')
     expect(declarations('.logoRow')?.get('margin-bottom')).toBe('0')
     expect(declarations('.newSession')?.get('margin')).toBe('0 calc(var(--dsh-sidebar-paint-inset) + 1px) 14px')
     expect(declarations('.newSessionContent')?.get('justify-content')).toBe('flex-start')
@@ -84,9 +93,11 @@ describe('SidebarRoot.module.css', () => {
     expect(declarations('.collapsed .newSession')?.get('width')).toBe('36px')
   })
 
-  it('keeps full-size brand artwork with a compact mark-to-name gap', () => {
-    expect(declarations('.brandIdentity')?.get('gap')).toBe('10px')
-    expect(declarations('.brandIdentity')?.get('height')).toBe('32px')
+  it('centers expanded branding with room for the JingWork mark and two-line name', () => {
+    expect(declarations('.brand')?.get('justify-content')).toBe('center')
+    expect(declarations('.brand')?.get('--dsh-sidebar-brand-mark-size')).toBe('40px')
+    expect(declarations('.brandIdentity')?.get('gap')).toBe('12px')
+    expect(declarations('.brandIdentity')?.get('height')).toBe('44px')
     expect(declarations('.brandName')?.get('height')).toBe('24px')
     expect(declarations('.brandName')?.get('line-height')).toBe('24px')
     expect(declarations('.brandName')?.get('font-size')).toBe('18px')

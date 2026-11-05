@@ -4,6 +4,8 @@ English | [中文](goal.zh.md)
 
 Types shared by the event-sourced goal service and its policy consumers. The [goal-domain reference](../../packages/goal/goal/README.md) owns the persistence and activation decisions; this page records the exact fields and variants from [`packages/goal/goal/src/types.ts`](../../packages/goal/goal/src/types.ts).
 
+[Super Agent](../../packages/goal/super-agent/README.md) associates a chat task with one goal. Its [task projection types](../../packages/goal/super-agent/src/types.ts) retain the objective, phase, task list, and owned worker ids for the current task.
+
 ## Identity and lifecycle
 
 `GoalId` is a [branded id](core.md#branded-ids). A caller mutates one exact revision through `GoalRef`; every accepted durable mutation increments the revision.

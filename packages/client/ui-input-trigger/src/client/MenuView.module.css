@@ -1,15 +1,13 @@
 .menu {
   position: absolute;
   bottom: calc(100% + 4px);
-  /* The overlay anchor is exactly the composer card's width; both insets pin
-     the menu edge to edge with border and padding kept inside. */
+  /* Keep the menu aligned with the composer while limiting its card width. */
   left: 0;
-  right: 0;
+  width: min(360px, 100%);
   z-index: 100;
   box-sizing: border-box;
-  /* Fits the built-in rows without scrolling and still clamps at runtime to
-   * the space above the composer (inline max-height set in MenuView.tsx). */
-  max-height: 400px;
+  /* Runtime max-height clamps the taller rows to the space above the composer. */
+  max-height: 560px;
   overflow: hidden;
   /* Elevated surface: the scrollbar thumb takes the l2 elevation tokens
      (see ui-theme styles/scrollbar.css for the rebinding contract). */
@@ -20,7 +18,7 @@
   --dsh-scrollbar-width: 6px;
   --dsh-scrollbar-thumb-border: 2px;
   --dsh-scrollbar-track-margin: 12px;
-  padding: 4px;
+  padding: 8px;
   display: flex;
   flex-direction: column;
   border: 0;
@@ -49,17 +47,20 @@
 }
 
 .item {
-  display: flex;
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) auto auto;
+  grid-template-rows: auto auto;
   align-items: center;
-  gap: 6px;
+  column-gap: 10px;
+  row-gap: 2px;
   width: 100%;
-  min-height: 34px;
-  padding: 6px 8px;
+  min-height: 52px;
+  padding: 9px 12px;
   border: none;
   border-radius: var(--dsw-radius-md);
   background: transparent;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 20px;
   color: var(--dsw-alias-label-primary);
   text-align: left;
@@ -101,8 +102,9 @@
 }
 
 .itemName {
-  flex: none;
-  max-width: 40%;
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -111,8 +113,9 @@
 /* The command name beside a localized title, in the description's ink so
    the row reads title first. */
 .itemAlias {
-  flex: none;
-  max-width: 20%;
+  grid-column: 3;
+  grid-row: 1;
+  max-width: 112px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -121,15 +124,16 @@
   line-height: 18px;
 }
 
-/* Right-aligned so every description ends at the same edge and the titles
-   read as one left column. */
+/* Keep descriptions below their titles so the compact card retains readable
+   text without changing which rows the menu publishes. */
 .itemDescription {
-  flex: 1;
+  grid-column: 2 / 5;
+  grid-row: 2;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  text-align: right;
+  text-align: left;
   color: var(--dsw-alias-label-tertiary);
   font-size: 12px;
   line-height: 18px;
@@ -138,7 +142,8 @@
 /* Trailing seat on drillable rows (directories): the Tab keycap hint plus the
    drill chevron, revealed while the row holds the shared highlight. */
 .trailing {
-  flex: none;
+  grid-column: 4;
+  grid-row: 1;
   display: inline-flex;
   align-items: center;
   gap: 3px;
@@ -194,10 +199,16 @@
 /* Heading row above a source group: non-interactive small grey text,
  * padding aligned with items (mirrors ui-primitives Menu .label). */
 .groupTitle {
-  padding: 6px 8px;
-  font-size: 11px;
-  line-height: 15px;
+  padding: 10px 12px 6px;
+  font-size: 12px;
+  line-height: 18px;
   color: var(--dsw-alias-label-tertiary);
+}
+
+.groupTitle:not(:first-child) {
+  margin-top: 4px;
+  border-top: 0.5px solid var(--dsw-alias-border-l2);
+  padding-top: 12px;
 }
 
 /* Pending-source skeleton rows: item cell metrics around a breathing bar

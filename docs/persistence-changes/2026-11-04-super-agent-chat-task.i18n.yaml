@@ -1,0 +1,28 @@
+# Bilingual-pair consistency record for 2026-11-04-super-agent-chat-task.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/persistence-changes/2026-11-04-super-agent-chat-task.md
+/:
+  en: 3d5a424ae7d7e46b
+  zh: c22a8e4a62d8cc1a
+/2026-11-04-super-agent-chat-task:
+  en: f6f2b3d597e05ea2
+  zh: 8c85d8d41900e790
+/2026-11-04-super-agent-chat-task/summary:
+  en: c674ec4391554f44
+  zh: 721009eeff6f6393
+/2026-11-04-super-agent-chat-task/table-of-contents:
+  en: 6cf314a069ceb451
+  zh: 9adff678e9ecab3b
+/2026-11-04-super-agent-chat-task/declaration:
+  en: 6907136f28e48c90
+  zh: 02f8298485f3d8e7
+/2026-11-04-super-agent-chat-task/compatibility:
+  en: 66cd21756fd0a205
+  zh: 0b2d205e446c630f
+/2026-11-04-super-agent-chat-task/verification:
+  en: 8cc4cfcd30e59128
+  zh: 18ea354eb1e760fd
+/2026-11-04-super-agent-chat-task/dev-note:
+  en: b75c8458928b72b9
+  zh: 003ba4e17b4b5269

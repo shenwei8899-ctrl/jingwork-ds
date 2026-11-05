@@ -23,6 +23,7 @@
   // this client-registered project must not also hold them (one program
   // cannot see both sides of the cordis Context merges).
   "exclude": [
+    "tests/super-agent.e2e.ts",
     "tests/workbench-skills.e2e.ts",
     "tests/workbench.e2e.ts",
     "tests/sidebar-drawer.e2e.ts",

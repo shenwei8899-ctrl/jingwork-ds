@@ -67,7 +67,16 @@
       "path": "../ui-conversation/tsconfig.client.json"
     },
     {
+      "path": "../ui-deliverables/tsconfig.client.json"
+    },
+    {
       "path": "../../util/crypto"
+    },
+    {
+      "path": "../../api/session-controller/tsconfig.client.json"
+    },
+    {
+      "path": "../../session/session-title"
     }
   ],
   "include": [
@@ -75,6 +84,8 @@
     "src/types.ts",
     "src/defaults.ts",
     "src/expert.ts",
-    "src/validation.ts"
+    "src/validation.ts",
+    "src/agent-options.ts",
+    "src/connector-catalog.ts"
   ]
 }

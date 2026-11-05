@@ -9,8 +9,8 @@
   en: 1387c4505dde2faf
   zh: 48570fa1c13d6910
 /session-persistence-event-catalog/persistence-type-fingerprints:
-  en: 31c6dab0878b05a8
-  zh: 176d0f7cbdc3fce3
+  en: 5b881e03a9e7835a
+  zh: 48b524e7f9259589
 /session-persistence-event-catalog/event-envelope:
   en: 56414ffd00cdc32a
   zh: 6dc11eb013e95e41
@@ -215,6 +215,12 @@
 /session-persistence-event-catalog/events/subagent/subagent-model-selection-policy-log-only:
   en: cdf085d18fae747a
   zh: 83cd5cf56fef4050
+/session-persistence-event-catalog/events/super-agent:
+  en: 41c53c3be61589a0
+  zh: 41c53c3be61589a0
+/session-persistence-event-catalog/events/super-agent/super-agent-start-log-only:
+  en: 885e5c5b3dc9c82e
+  zh: 526c045a6c0c4a5e
 /session-persistence-event-catalog/events/system:
   en: 8cac41d2fb575975
   zh: 8cac41d2fb575975
@@ -792,8 +798,11 @@
   en: 25ccd80df944ac00
   zh: 25ccd80df944ac00
 /session-persistence-event-catalog/resolved-persistence-types/success:
-  en: 801923015f7dc7e4
-  zh: 801923015f7dc7e4
+  en: e1663828d007e31c
+  zh: e1663828d007e31c
+/session-persistence-event-catalog/resolved-persistence-types/super-agent-start:
+  en: 7097f8a931fc6550
+  zh: 7097f8a931fc6550
 /session-persistence-event-catalog/resolved-persistence-types/system:
   en: 62c9262fb0fe60b2
   zh: 62c9262fb0fe60b2
@@ -1509,8 +1518,11 @@
   en: 7dddcbc923491531
   zh: bbdaea7d433b6fda
 /session-persistence-event-catalog/resolved-persistence-types/failure-kind-error:
-  en: 4cb1c48095df98dc
-  zh: 5a03e44761af559e
+  en: f1d04a428b296c62
+  zh: 82051fca5bc9c989
+/session-persistence-event-catalog/resolved-persistence-types/goalid-objective:
+  en: 6f4db9fea2e131d1
+  zh: 47b5f85a2c91934d
 /session-persistence-event-catalog/resolved-persistence-types/header-reason-startsseries:
   en: 7d1610d20e987988
   zh: 1297cba0f2a2c73d
@@ -2100,8 +2112,11 @@
   en: 2adab4361a5b558d
   zh: 7f2a8da669f9e117
 /session-persistence-event-catalog/resolved-persistence-types/type-subagent-model-selection-policy:
-  en: 9dd6539f4a5d9d16
-  zh: d886630b70a4bce8
+  en: 5a59a2c8af7910ed
+  zh: ae63b1064aea9a11
+/session-persistence-event-catalog/resolved-persistence-types/type-super-agent-start:
+  en: 80c6a43efc470757
+  zh: ef4771e18f5645e5
 /session-persistence-event-catalog/resolved-persistence-types/type-system-message:
   en: 7fb45f52932f268b
   zh: 5019109b99274589

@@ -56,6 +56,7 @@ import { SessionScheduleHover } from './SessionScheduleHover.tsx'
 import { SessionScheduleMark } from './SessionScheduleMark.tsx'
 import { TaskTabBindings } from './task-tab-bindings.ts'
 import { TaskManagerPage, type TaskManagerInjected } from './TaskManagerPage.tsx'
+import { TaskManagerFactory } from './TaskManagerFactory.tsx'
 import type { TaskDetailInjected } from './TaskDetail.tsx'
 import { TaskManagerIcon } from './TaskManagerIcon.tsx'
 import { sessionLinkState } from './session-link.ts'
@@ -71,6 +72,14 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
     'schedule.catalog': ScheduleCatalogKey
     /** Host task management page and task tab copy. */
     'schedule.manager': TaskManagerKey
+  }
+  interface SlotFactoryMap {
+    /** Retained Host tasks managed through the shared catalog and authenticated commands. */
+    'schedule.manager': {
+      scope: 'root'
+      inject: TaskManagerInjected
+      locale: 'schedule.manager'
+    }
   }
 }
 
@@ -213,26 +222,33 @@ export function apply(ctx: ClientContext): void {
       locale: MANAGER_NS,
       inject: (): ScheduleTaskCatalogInjected & ScheduleTaskBindingInjected => ({ hooks: detail.hooks, taskBindings }),
     }, ScheduleTaskTabTitle))
+    const managerFace: TaskManagerInjected = {
+      ...detail,
+      onNewTask: () => { ctx.uiWorkspace.startSession() },
+      onClearEnded: async () => {
+        const outcome = await clearEnded()
+        deleteToast.reportClear(outcome)
+      },
+      onCreateTask: async (request) => {
+        const result = await settle(() => ctx.remote.schedule.create(request))
+        if (result === undefined) return { failed: 'host.createError' }
+        if (!result.ok) return { failed: inputCorrection(result.error) ?? 'host.createError' }
+        manager.retainCreated(result.value)
+        await refresh()
+        return { created: result.value }
+      },
+    }
+    yield ctx.slots.registerFactory({
+      name: 'schedule.manager',
+      scope: 'root',
+      locale: MANAGER_NS,
+      inject: () => managerFace,
+    }, TaskManagerFactory)
     yield ctx.slots.inject('main', () => ctx.slots.register({
       name: 'main',
       key: PANEL_ID,
       locale: MANAGER_NS,
-      inject: (): TaskManagerInjected => ({
-        ...detail,
-        onNewTask: () => { ctx.uiWorkspace.startSession() },
-        onClearEnded: async () => {
-          const outcome = await clearEnded()
-          deleteToast.reportClear(outcome)
-        },
-        onCreateTask: async (request) => {
-          const result = await settle(() => ctx.remote.schedule.create(request))
-          if (result === undefined) return { failed: 'host.createError' }
-          if (!result.ok) return { failed: inputCorrection(result.error) ?? 'host.createError' }
-          manager.retainCreated(result.value)
-          await refresh()
-          return { created: result.value }
-        },
-      }),
+      inject: () => managerFace,
     }, TaskManagerPage))
     yield ctx.slots.inject('sidebar.panellist', () => ctx.slots.register({
       name: 'sidebar.panellist',

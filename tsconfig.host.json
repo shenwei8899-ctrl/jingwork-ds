@@ -8,6 +8,7 @@
     "rewriteRelativeImportExtensions": false
   },
   "include": [
+    "apps/web/tests/super-agent.e2e.ts",
     "apps/web/tests/workbench-skills.e2e.ts",
     "apps/web/tests/workbench.e2e.ts",
     "packages/client/ui-workbench/tests/presets.host.spec.ts",
@@ -431,6 +432,7 @@
     { "path": "./packages/goal/tool-goal" },
     { "path": "./packages/goal/goal-round-driver" },
     { "path": "./packages/goal/command-goal" },
+    { "path": "./packages/goal/super-agent" },
     { "path": "./packages/feedback/command-feedback" },
     { "path": "./packages/schedule/schedule" },
     { "path": "./packages/schedule/tool-schedule" },
@@ -440,6 +442,7 @@
     { "path": "./packages/context/tmux-context" },
     { "path": "./packages/context/session-reference" },
     { "path": "./packages/context/harness-dev-context" },
+    { "path": "./packages/context/knowledge" },
     { "path": "./packages/interaction/user-questions" },
     { "path": "./packages/interaction/user-approval" },
     { "path": "./packages/interaction/permission-presets" },

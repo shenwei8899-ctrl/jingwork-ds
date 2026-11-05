@@ -1,0 +1,50 @@
+- region "Connectors":
+  - navigation "Connectors":
+    - button "Enabled connectors"
+    - button "Built-in connectors" [pressed]
+  - paragraph: Credentials are saved in the local DSH credential store. Select enabled connectors in an assistant to connect when a new session starts.
+  - article:
+    - heading "Tencent Docs" [level=2]
+    - text: Office collaboration
+    - paragraph: Read and write documents, smart tables and space files
+    - button "Connect"
+  - article:
+    - heading "Tencent IMA" [level=2]
+    - text: Notes and knowledge
+    - paragraph: Read, write, search and manage notes and knowledge bases
+    - button "Connect"
+  - article:
+    - heading "Tencent Meeting" [level=2]
+    - text: Office collaboration
+    - paragraph: Manage meetings, recordings and intelligent summaries
+    - button "Connect"
+  - article:
+    - heading "Tencent News" [level=2]
+    - text: News and entertainment
+    - paragraph: Search news and trending stories
+    - button "Connect"
+  - article:
+    - heading "WeRead" [level=2]
+    - text: News and entertainment
+    - paragraph: Sync bookshelves and read book notes
+    - button "Connect"
+  - article:
+    - heading "Tencent Lexiang" [level=2]
+    - text: Office collaboration
+    - paragraph: Search knowledge bases and manage documents
+    - button "Connect"
+  - article:
+    - heading "Tencent Weiyun" [level=2]
+    - text: Office collaboration
+    - paragraph: List, upload, download, share and manage cloud files
+    - button "Connect"
+  - article:
+    - heading "Personal email" [level=2]
+    - text: Communication and productivity
+    - paragraph: Connect QQ Mail, NetEase Mail, Gmail and other IMAP/SMTP mailboxes
+    - button "Connect"
+  - article:
+    - heading "QQ Music" [level=2]
+    - text: News and entertainment
+    - paragraph: Search music, charts, playlists and listening reports
+    - button "Connect"

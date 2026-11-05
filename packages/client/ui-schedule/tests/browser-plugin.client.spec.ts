@@ -220,9 +220,11 @@ describe('ui-schedule browser half', () => {
       expect(allows).toHaveBeenCalledWith('schedule/catalog')
       // The Session-header reminder catalog is this plugin's entry point into the page.
       expect(headerEntryIds(ctx)).toEqual(allowed ? ['schedule-catalog'] : [])
+      expect(ctx.slots.snapshot('factory:schedule.manager')).toHaveLength(allowed ? 1 : 0)
       // The task tab type is a definition, registered either way.
       expect(sidebar.register).toHaveBeenCalledOnce()
       await fiber.dispose()
+      expect(ctx.slots.snapshot('factory:schedule.manager')).toEqual([])
       header()
       await ctx.fiber.dispose()
     }

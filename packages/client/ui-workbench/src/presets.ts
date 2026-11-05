@@ -1,7 +1,16 @@
 /** Build real Agent compositions from expert and team configuration. */
 import type { PresetDefinition } from '@deepseek-ai/dsh-agent-preset-registry'
 import type { Expert, WorkbenchData } from './types.ts'
+import { AGENT_TOOL_GROUPS } from './agent-options.ts'
 import { resolveExpert } from './expert.ts'
+
+/** Deployment limits applied to backend knowledge retrieval. */
+export interface KnowledgeRetrievalPolicy {
+  /** Per-query timeout in milliseconds. */
+  timeoutMs: number
+  /** Maximum response bytes supplied to the model. */
+  maxBytes: number
+}
 
 /** Stable preset key shared by navigation and the Host registry.
  * @param slug User-configured expert or team key.
@@ -14,13 +23,20 @@ export function workbenchPreset(slug: string): string {
 /** Compose an expert with standard filesystem, shell, skill, search and delegation tools.
  * @param expert Configured expert.
  * @param data Profile configuration containing selected skills and connectors.
+ * @param knowledgePolicy Deployment retrieval limits.
  * @returns A scoped Agent preset; access policy remains owned by the deployment.
  */
-export function expertPreset(expert: Expert, data: WorkbenchData): PresetDefinition {
+export function expertPreset(
+  expert: Expert,
+  data: WorkbenchData,
+  knowledgePolicy: KnowledgeRetrievalPolicy = { timeoutMs: 15000, maxBytes: 262144 },
+): PresetDefinition {
+  const resolved = resolveExpert(expert)
   const extra = data.skills
     .filter(skill => expert.skills.includes(skill.slug))
     .map(skill => `\n\n## ${skill.name}\n${skill.content}`)
     .join('')
+  const selectedTools = expert.tools ?? AGENT_TOOL_GROUPS
   const tools = [
     ['agent-instructions', { maxBytes: 65536 }],
     ['time-context', {}],
@@ -30,6 +46,7 @@ export function expertPreset(expert: Expert, data: WorkbenchData): PresetDefinit
     ['tool-skill', {}],
     ['tool-web', { fetch: true }],
     ['tool-todo', { allowParallelInProgress: true }],
+    ['tool-goal', {}],
     ['tool-ask-user', {}],
     ['tool-present', {}],
     [process.platform === 'win32' ? 'tool-pwsh' : 'tool-bash', {}],
@@ -42,13 +59,36 @@ export function expertPreset(expert: Expert, data: WorkbenchData): PresetDefinit
     description: expert.description,
     plugins: [
       { id: 'persona', name: '@deepseek-ai/dsh-persona', config: { prefix: expert.instructions + extra } },
-      ...tools.map(([name, config]) => ({ id: name, name: `@deepseek-ai/dsh-${name}`, config })),
+      ...resolved.knowledge.trim() || expert.knowledgeBases?.length ? [{
+        id: 'knowledge',
+        name: '@deepseek-ai/dsh-knowledge',
+        config: { content: resolved.knowledge, ...(expert.knowledgeBases?.length ? {
+          retrieval: { bases: expert.knowledgeBases, urlEnv: 'DSH_KNOWLEDGE_URL', tokenEnv: 'DSH_KNOWLEDGE_TOKEN',
+            ...knowledgePolicy },
+        } : {}) },
+      }] : [],
+      ...tools.filter(([name]) => {
+        if (['tool-fs', 'tool-fs-search', 'skill-filesystem', 'tool-skill'].includes(name)) return selectedTools.includes('files')
+        if (name === 'tool-web') return selectedTools.includes('web')
+        if (name === 'tool-bash' || name === 'tool-pwsh') return selectedTools.includes('shell')
+        if (name === 'tool-todo' || name === 'tool-goal') return selectedTools.includes('tasks')
+        if (name === 'tool-ask-user' || name === 'tool-present') return selectedTools.includes('interaction')
+        if (name === 'tool-subagent' || name === 'tool-subagent-control') return expert.subagents === undefined || expert.subagents.length > 0
+        return true
+      }).map(([name, config]) => ({
+        id: name, name: `@deepseek-ai/dsh-${name}`,
+        config: name === 'tool-subagent' && expert.subagents !== undefined
+          ? { ...config, allowedAgentPresets: expert.subagents.map(workbenchPreset) }
+          : config,
+      })),
       ...data.connectors
         .filter(connector => connector.enabled && expert.connectors.includes(connector.slug))
         .map(connector => ({
           id: `mcp-${connector.slug}`,
-          name: '@deepseek-ai/dsh-mcp-client',
-          config: {
+          name: connector.builtin ? '@deepseek-ai/dsh-client-ui-workbench/connector' : '@deepseek-ai/dsh-mcp-client',
+          config: connector.builtin ? {
+            kind: connector.builtin, serverName: connector.slug,
+          } : {
             transport: connector.transport,
             serverName: connector.slug,
             ...(connector.transport === 'streamable-http'
@@ -63,14 +103,15 @@ export function expertPreset(expert: Expert, data: WorkbenchData): PresetDefinit
 
 /** Compose enabled assistants and teams whose members are all enabled.
  * @param data Validated profile configuration.
+ * @param knowledgePolicy Deployment retrieval limits.
  * @returns Scoped compositions for experts and teams.
  * @throws When slugs repeat or a team references a removed expert.
  */
-export function workbenchPresets(data: WorkbenchData): PresetDefinition[] {
+export function workbenchPresets(data: WorkbenchData, knowledgePolicy?: KnowledgeRetrievalPolicy): PresetDefinition[] {
   const keys = [...data.experts, ...data.teams].map(row => row.slug)
   if (new Set(keys).size !== keys.length) throw new Error('Workbench expert and team slugs must be unique')
   const resolved = data.experts.map(resolveExpert)
-  const experts = resolved.filter(expert => expert.enabled).map(expert => expertPreset(expert, data))
+  const experts = resolved.filter(expert => expert.enabled).map(expert => expertPreset(expert, data, knowledgePolicy))
   return [
     ...experts,
     ...data.teams.flatMap((team) => {
@@ -86,10 +127,16 @@ export function workbenchPresets(data: WorkbenchData): PresetDefinition[] {
           name: team.name,
           description: team.description,
           instructions: `${team.instructions}\n\n你是专家团队的协调者。成员职责如下：\n${members.map(member => `### ${member.name}\n${member.instructions}`).join('\n\n')}\n\n需要并行工作时，使用 subagent 工具将子任务和对应成员职责交给子智能体。核验并汇总成员结果；不要把尚未执行的分工写成已完成。`,
+          knowledgeBases: [...new Set(members.flatMap(member => member.knowledgeBases ?? []))],
+          knowledge: members
+            .filter(member => member.knowledge.trim())
+            .map(member => `### ${member.name}\n${member.knowledge}`)
+            .join('\n\n'),
           skills: [...new Set(members.flatMap(member => member.skills))],
           connectors: [...new Set(members.flatMap(member => member.connectors))],
         },
         data,
+        knowledgePolicy,
       )]
     }),
   ]

@@ -20,6 +20,15 @@
     },
     {
       "path": "../../skill/skill"
+    },
+    {
+      "path": "../../credentials/credentials"
+    },
+    {
+      "path": "../../mcp/mcp-client"
+    },
+    {
+      "path": "../../core/tools"
     }
   ],
   "include": [

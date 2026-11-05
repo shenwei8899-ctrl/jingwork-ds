@@ -5,7 +5,6 @@
  * summary, and deliveries from `present`; never from presentation data or
  * the closing prose.
  */
-import { isAbsoluteWorkspacePath } from '@deepseek-ai/dsh-util-workspace-path'
 import { isAppendSurfaceEvent } from '@deepseek-ai/dsh-session/surface'
 import type { TurnTailOwnerProps } from '@deepseek-ai/dsh-client-ui-chat/client'
 import type { ConversationNodeDefinition } from '@deepseek-ai/dsh-client-ui-conversation/client'
@@ -13,6 +12,7 @@ import type { MarkdownFileMentions } from '@deepseek-ai/dsh-client-ui-primitives
 import type { PresentedFile } from '@deepseek-ai/dsh-tool-present/types'
 import { isChangesEvent } from '../changes.ts'
 import { basename, isPresentedData, isPresentedFile } from '../presented.ts'
+import { mutationPath, mutationResultPath } from '../produced-files.ts'
 
 /** A declared file with its authorized open coordinates. */
 export interface PresentedPath extends PresentedFile {
@@ -47,85 +47,6 @@ declare module '@deepseek-ai/dsh-client-ui-conversation/client' {
 interface DeliverablesState extends DeliverablesTurnData {
   readonly turn: number
   readonly calls: ReadonlyMap<string, string | null>
-}
-
-/**
- * Extract the path from a supported first-party mutation call. Session
- * `tool/call` events are root calls; PTC dispatch children do not enter this
- * Definition independently.
- * @param name - wire tool name.
- * @param argsRaw - model-produced JSON arguments.
- * @returns the mutation path, or null when the call is not a supported mutation.
- */
-function mutationPath(name: string, argsRaw: string): string | null {
-  let args: unknown
-  try {
-    args = JSON.parse(argsRaw) as unknown
-  } catch {
-    return null
-  }
-  if (!isRecord(args)) return null
-  switch (name) {
-    case 'write':
-      return typeof args.content === 'string' ? pathValue(args.file_path) : null
-    case 'edit':
-      return validEditArgs(args) ? pathValue(args.file_path) : null
-    case 'str_replace_editor':
-      return editorMutationPath(args)
-    default:
-      return null
-  }
-}
-
-/** Validate the fields that an `edit` execution requires. */
-function validEditArgs(args: Readonly<Record<string, unknown>>): boolean {
-  return typeof args.old_string === 'string'
-    && args.old_string.length > 0
-    && typeof args.new_string === 'string'
-    && args.old_string !== args.new_string
-    && (args.replace_all === undefined || typeof args.replace_all === 'boolean')
-}
-
-/** Extract a path only from a complete mutating editor command. */
-function editorMutationPath(args: Readonly<Record<string, unknown>>): string | null {
-  const path = pathValue(args.path)
-  if (path === null) return null
-  switch (args.command) {
-    case 'create':
-      return typeof args.file_text === 'string' ? path : null
-    case 'str_replace':
-      return typeof args.old_str === 'string'
-        && args.old_str.length > 0
-        && (args.new_str === undefined || typeof args.new_str === 'string')
-        ? path
-        : null
-    case 'insert':
-      return typeof args.insert_line === 'number'
-        && Number.isInteger(args.insert_line)
-        && args.insert_line >= 0
-        && typeof args.new_str === 'string'
-        ? path
-        : null
-    default:
-      return null
-  }
-}
-
-/** A non-blank path preserves the exact spelling supplied to the tool. */
-function pathValue(value: unknown): string | null {
-  return typeof value === 'string' && value.trim().length > 0 ? value : null
-}
-
-/** Resolve a settled mutation from recorded metadata, retaining legacy argument paths. */
-function mutationResultPath(argumentPath: string, meta: unknown): string | null {
-  if (!isRecord(meta) || !Object.hasOwn(meta, 'path')) return argumentPath
-  if (typeof meta.path === 'string' && isAbsoluteWorkspacePath(meta.path)) return meta.path
-  return isAbsoluteWorkspacePath(argumentPath) ? argumentPath : null
-}
-
-/** Narrow parsed JSON to an argument object. */
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
 /**

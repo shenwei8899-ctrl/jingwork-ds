@@ -1,0 +1,155 @@
+[
+  {
+    "kind": "chunks",
+    "chunks": [
+      {
+        "type": "block-start",
+        "index": 0,
+        "blockType": "tool-call"
+      },
+      {
+        "type": "block-end",
+        "index": 0,
+        "block": {
+          "type": "tool-call",
+          "id": "task-call-0-todo_write",
+          "name": "todo_write",
+          "arguments": "{\"todos\":[{\"content\":\"Identify review criteria\",\"status\":\"completed\"},{\"content\":\"Write the checklist\",\"status\":\"in_progress\"}]}"
+        }
+      },
+      {
+        "type": "block-start",
+        "index": 1,
+        "blockType": "tool-call"
+      },
+      {
+        "type": "block-end",
+        "index": 1,
+        "block": {
+          "type": "tool-call",
+          "id": "task-call-1-get_goal",
+          "name": "get_goal",
+          "arguments": "{}"
+        }
+      },
+      {
+        "type": "finish",
+        "reason": {
+          "kind": "tool-calls"
+        }
+      }
+    ]
+  },
+  {
+    "kind": "hang"
+  },
+  {
+    "kind": "hang"
+  },
+  {
+    "kind": "chunks",
+    "chunks": [
+      {
+        "type": "block-start",
+        "index": 0,
+        "blockType": "tool-call"
+      },
+      {
+        "type": "block-end",
+        "index": 0,
+        "block": {
+          "type": "tool-call",
+          "id": "task-call-0-todo_write",
+          "name": "todo_write",
+          "arguments": "{\"todos\":[{\"content\":\"Identify review criteria\",\"status\":\"completed\"},{\"content\":\"Write the checklist\",\"status\":\"in_progress\"}]}"
+        }
+      },
+      {
+        "type": "block-start",
+        "index": 1,
+        "blockType": "tool-call"
+      },
+      {
+        "type": "block-end",
+        "index": 1,
+        "block": {
+          "type": "tool-call",
+          "id": "task-call-1-get_goal",
+          "name": "get_goal",
+          "arguments": "{}"
+        }
+      },
+      {
+        "type": "finish",
+        "reason": {
+          "kind": "tool-calls"
+        }
+      }
+    ]
+  },
+  {
+    "kind": "chunks",
+    "chunks": [
+      {
+        "type": "block-start",
+        "index": 0,
+        "blockType": "tool-call"
+      },
+      {
+        "type": "block-end",
+        "index": 0,
+        "block": {
+          "type": "tool-call",
+          "id": "task-call-0-todo_write",
+          "name": "todo_write",
+          "arguments": "{\"todos\":[{\"content\":\"Identify review criteria\",\"status\":\"completed\"},{\"content\":\"Write the checklist\",\"status\":\"completed\"}]}"
+        }
+      },
+      {
+        "type": "block-start",
+        "index": 1,
+        "blockType": "tool-call"
+      },
+      {
+        "type": "block-end",
+        "index": 1,
+        "block": {
+          "type": "tool-call",
+          "id": "task-call-1-update_goal",
+          "name": "update_goal",
+          "arguments": "{\"goal_id\":\"{{fromRequest:goal-[0-9a-f-]+}}\",\"revision\":1,\"action\":\"complete\"}"
+        }
+      },
+      {
+        "type": "finish",
+        "reason": {
+          "kind": "tool-calls"
+        }
+      }
+    ]
+  },
+  {
+    "kind": "chunks",
+    "chunks": [
+      {
+        "type": "block-start",
+        "index": 0,
+        "blockType": "text"
+      },
+      {
+        "type": "block-end",
+        "index": 0,
+        "block": {
+          "type": "text",
+          "text": "1. Check each factual claim against its source.\n2. Check clarity, structure, and consistency."
+        }
+      },
+      {
+        "type": "finish",
+        "reason": {
+          "kind": "stop"
+        }
+      }
+    ]
+  }
+]

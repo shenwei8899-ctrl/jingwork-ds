@@ -4,6 +4,8 @@
 
 事件溯源目标服务及其策略消费方共享的类型。[目标领域 参考](../../packages/goal/goal/README.zh.md) 负责记录持久化与激活决策；本页记录 [`packages/goal/goal/src/types.ts`](../../packages/goal/goal/src/types.ts) 中的确切字段和变体。
 
+[Super Agent](../../packages/goal/super-agent/README.zh.md) 将聊天任务关联到一个目标。其[任务投影类型](../../packages/goal/super-agent/src/types.ts) 保留当前任务的目标、阶段、任务清单及所属执行器 id。
+
 ## 标识与生命周期
 
 `GoalId` 是[品牌化 id](core.zh.md#branded-ids)。调用方通过 `GoalRef` 修改一个确切修订版本；每次获准的持久变更都会递增修订号。

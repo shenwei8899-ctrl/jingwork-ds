@@ -24,8 +24,8 @@ import type { MenuKey } from './locales.ts'
 /** Full menu props: injected face + the locale seat. */
 export type MenuViewProps = MenuViewInjected & PropsLocale<'slash.menu'>
 
-/** Height cap that fits the two headings and eight built-in command rows. */
-const MAX_HEIGHT = 400
+/** Height cap that fits the two headings and roomier built-in command rows. */
+const MAX_HEIGHT = 560
 
 /**
  * Viewport top margin: the conversation header's 76px block (title row plus

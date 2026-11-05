@@ -111,3 +111,30 @@ describe('desktop welcome Web operations', () => {
     await expect(connectDesktopWelcome(url, send)).rejects.toThrow('Web authentication failed')
   })
 })
+
+it('prepares a native enterprise preset with a revision fence while retaining personal agents', async () => {
+  const personal = { slug: 'personal', category: 'personal', name: 'Personal' }
+  const role: import('../src/jingwork-auth.ts').JingworkRole = { slug: 'jw-role', category: 'enterprise', enabled: true,
+    name: 'Enterprise role', description: 'Shared role', instructions: 'Use verified sources.', knowledge: '', skills: [], connectors: [] }
+  const requests: { method: string; args: Record<string, unknown> }[] = []
+  const send = vi.fn<Parameters<typeof connectDesktopWelcome>[1]>(async (_input, init) => {
+    if (init?.method !== 'POST') return new Response('index')
+    if (typeof init.body !== 'string') throw new Error('Expected JSON request body')
+    const request = JSON.parse(init.body) as { rpcId: string; method: string; payload: { args: Record<string, unknown> } }
+    requests.push({ method: request.method, args: request.payload.args })
+    let value: unknown
+    if (request.method === 'settings/describe') {
+      value = { namespaces: [{ ns: 'ui-workbench', revision: 7, value: { experts: [personal] } }] }
+    } else if (request.method === 'settings/update') value = {}
+    else if (request.method === 'agentPresets/list') value = { presets: [{ id: 'workbench-jw-role' }] }
+    else if (request.method === 'agentPresets/read') value = { name: role.name, description: role.description,
+      content: '- id: persona\n  config:\n    prefix: Use verified sources.\n' }
+    else throw new Error('Unexpected request')
+    return Response.json({ type: 'server-response', rpcId: request.rpcId, result: { ok: true, value } })
+  })
+  const backend = await connectDesktopWelcome(url, send)
+  expect(await backend.prepareEnterprise(role, 1000)).toBe('workbench-jw-role')
+  expect(requests.find(request => request.method === 'settings/update')?.args).toEqual({
+    ns: 'ui-workbench', expectedRevision: 7, patch: { experts: [personal, role] },
+  })
+})

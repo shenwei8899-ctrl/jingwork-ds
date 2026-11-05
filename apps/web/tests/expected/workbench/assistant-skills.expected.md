@@ -1,0 +1,88 @@
+- region "New agent":
+  - button "Close draft"
+  - heading "Create from “General expert”" [level=1]
+  - navigation "Creation steps":
+    - button "Basic information"
+    - button "Model configuration"
+    - button "Knowledge base"
+    - button "Skills"
+    - button "Connectors"
+    - button "Runtime tools"
+    - button "Subagents"
+    - button "Review"
+  - heading "Skills" [level=2]
+  - paragraph: Select built-in or saved skills, or upload a Markdown skill file. Selected skills are saved with the agent.
+  - text: Upload skill (Markdown)
+  - button "Upload skill (Markdown)"
+  - checkbox "Agent experience Improve tool instructions, skill discovery, context loading and multi-step agent workflows."
+  - strong: Agent experience
+  - text: Improve tool instructions, skill discovery, context loading and multi-step agent workflows.
+  - checkbox "Cordis lifecycle review Review shared state, side effects and resource cleanup ordering in Cordis plugins."
+  - strong: Cordis lifecycle review
+  - text: Review shared state, side effects and resource cleanup ordering in Cordis plugins.
+  - checkbox "Agent note maintenance Review and archive decision notes, remove superseded records and preserve durable rationale."
+  - strong: Agent note maintenance
+  - text: Review and archive decision notes, remove superseded records and preserve durable rationale.
+  - checkbox "Test reliability Investigate intermittent failures caused by concurrency, shared resources, clocks and asynchronous cleanup."
+  - strong: Test reliability
+  - text: Investigate intermittent failures caused by concurrency, shared resources, clocks and asynchronous cleanup.
+  - checkbox "Client interface design Design and review component reuse, visual tokens, feedback, overlays and loading states."
+  - strong: Client interface design
+  - text: Design and review component reuse, visual tokens, feedback, overlays and loading states.
+  - checkbox "Project code review Review code and pull requests against project architecture, conventions and quality requirements."
+  - strong: Project code review
+  - text: Review code and pull requests against project architecture, conventions and quality requirements.
+  - checkbox "Upgrade guides Document compatibility changes to commands, configuration, APIs and persisted data."
+  - strong: Upgrade guides
+  - text: Document compatibility changes to commands, configuration, APIs and persisted data.
+  - checkbox "Project documentation Write and organize project documentation, maintain bilingual alignment and validate references."
+  - strong: Project documentation
+  - text: Write and organize project documentation, maintain bilingual alignment and validate references.
+  - checkbox "Error handling Design actionable failure reports, recovery, retries and background task handling."
+  - strong: Error handling
+  - text: Design actionable failure reports, recovery, retries and background task handling.
+  - checkbox "Code and architecture simplification Find evidence-backed opportunities to remove unnecessary or duplicated code, configuration and prose."
+  - strong: Code and architecture simplification
+  - text: Find evidence-backed opportunities to remove unnecessary or duplicated code, configuration and prose.
+  - checkbox "Stacked pull requests Manage dependent pull requests, merge ordering and checks using GitHub native stacks."
+  - strong: Stacked pull requests
+  - text: Manage dependent pull requests, merge ordering and checks using GitHub native stacks.
+  - checkbox "Official plugin artwork Create and review official plugin icons and previews for meaning, proportion and localization."
+  - strong: Official plugin artwork
+  - text: Create and review official plugin icons and previews for meaning, proportion and localization.
+  - checkbox "Pull request descriptions Write pull request descriptions with issue links, validation, change impact and AI usage disclosures."
+  - strong: Pull request descriptions
+  - text: Write pull request descriptions with issue links, validation, change impact and AI usage disclosures.
+  - checkbox "Pre-push checks Select relevant local tests and checks for the actual change before pushing or requesting review."
+  - strong: Pre-push checks
+  - text: Select relevant local tests and checks for the actual change before pushing or requesting review.
+  - checkbox "Prose and comment standards Review documentation, comments, prompts and interface copy for precise and concise language."
+  - strong: Prose and comment standards
+  - text: Review documentation, comments, prompts and interface copy for precise and concise language.
+  - checkbox "Responsive interface design Adapt interfaces for narrow windows and touch, including wrapping, actions, tooltips and focus."
+  - strong: Responsive interface design
+  - text: Adapt interfaces for narrow windows and touch, including wrapping, actions, tooltips and focus.
+  - checkbox "Session projections Create and review projections that derive reconstructable state from session events."
+  - strong: Session projections
+  - text: Create and review projections that derive reconstructable state from session events.
+  - checkbox "Performance analysis Profile long sessions and web responsiveness, design realistic benchmarks and measure improvements."
+  - strong: Performance analysis
+  - text: Profile long sessions and web responsiveness, design realistic benchmarks and measure improvements.
+  - checkbox "Bilingual document translation Run the explicitly requested document translation workflow and verify bilingual alignment."
+  - strong: Bilingual document translation
+  - text: Run the explicitly requested document translation workflow and verify bilingual alignment.
+  - checkbox "Reasoning residue cleanup Remove internal discussion and obsolete planning references from documentation and comments."
+  - strong: Reasoning residue cleanup
+  - text: Remove internal discussion and obsolete planning references from documentation and comments.
+  - checkbox "Interface demo recording Record browser interactions as optimized GIFs and attach them to pull requests when needed."
+  - strong: Interface demo recording
+  - text: Record browser interactions as optimized GIFs and attach them to pull requests when needed.
+  - checkbox "Meeting notes Summarize decisions and action items" [checked]
+  - strong: Meeting notes
+  - text: Summarize decisions and action items
+  - checkbox "uploaded-notes Summarize uploaded notes"
+  - strong: uploaded-notes
+  - text: Summarize uploaded notes Step 4 of 8
+  - button "Cancel"
+  - button "Back"
+  - button "Next"

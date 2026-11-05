@@ -25,6 +25,8 @@ The Web GUI goal surface shows both the durable goal state and its current proce
 <a id="use-this-package"></a>
 ## Use this package
 
+Click **Super Agent** in the composer to start one persistent chat task. Its card replaces the ordinary goal strip for that task and retains expandable progress after completion or stopping. Pause, resume, and stop use the [Super Agent command plugin](../../goal/super-agent/README.md). The mode applies to one submission, and follow-up messages continue in the same chat.
+
 Mount this plugin alongside `ui-conversation` and the goal domain package; the strip then appears as the second card in the composer-context stack (after Todo, before Queue) whenever the session has a goal. Todo and Goal use the same panel elevation above the composer. An armed active goal offers pause; an active-but-disarmed, paused, or blocked goal offers resume; edit rewrites the objective in the ui-primitives `InlineEditor`, so multi-line objectives survive editing; clear removes the goal and suppresses the strip until the projection catches up.
 
 ### The command-input bubble
