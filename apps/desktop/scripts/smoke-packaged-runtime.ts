@@ -13,7 +13,7 @@ const target = resolveDesktopBuildTarget()
 const windows = target.startsWith('win-')
 const applicationName = values.unsigned && !windows ? 'JingWork' : 'DeepSeek Harness'
 const artifacts = desktopArtifactOutput(paths, { unsigned: values.unsigned, skipNotarization: values['skip-notarization'] }).directory
-const application = windows ? join(artifacts, 'win-unpacked')
+const application = windows ? join(artifacts, target === 'win-arm64' ? 'win-arm64-unpacked' : 'win-unpacked')
   : join(artifacts, target === 'mac-arm64' ? 'mac-arm64' : 'mac', `${applicationName}.app`, 'Contents')
 const resources = join(application, windows ? 'resources' : 'Resources')
 const executable = windows ? join(application, 'DeepSeek Harness.exe') : join(application, 'MacOS', applicationName)
