@@ -1,6 +1,7 @@
 /** Private command-management worker; macOS mutation targets are fixed before elevation. */
 
 import { spawn } from 'node:child_process'
+import { readFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { CommandInstallationError, inspectFileCommand, installFileCommand, removeFileCommand } from './command-installation.ts'
@@ -15,7 +16,9 @@ try {
   if (!['inspect', 'install', 'remove'].includes(operation ?? '')) throw new CommandInstallationError('EINVAL', 'Invalid command-management operation.')
   if (operation !== 'inspect' && !/^[a-f0-9]{64}$/u.test(fingerprint)) throw new CommandInstallationError('EINVAL', 'Missing command confirmation.')
   if (process.platform === 'darwin') {
-    const options = { destination: '/usr/local/bin/dsh', launcher: join(resources, 'runtime', 'cli', 'bin', 'dsh'),
+    const commandName = readFileSync(join(import.meta.dirname, 'command-name'), 'utf8').trim()
+    if (commandName !== 'dsh' && commandName !== 'jingwork') throw new CommandInstallationError('EINVAL', 'Invalid packaged command name.')
+    const options = { destination: `/usr/local/bin/${commandName}`, launcher: join(resources, 'runtime', 'cli', 'bin', commandName),
       linkHelper: join(resources, 'runtime', 'cli', 'link-entry') }
     const state = operation === 'inspect' ? await inspectFileCommand(options)
       : operation === 'install' ? await installFileCommand(options, fingerprint) : await removeFileCommand(options, fingerprint)

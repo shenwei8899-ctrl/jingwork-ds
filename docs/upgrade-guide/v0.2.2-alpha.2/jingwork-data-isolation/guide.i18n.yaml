@@ -1,0 +1,16 @@
+# Bilingual-pair consistency record for guide.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/upgrade-guide/v0.2.2-alpha.2/jingwork-data-isolation/guide.md
+/:
+  en: 08c838088d966325
+  zh: 40fe7828e4a8a57a
+/jingwork-macos-data-and-command-isolation:
+  en: 48e33988ce025906
+  zh: 769af1bb08db757c
+/jingwork-macos-data-and-command-isolation/change:
+  en: 1d0b78b7238581d5
+  zh: a127672af29ccbe2
+/jingwork-macos-data-and-command-isolation/migration:
+  en: 569cea35f0113fd1
+  zh: d84f571127af8250

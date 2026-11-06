@@ -9,6 +9,7 @@ import {
   resolveMacOSSigningEnvironment,
 } from '../scripts/desktop-release-environment.mjs'
 import { notarizeMacOSDiskImageArtifact } from '../scripts/notarize-macos-disk-images.mjs'
+import { localMacOSPackageEnvironment } from '../scripts/desktop-package-environment.mjs'
 import {
   assertMacOSRuntimeSignatureDetails,
   assertMacOSSignatureDetails,
@@ -166,9 +167,45 @@ describe('desktop macOS release signature', () => {
     expect(config.mac).toMatchObject({ identity: '-', forceCodeSigning: false, notarize: false, target: ['dmg'] })
     expect(config.dmg).toMatchObject({ sign: false, writeUpdateInfo: false })
     expect(config.publish).toBeNull()
+    expect(config.productName).toBe('DeepSeek Harness')
+    expect(config.protocols).toEqual([{ name: 'DeepSeek Harness', schemes: ['dsh'] }])
+    expect(config.extraMetadata).not.toHaveProperty('dshDesktopProduct')
     expect(config.extraMetadata).not.toHaveProperty('dshMandatoryUpdatePolicy')
     await expect(config.afterSign({ electronPlatformName: 'darwin' } as Parameters<typeof config.afterSign>[0])).resolves.toBeUndefined()
     expect(config.artifactBuildCompleted({ file: '/tmp/local-unsigned.dmg' })).toBeUndefined()
+  })
+
+  it.each(['arm64', 'x64'])('packages JingWork macOS %s with independent application metadata', async (arch) => {
+    const { createElectronBuilderConfig } = await import('../scripts/electron-builder-config.mjs')
+    const config = createElectronBuilderConfig(localMacOSPackageEnvironment({}), 'darwin', arch)
+    expect(config.appId).toBe('com.jingwork.desktop')
+    expect(config.productName).toBe('JingWork')
+    expect(config.protocols).toEqual([{ name: 'JingWork', schemes: ['jingwork'] }])
+    expect(config.extraMetadata).toMatchObject({
+      dshDesktopAppId: 'com.jingwork.desktop', dshDesktopProduct: 'jingwork', name: 'jingwork', productName: 'JingWork',
+    })
+    expect(config.mac.extendInfo.NSMicrophoneUsageDescription).toMatch(/^JingWork /u)
+    expect(portablePath(config.extraResources[1]?.from ?? '')).toMatch(/\/icon-jingwork\.png$/u)
+    expect(config.publish).toBeNull()
+    await expect(validateConfiguration(config, { isEnabled: false })).resolves.toBeUndefined()
+  })
+
+  it('rejects an unknown product identifier', async () => {
+    const { createElectronBuilderConfig } = await import('../scripts/electron-builder-config.mjs')
+    expect(() => createElectronBuilderConfig({ ...RELEASE_ENVIRONMENT, DSH_DESKTOP_PRODUCT: 'other' }, 'darwin', 'arm64'))
+      .toThrow('DSH_DESKTOP_PRODUCT')
+  })
+
+  it.each([
+    { platform: 'darwin', unsigned: '0', appId: 'com.jingwork.desktop' },
+    { platform: 'win32', unsigned: '1', appId: 'com.jingwork.desktop' },
+    { platform: 'darwin', unsigned: '1', appId: 'com.deepseek.harness' },
+  ] as const)('rejects JingWork configuration outside its unsigned macOS identity %j', async ({ platform, unsigned, appId }) => {
+    const { createElectronBuilderConfig } = await import('../scripts/electron-builder-config.mjs')
+    expect(() => createElectronBuilderConfig({
+      DSH_DESKTOP_APP_ID: appId, DSH_DESKTOP_PRODUCT: 'jingwork', DSH_DESKTOP_UNSIGNED: unsigned,
+      DSH_DESKTOP_TARGET_PLATFORM: platform,
+    }, platform, 'arm64')).toThrow('JingWork requires unsigned macOS packaging with app ID com.jingwork.desktop')
   })
 
   it('omits mandatory-update policy from local macOS builds even when release settings are supplied', async () => {

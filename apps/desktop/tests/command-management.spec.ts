@@ -1,7 +1,7 @@
 /** Locale-owned native command-management states. */
 
 import { expect, it } from 'vitest'
-import { en, zh } from '../src/locale.ts'
+import { en, zh, formatDesktopMessage } from '../src/locale.ts'
 import { presentCommandManagement } from '../src/command-management.ts'
 
 it.each([en, zh])('shows installation, repair/removal and shadowed command locations', (messages) => {
@@ -15,9 +15,17 @@ it.each([en, zh])('shows installation, repair/removal and shadowed command locat
   const shadowed = presentCommandManagement({ managed: true, available: true, destination, activeCommand: '/opt/homebrew/bin/dsh' }, messages, 'darwin')
   expect(shadowed.type).toBe('warning')
   expect(shadowed.detail).toContain('/opt/homebrew/bin/dsh')
-  expect(shadowed.detail).toContain(messages.cliCommandShadowed)
+  expect(shadowed.detail).toContain(formatDesktopMessage(messages.cliCommandShadowed, { command: 'dsh' }))
   const unknown = presentCommandManagement({ managed: false, available: false, destination, selectionUnknown: true }, messages, 'darwin')
-  expect(unknown.detail).toContain(messages.cliCommandSelectionUnknown)
+  expect(unknown.detail).toContain(formatDesktopMessage(messages.cliCommandSelectionUnknown, { command: 'dsh' }))
+})
+
+it.each([['en-US', en], ['zh-CN', zh]] as const)('records JingWork command management in %s', async (language, messages) => {
+  const dialog = presentCommandManagement({ managed: true, available: true, destination: '/usr/local/bin/jingwork',
+    activeCommand: '/opt/homebrew/bin/jingwork' }, messages, 'darwin', 'jingwork')
+  expect(dialog.title).toContain('jingwork')
+  expect(dialog.detail).not.toContain('{command}')
+  await expect(JSON.stringify(dialog, null, 2) + '\n').toMatchFileSnapshot(`./expected/command-management-jingwork-${language}.json`)
 })
 
 it.each([

@@ -55,6 +55,7 @@ vi.mock('electron', () => ({
   app: {
     isPackaged: false,
     name: 'Harness',
+    getName: () => 'Harness',
     requestSingleInstanceLock: () => true,
     setAsDefaultProtocolClient: vi.fn(),
     whenReady: () => Promise.resolve(),
@@ -163,6 +164,12 @@ vi.mock('../src/jingwork-auth.ts', () => ({
   readJingworkLoginConfig: () => state.jingwork,
   JingworkDesktopAuth: class { restore = state.jingworkRestore },
 }))
+vi.mock('../src/jingwork-client-logs.ts', async importOriginal => ({
+  ...await importOriginal<typeof import('../src/jingwork-client-logs.ts')>(),
+  JingworkClientLogs: { open: async () => ({ close: async () => {}, runtime: vi.fn(), operation: vi.fn() }) },
+}))
+vi.mock('../src/jingwork-conversation-sync.ts', () => ({ startJingworkConversationSync: async () => ({ dispose: async () => {} }) }))
+vi.mock('../src/jingwork-knowledge.ts', () => ({ startJingworkKnowledge: async () => ({ environment: {}, dispose: async () => {} }) }))
 vi.mock('../src/jingwork-window.ts', () => ({
   openJingworkWelcome: (_locale: DesktopLocale, _auth: unknown, enter: () => Promise<void>) => {
     state.jingworkEnter = enter
@@ -217,7 +224,7 @@ it.each([false, true])('starts welcome onboarding without carrying update focus 
     state.appListeners.get('second-instance')!()
     state.appListeners.get('open-url')!({ preventDefault: vi.fn() }, 'dsh://open')
   }
-  await import('../src/main.ts')
+  await import('../src/main.ts').then(({ startDesktop }) => { startDesktop() })
   await vi.waitFor(() => { expect(state.beforeRead).toHaveBeenCalledOnce() })
   try {
     activate()
@@ -340,7 +347,7 @@ it.each([false, true])('uses Jingwork authorization independently of model API k
   vi.stubEnv('DSH_DESKTOP_OPEN_DEVTOOLS', '0')
   vi.stubEnv('DSH_DESKTOP_MANDATORY_UPDATE_CONFIG', undefined)
   vi.stubEnv('DSH_DESKTOP_UPDATE_JOURNAL_DIR', undefined)
-  await import('../src/main.ts')
+  await import('../src/main.ts').then(({ startDesktop }) => { startDesktop() })
   await vi.waitFor(() => { expect(state.jingworkRestore).toHaveBeenCalledOnce() })
   if (cached) {
     await vi.waitFor(() => { expect(state.showWorkspace).toHaveBeenCalledOnce() })

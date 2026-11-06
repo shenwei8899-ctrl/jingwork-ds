@@ -52,6 +52,22 @@ describe.skipIf(process.platform === 'win32')('macOS command entry ownership', (
     if (process.platform === 'darwin') prepareCommandLink(compiled, process.arch === 'arm64' ? 'arm64' : 'x64', '13.0')
   })
   afterAll(async () => { if (compiled !== undefined) await rm(compiled, { recursive: true, force: true }) })
+  it('keeps Harness and JingWork command ownership independent in the same directory', async () => {
+    const f = await fixture()
+    const jingwork = { ...f.options, destination: join(f.root, 'jingwork'), launcher: join(f.root, 'jingwork-launcher') }
+    await writeFile(jingwork.launcher, 'jingwork\n', { mode: 0o755 })
+    const [harnessState, jingworkState] = await Promise.all([inspectFileCommand(f.options), inspectFileCommand(jingwork)])
+    const [harnessInstalled, jingworkInstalled] = await Promise.all([
+      installFileCommand(f.options, harnessState.fingerprint), installFileCommand(jingwork, jingworkState.fingerprint),
+    ])
+    expect((await inspectFileCommand(f.options)).managed).toBe(true)
+    expect((await inspectFileCommand(jingwork)).managed).toBe(true)
+    expect(await readdir(f.root)).toEqual(expect.arrayContaining(['.dsh-desktop-command.json', '.jingwork-desktop-command.json']))
+    await removeFileCommand(jingwork, jingworkInstalled.fingerprint)
+    expect((await inspectFileCommand(f.options)).fingerprint).toBe(harnessInstalled.fingerprint)
+    expect(await readlink(f.options.destination)).toBe(f.options.launcher)
+  })
+
   it('installs and removes only its own link', async () => {
     const f = await fixture()
     const before = await inspectFileCommand(f.options)

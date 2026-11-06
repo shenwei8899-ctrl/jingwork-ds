@@ -1,0 +1,13 @@
+{
+  "type": "warning",
+  "title": "Manage jingwork command",
+  "message": "The Desktop command is installed.",
+  "detail": "Desktop command: /usr/local/bin/jingwork\n\nCurrent jingwork command: /opt/homebrew/bin/jingwork\n\nAnother jingwork takes precedence. Remove or reorder that installation to use the Desktop command by default. You can also run the Desktop command by its full path.",
+  "buttons": [
+    "Close",
+    "Repair",
+    "Remove"
+  ],
+  "defaultId": 0,
+  "cancelId": 0
+}

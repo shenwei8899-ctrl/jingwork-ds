@@ -73,6 +73,7 @@ import { DesktopUpdateOverlays } from './update-overlay.ts'
 import { DesktopQuitConfirmation } from './quit-confirmation.ts'
 import { DesktopTray } from './tray.ts'
 import { DesktopBackgroundNotice } from './background-notice.ts'
+import type { DesktopProduct } from './product-identity.ts'
 
 let focusPrimaryWindow = (): void => {}
 let stopForRecovery = async (): Promise<void> => { await stopOperationReports() }
@@ -375,7 +376,8 @@ function createWindow(preload: string, show = false, primary = false, jingwork =
   return window
 }
 
-async function main(): Promise<void> {
+async function main(product: DesktopProduct): Promise<void> {
+  const commandName = product === 'jingwork' ? 'jingwork' : 'dsh'
   const desktopSettings = readDesktopSettings(app.getPath('userData'))
   const jingworkConfig = readJingworkLoginConfig(app.getPath('userData'))
   const jingworkAuth = jingworkConfig === undefined ? undefined : new JingworkDesktopAuth(
@@ -494,6 +496,7 @@ async function main(): Promise<void> {
       buttons: [locale.messages.updateAcknowledge], cancelId: 0 })
   }
   const commandManager = new DesktopCommandManager({
+    commandName,
     resources: process.resourcesPath,
     isPackaged: app.isPackaged,
     isInstalledLocation: () => process.platform !== 'darwin' || app.isInApplicationsFolder(),
@@ -577,9 +580,11 @@ async function main(): Promise<void> {
         if (jingworkAuth !== undefined && jingworkConfig !== undefined) {
           stopConversationSync = startJingworkConversationSync(jingworkAuth, welcomeBackend.conversationLogs,
             app.getPath('userData'), jingworkConfig.conversationLogIntervalMs ?? 5000, jingworkConfig.requestTimeoutMs,
-            (failed, reason) => console.warn(failed
-              ? `Jingwork conversation log sync paused (${reason ?? 'unknown'}). Local chat is retained. Check connection, sign-in and local storage.`
-              : 'Jingwork conversation log sync resumed.'))
+            (failed, reason) => {
+              console.warn(failed
+                ? `Jingwork conversation log sync paused (${reason ?? 'unknown'}). Local chat is retained. Check connection, sign-in and local storage.`
+                : 'Jingwork conversation log sync resumed.')
+            })
         }
         analyticsEnabled = await welcomeBackend.analyticsEnabled().catch(() => false)
         if (!reportedLaunch) { reportedLaunch = true; void track('desktop_app_launch', {}) }
@@ -798,7 +803,7 @@ async function main(): Promise<void> {
     // A confirmation on a hidden window would go unseen, so it waits for the next show; the mandatory
     // flow keeps its own taskbar and Dock attention instead.
     if (!isMandatory()) await windowShown()
-    if (quitting) return state
+    if (isQuitting()) return state
     return updates.install(version)
   }
   const windowShown = (): Promise<void> => new Promise((resolve) => {
@@ -1151,7 +1156,8 @@ async function main(): Promise<void> {
     { type: 'separator' },
     { label: currentDesktopLocale().messages.checkUpdatesMenu, click: () => { void openUpdatePrompt(true) } },
     ...process.platform === 'darwin' || process.platform === 'win32'
-      ? [{ label: currentDesktopLocale().messages.cliCommandMenu, click: () => { void commandManager.show() } }] : [],
+      ? [{ label: formatDesktopMessage(currentDesktopLocale().messages.cliCommandMenu, { command: commandName }),
+        click: () => { void commandManager.show() } }] : [],
     { type: 'separator' },
     ...development ? [
       { label: currentDesktopLocale().messages.reloadPageMenu, role: 'reload' as const },
@@ -1431,10 +1437,11 @@ async function main(): Promise<void> {
     window.focus()
   }
 
-  if (app.isPackaged || process.env.DSH_DESKTOP_DEV_APP === '1') app.setAsDefaultProtocolClient('dsh')
+  const openProtocol = product === 'jingwork' ? 'jingwork' : 'dsh'
+  if (app.isPackaged || process.env.DSH_DESKTOP_DEV_APP === '1') app.setAsDefaultProtocolClient(openProtocol)
   app.on('open-url', (event, url) => {
     event.preventDefault()
-    if (url === 'dsh://open' || url === 'dsh://open/') focusPrimaryWindow()
+    if (url === `${openProtocol}://open` || url === `${openProtocol}://open/`) focusPrimaryWindow()
   })
 
   app.on('activate', (_event, hasVisibleWindows) => {
@@ -1544,19 +1551,24 @@ async function main(): Promise<void> {
   publishUpdate(updateState)
 }
 
-const ownsDesktopInstance = claimDesktopSingleInstance(app, () => { focusPrimaryWindow() })
-
-if (ownsDesktopInstance) void app.whenReady().then(main).catch(async (error: unknown) => {
-  const message = error instanceof Error ? error.message : String(error)
-  console.error(error)
-  const diagnosticFile = process.env.DSH_DESKTOP_DIAGNOSTIC_FILE
-  if (diagnosticFile !== undefined) {
-    await writeFile(diagnosticFile, `${error instanceof Error ? error.stack ?? message : message}\n`).catch(() => undefined)
-  }
-  reportFatal(error, 'main')
-}).catch(async (error: unknown) => {
-  console.error(error)
-  shuttingDown = true
-  await stopOperationReports()
-  app.exit(1)
-})
+/**
+ * Start Desktop once after the bootstrap configures its product paths.
+ * @param product - Installed identity selected by the bootstrap, or Harness for source development.
+ */
+export function startDesktop(product: DesktopProduct = 'harness'): void {
+  const ownsDesktopInstance = claimDesktopSingleInstance(app, () => { focusPrimaryWindow() })
+  if (ownsDesktopInstance) void app.whenReady().then(() => main(product)).catch(async (error: unknown) => {
+    const message = error instanceof Error ? error.message : String(error)
+    console.error(error)
+    const diagnosticFile = process.env.DSH_DESKTOP_DIAGNOSTIC_FILE
+    if (diagnosticFile !== undefined) {
+      await writeFile(diagnosticFile, `${error instanceof Error ? error.stack ?? message : message}\n`).catch(() => undefined)
+    }
+    reportFatal(error, 'main')
+  }).catch(async (error: unknown) => {
+    console.error(error)
+    shuttingDown = true
+    await stopOperationReports()
+    app.exit(1)
+  })
+}

@@ -8,7 +8,7 @@ import { basename, dirname, isAbsolute, join } from 'node:path'
 import { promisify } from 'node:util'
 import { withFileLock, writeFileAtomic } from '@deepseek-ai/dsh-atomic-write'
 
-/** Fixed installation locations supplied by the Desktop shell. */
+/** Fixed installation locations; each destination basename owns its receipt and lock. */
 export interface FileCommandInstallation {
   readonly destination: string
   readonly launcher: string
@@ -53,7 +53,7 @@ function digest(value: unknown): string {
 }
 
 function receiptPath(options: FileCommandInstallation): string {
-  return join(dirname(options.destination), '.dsh-desktop-command.json')
+  return join(dirname(options.destination), `.${basename(options.destination)}-desktop-command.json`)
 }
 
 async function readEntry(path: string): Promise<Entry> {

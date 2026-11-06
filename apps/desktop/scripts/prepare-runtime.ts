@@ -16,8 +16,15 @@ import { prepareCommandLink } from './prepare-command-link.ts'
 
 const BUILD_PATHS = resolveDesktopTargetBuildPaths()
 const RUNTIME_ROOT = BUILD_PATHS.runtime
+const CLI_PRODUCT = resolveCliProduct(process.env.DSH_DESKTOP_PRODUCT)
 
 type DesktopTarget = ReturnType<typeof desktopTargetPlatform>
+
+function resolveCliProduct(value: string | undefined): 'harness' | 'jingwork' {
+  const product = value ?? 'harness'
+  if (product !== 'harness' && product !== 'jingwork') throw new Error('desktop CLI: unsupported application product')
+  return product
+}
 
 /** Extract the target Electron distribution and return its embedded Node version. */
 async function prepareElectron({ platform, arch }: DesktopTarget): Promise<string> {
@@ -37,7 +44,7 @@ function prepareCli({ platform, arch }: DesktopTarget): void {
   cpSync(join(import.meta.dirname, 'node-bin'), join(RUNTIME_ROOT, 'bin'), { recursive: true })
   chmodSync(join(RUNTIME_ROOT, 'bin', 'node'), 0o755)
   const cli = join(RUNTIME_ROOT, 'cli')
-  prepareDesktopCli(cli, platform)
+  prepareDesktopCli(cli, platform, CLI_PRODUCT)
   if (platform === 'darwin') {
     const minimumVersion = execFileSync('/usr/libexec/PlistBuddy', [
       '-c', 'Print LSMinimumSystemVersion', join(BUILD_PATHS.electron, 'Electron.app', 'Contents', 'Info.plist'),

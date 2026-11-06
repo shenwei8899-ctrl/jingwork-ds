@@ -3,12 +3,12 @@
 import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process'
 import { copyFileSync, mkdirSync, mkdtempSync, realpathSync, symlinkSync, writeFileSync } from 'node:fs'
 import { rm } from 'node:fs/promises'
-import { tmpdir } from 'node:os'
+import { homedir, tmpdir } from 'node:os'
 import { dirname, join, relative } from 'node:path'
 import { expect, it, onTestFinished } from 'vitest'
 import { prepareDesktopCli } from '../scripts/prepare-cli.ts'
 
-function fixture() {
+function fixture(product: 'harness' | 'jingwork' = 'harness') {
   const root = realpathSync(mkdtempSync(join(tmpdir(), 'dsh-cli-launcher-')))
   const children: ChildProcessWithoutNullStreams[] = []
   const exits: Promise<unknown>[] = []
@@ -23,8 +23,8 @@ function fixture() {
   const platform = process.platform === 'win32' ? 'win32' : 'darwin'
   const resources = join(application, ...platform === 'darwin' ? ['Contents', 'Resources'] : ['resources'])
   const cli = join(resources, 'runtime', 'cli')
-  prepareDesktopCli(cli, platform)
-  const electron = join(application, ...platform === 'darwin' ? ['Contents', 'MacOS', 'DeepSeek Harness'] : ['DeepSeek Harness.exe'])
+  prepareDesktopCli(cli, platform, product)
+  const electron = join(application, ...platform === 'darwin' ? ['Contents', 'MacOS', product === 'jingwork' ? 'JingWork' : 'DeepSeek Harness'] : ['DeepSeek Harness.exe'])
   mkdirSync(dirname(electron), { recursive: true })
   if (platform === 'win32') copyFileSync(process.execPath, electron)
   else symlinkSync(process.execPath, electron)
@@ -34,19 +34,21 @@ function fixture() {
   writeFileSync(entry, [
     'const chunks = []',
     'for await (const chunk of process.stdin) chunks.push(chunk)',
-    "process.stdout.write(JSON.stringify({ args: process.argv.slice(2), cwd: process.cwd(), value: process.env.DSH_CLI_TEST_VALUE, nodeMode: process.env.ELECTRON_RUN_AS_NODE, input: Buffer.concat(chunks).toString('hex') }))",
+    "process.stdout.write(JSON.stringify({ args: process.argv.slice(2), cwd: process.cwd(), value: process.env.DSH_CLI_TEST_VALUE, nodeMode: process.env.ELECTRON_RUN_AS_NODE, input: Buffer.concat(chunks).toString('hex'), ...(process.env.DSH_CLI_TEST_CAPTURE_HOME === '1' ? { home: process.env.DSH_HOME, agents: process.env.DSH_AGENTS_HOME } : {}) }))",
     "process.stderr.write('separate stderr\\n')",
     'process.exitCode = 23',
     '',
   ].join('\n'))
-  const command = join(cli, 'bin', platform === 'win32' ? 'dsh.cmd' : 'dsh')
+  const command = join(cli, 'bin', platform === 'win32' ? 'dsh.cmd' : product === 'jingwork' ? 'jingwork' : 'dsh')
   function start(args: string[], executable = command) {
+    const environment = { ...process.env, DSH_CLI_TEST_VALUE: 'kept',
+      ...product === 'jingwork' ? { DSH_CLI_TEST_CAPTURE_HOME: '1', DSH_HOME: '/shared/harness', DSH_AGENTS_HOME: '/shared/agents' } : {} }
     // cmd fixture inputs contain no metacharacters; POSIX cases exercise literal expansion characters separately.
     const child = platform === 'win32'
       ? spawn(process.env.ComSpec ?? 'cmd.exe', ['/d', '/s', '/c', `""${executable}" ${args.map(value => `"${value}"`).join(' ')}"`], {
-        cwd: root, env: { ...process.env, DSH_CLI_TEST_VALUE: 'kept' }, stdio: 'pipe', windowsVerbatimArguments: true,
+        cwd: root, env: environment, stdio: 'pipe', windowsVerbatimArguments: true,
       })
-      : spawn(executable, args, { cwd: root, env: { ...process.env, DSH_CLI_TEST_VALUE: 'kept' }, stdio: 'pipe' })
+      : spawn(executable, args, { cwd: root, env: environment, stdio: 'pipe' })
     children.push(child)
     const closed = new Promise<number | null>((resolve, reject) => {
       child.once('error', reject)
@@ -84,4 +86,15 @@ it.skipIf(process.platform === 'win32')('resolves chained command symlinks witho
   run.child.stdin.end()
   expect(await run.closed, run.stderr()).toBe(23)
   expect(JSON.parse(run.stdout())).toMatchObject({ args, cwd: f.root, nodeMode: '1' })
+})
+
+it.skipIf(process.platform === 'win32')('runs the JingWork executable with private roots instead of inherited Harness roots', async () => {
+  const f = fixture('jingwork')
+  const link = join(f.root, 'jingwork')
+  symlinkSync(relative(f.root, f.command), link)
+  const run = f.start(['--version'], link)
+  run.child.stdin.end()
+  expect(await run.closed, run.stderr()).toBe(23)
+  expect(JSON.parse(run.stdout())).toMatchObject({ args: ['--version'], cwd: f.root, nodeMode: '1',
+    home: join(homedir(), '.jingwork'), agents: join(homedir(), '.jingwork', 'agents') })
 })

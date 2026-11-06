@@ -11,7 +11,7 @@ import type { MenuItemConstructorOptions, MessageBoxOptions } from 'electron'
 import { DESKTOP_IPC, type DesktopUpdateState } from '../src/ipc.ts'
 import { MANDATORY_IPC } from '../src/mandatory-update-ipc.ts'
 import { DesktopHostFatalError, DesktopHostUncleanExitError } from '../src/host-process.ts'
-import { en, zh } from '../src/locale.ts'
+import { en, zh, formatDesktopMessage } from '../src/locale.ts'
 import { DesktopUpdatePreparationError } from '../src/update-error.ts'
 import { writeCrashReport } from '../src/crash-report.ts'
 import { runOperationReportJob } from '../src/operation-report-job.ts'
@@ -175,6 +175,7 @@ const harness = await vi.hoisted(async () => {
   const app = Object.assign(new EventEmitter(), {
     isPackaged: true,
     name: 'Desktop test',
+    getName: () => 'Desktop test',
     whenReady: () => Promise.resolve(),
     getLocale: (): string => 'en-US',
     getPreferredSystemLanguages: () => ['en-US'],
@@ -564,7 +565,7 @@ describe('desktop main startup', () => {
     const visible = menu.filter(item => item.visible !== false)
     expect(visible.map(item => item.role === 'quit' ? 'quit' : item.label ?? item.type)).toEqual([
       messages.aboutMenu, 'separator', messages.checkUpdatesMenu,
-      ...platform === 'linux' ? [] : [messages.cliCommandMenu],
+      ...platform === 'linux' ? [] : [formatDesktopMessage(messages.cliCommandMenu, { command: 'dsh' })],
       'separator', ...packaged ? [] : [messages.reloadPageMenu, messages.restartAppHostMenu],
       messages.toggleDevToolsMenu, 'separator',
       ...platform === 'darwin' ? [messages.hideApplication, messages.hideOtherApplications, messages.showAllApplications, 'separator'] : [],
@@ -738,7 +739,7 @@ describe('desktop main startup', () => {
     testAuth.login.mockImplementationOnce(() => { entered.resolve(undefined); return login.promise })
     const checks: Promise<unknown>[] = []
     try {
-      await import('../src/main.ts')
+      await import('../src/main.ts').then(({ startDesktop }) => { startDesktop() })
       await explained.promise
       expect(harness.hosts).toHaveLength(0)
       expect(harness.dialog.showMessageBox).toHaveBeenCalledOnce()
@@ -892,7 +893,7 @@ describe('desktop main startup', () => {
 
   it.each(['darwin', 'win32', 'linux'] as const)('limits native titlebar styling to macOS on %s', async (platform) => {
     vi.spyOn(process, 'platform', 'get').mockReturnValue(platform)
-    await import('../src/main.ts')
+    await import('../src/main.ts').then(({ startDesktop }) => { startDesktop() })
     await harness.preparing.promise
     const window = harness.windows[0]!
     expect(window.urls).toEqual(['dsh-app://app/'])
@@ -915,7 +916,7 @@ describe('desktop main startup', () => {
   it('serves packaged shell documents instead of rejecting the shell origin', async () => {
     const { serveWebDocument } = await import('../src/web-document.ts')
     vi.mocked(serveWebDocument).mockResolvedValue(new Response('shell document'))
-    await import('../src/main.ts')
+    await import('../src/main.ts').then(({ startDesktop }) => { startDesktop() })
     await harness.preparing.promise
     const handler = harness.protocolHandle.mock.calls[0]![1]
     const request = new Request('dsh-app://shell/update-dialog.html')
@@ -926,7 +927,7 @@ describe('desktop main startup', () => {
 
   it.each(['darwin', 'win32'] as const)('relays the %s fullscreen state on transitions and after each load', async (platform) => {
     vi.spyOn(process, 'platform', 'get').mockReturnValue(platform)
-    await import('../src/main.ts')
+    await import('../src/main.ts').then(({ startDesktop }) => { startDesktop() })
     await harness.preparing.promise
     const window = harness.windows[0]!
     const sent = () => window.webContents.send.mock.calls.filter(([channel]) => channel === DESKTOP_IPC.windowFullscreen)
@@ -949,7 +950,7 @@ describe('desktop main startup', () => {
 
   it.each(['linux'] as const)('registers no fullscreen relay on %s', async (platform) => {
     vi.spyOn(process, 'platform', 'get').mockReturnValue(platform)
-    await import('../src/main.ts')
+    await import('../src/main.ts').then(({ startDesktop }) => { startDesktop() })
     await harness.preparing.promise
     const window = harness.windows[0]!
     window.emit('enter-full-screen')
@@ -959,7 +960,7 @@ describe('desktop main startup', () => {
 
   it('covers the macOS vibrancy reattach gap with an opaque base while minimized or hidden', async () => {
     vi.spyOn(process, 'platform', 'get').mockReturnValue('darwin')
-    await import('../src/main.ts')
+    await import('../src/main.ts').then(({ startDesktop }) => { startDesktop() })
     await harness.preparing.promise
     const window = harness.windows[0]!
     // Minimizing drops the vibrancy material and paints the theme's opaque fill.
@@ -990,7 +991,7 @@ describe('desktop main startup', () => {
 
   it.each(['win32', 'linux'] as const)('registers no backdrop swap on %s', async (platform) => {
     vi.spyOn(process, 'platform', 'get').mockReturnValue(platform)
-    await import('../src/main.ts')
+    await import('../src/main.ts').then(({ startDesktop }) => { startDesktop() })
     await harness.preparing.promise
     const window = harness.windows[0]!
     window.minimized = true
@@ -1001,7 +1002,7 @@ describe('desktop main startup', () => {
 
   it('follows confirmed language and primary document palette without trusting other frames', async () => {
     vi.spyOn(process, 'platform', 'get').mockReturnValue('win32')
-    await import('../src/main.ts')
+    await import('../src/main.ts').then(({ startDesktop }) => { startDesktop() })
     await harness.preparing.promise
     const window = harness.windows[0]!
     const listener = harness.ipcOn.mock.calls.find(([channel]) => channel === DESKTOP_IPC.windowsAppearance)![1]
@@ -1034,7 +1035,7 @@ describe('desktop main startup', () => {
     const directory = join(harness.app.getPath('userData'), 'desktop')
     mkdirSync(directory, { recursive: true })
     writeFileSync(join(directory, 'locale-cache'), 'zh-CN\n')
-    await import('../src/main.ts')
+    await import('../src/main.ts').then(({ startDesktop }) => { startDesktop() })
     await harness.preparing.promise
     const window = harness.windows[0]!
     const appearance = harness.ipcOn.mock.calls.find(([channel]) => channel === DESKTOP_IPC.windowsAppearance)![1]
@@ -1054,7 +1055,7 @@ describe('desktop main startup', () => {
 
   it('maps Windows caption menus to localized native commands and rejects foreign popup requests', async () => {
     vi.spyOn(process, 'platform', 'get').mockReturnValue('win32')
-    await import('../src/main.ts')
+    await import('../src/main.ts').then(({ startDesktop }) => { startDesktop() })
     await harness.preparing.promise
     const window = harness.windows[0]!
     const event = { sender: window.webContents, senderFrame: window.webContents.mainFrame }
@@ -1092,7 +1093,7 @@ describe('desktop main startup', () => {
 
   it.each(['darwin', 'linux'] as const)('adds the product File menu and standard window commands only on macOS (%s)', async (platform) => {
     vi.spyOn(process, 'platform', 'get').mockReturnValue(platform)
-    await import('../src/main.ts')
+    await import('../src/main.ts').then(({ startDesktop }) => { startDesktop() })
     await harness.preparing.promise
     const describeItem = (item: MenuItemConstructorOptions): string | undefined =>
       item.role ?? (item.type === 'separator' ? 'separator' : item.label)
@@ -1105,7 +1106,7 @@ describe('desktop main startup', () => {
       : ['Application', 'editMenu'])
     const application = template[0]!.submenu as MenuItemConstructorOptions[]
     expect(application.filter(item => item.visible !== false).map(describeItem)).toEqual(platform === 'darwin'
-      ? ['about', 'separator', en.checkUpdatesMenu, en.cliCommandMenu, 'separator', 'toggleDevTools', 'separator', 'hide', 'hideOthers', 'unhide', 'separator', 'quit']
+      ? ['about', 'separator', en.checkUpdatesMenu, formatDesktopMessage(en.cliCommandMenu, { command: 'dsh' }), 'separator', 'toggleDevTools', 'separator', 'hide', 'hideOthers', 'unhide', 'separator', 'quit']
       : ['about', 'separator', en.checkUpdatesMenu, 'separator', 'toggleDevTools', 'separator', 'quit'])
     expect(harness.menu.setApplicationMenu).toHaveBeenCalledOnce()
   })
@@ -1117,7 +1118,7 @@ describe('desktop main startup', () => {
     const originalName = harness.app.name
     harness.app.name = '@deepseek-ai/dsh-desktop'
     try {
-      await import('../src/main.ts')
+      await import('../src/main.ts').then(({ startDesktop }) => { startDesktop() })
       await harness.preparing.promise
       const commands = applicationMenuItems().filter(item => item.visible !== false)
       await expect(JSON.stringify(commands, null, 2) + '\n')
@@ -1127,7 +1128,7 @@ describe('desktop main startup', () => {
   })
 
   it.each(['http:', 'https:'] as const)('attaches %s Host socket credentials only to the owned application origin and window', async (protocol) => {
-    await import('../src/main.ts')
+    await import('../src/main.ts').then(({ startDesktop }) => { startDesktop() })
     await harness.preparing.promise
     harness.prepared.resolve()
     await harness.hostStarted.promise
@@ -1167,7 +1168,7 @@ describe('desktop main startup', () => {
   })
 
   it('enlarges only an active onboarding window and keeps its size after completion', async () => {
-    await import('../src/main.ts')
+    await import('../src/main.ts').then(({ startDesktop }) => { startDesktop() })
     await harness.preparing.promise
     const window = harness.windows[0]!
     const listener = harness.ipcOn.mock.calls.find(([channel]) => channel === DESKTOP_IPC.onboardingActive)![1]
@@ -1189,7 +1190,7 @@ describe('desktop main startup', () => {
   })
 
   it('registers the window-owned directory picker during startup and rejects foreign callers', async () => {
-    await import('../src/main.ts')
+    await import('../src/main.ts').then(({ startDesktop }) => { startDesktop() })
     await harness.preparing.promise
     const window = harness.windows[0]!
     const handler = harness.handlers.get(DESKTOP_IPC.directoryPick) as (event: IpcMainInvokeEvent) => Promise<string | null>
@@ -1203,7 +1204,7 @@ describe('desktop main startup', () => {
   })
 
   it('holds boot injections until the Host is ready and rejects foreign boot callers', async () => {
-    await import('../src/main.ts')
+    await import('../src/main.ts').then(({ startDesktop }) => { startDesktop() })
     await harness.preparing.promise
     const handler = harness.handlers.get(DESKTOP_IPC.boot)!
     await expect(handler({ senderFrame: { url: 'https://other.example/' } })).rejects.toThrow('unowned renderer')
@@ -1222,7 +1223,7 @@ describe('desktop main startup', () => {
 
   it('retains macOS native editing actions on right-click and only copy for selected read-only text', async () => {
     vi.spyOn(process, 'platform', 'get').mockReturnValue('darwin')
-    await import('../src/main.ts')
+    await import('../src/main.ts').then(({ startDesktop }) => { startDesktop() })
     await harness.preparing.promise
     const window = harness.windows[0]!
     const editFlags = { canUndo: true, canRedo: false, canCut: true, canCopy: true, canPaste: true, canSelectAll: true }
@@ -1266,8 +1267,16 @@ describe('desktop main startup', () => {
     expect(harness.openExternal).not.toHaveBeenCalled()
   })
 
-  async function readyForUpdate() {
-    await import('../src/main.ts')
+  it('registers JingWork links and its independent terminal command', async () => {
+    vi.stubGlobal('process', { ...process, platform: 'darwin' })
+    harness.app.isPackaged = true
+    await readyForUpdate('jingwork')
+    expect(harness.app.setAsDefaultProtocolClient).toHaveBeenCalledExactlyOnceWith('jingwork')
+    expect(applicationMenuItems().map(item => item.label)).toContain(formatDesktopMessage(en.cliCommandMenu, { command: 'jingwork' }))
+  })
+
+  async function readyForUpdate(product: 'harness' | 'jingwork' = 'harness') {
+    await import('../src/main.ts').then(({ startDesktop }) => { startDesktop(product) })
     await harness.preparing.promise
     harness.prepared.resolve()
     await harness.hostStarted.promise
@@ -1283,7 +1292,7 @@ describe('desktop main startup', () => {
     ['linux', ['--updated'], false],
   ] as const)('raises the first workspace only for a Windows installer restart (%s, %j)', async (platform, args, raises) => {
     vi.stubGlobal('process', { ...process, platform, argv: ['desktop', ...args] })
-    await import('../src/main.ts')
+    await import('../src/main.ts').then(({ startDesktop }) => { startDesktop() })
     await harness.preparing.promise
     const window = harness.windows[0]!
     expect(window.moveTop).not.toHaveBeenCalled()
@@ -2253,14 +2262,14 @@ describe('desktop main startup', () => {
     const shown = Promise.withResolvers<undefined>()
     harness.dialog.showMessageBox.mockImplementation(() => { shown.resolve(undefined); return new Promise(() => {}) })
     harness.failWindow(new Error('window creation failed'))
-    await import('../src/main.ts')
+    await import('../src/main.ts').then(({ startDesktop }) => { startDesktop() })
     await shown.promise
     expect(harness.windows).toHaveLength(0)
     expect((harness.dialog.showMessageBox.mock.calls[0]![0] as MessageBoxOptions).detail).toContain('window creation failed')
   })
 
   it('accepts Web fatal reports only from the primary application frame', async () => {
-    await import('../src/main.ts')
+    await import('../src/main.ts').then(({ startDesktop }) => { startDesktop() })
     await harness.preparing.promise
     const window = harness.windows[0]!
     const frame = { url: 'dsh-app://app/' }
@@ -2280,7 +2289,7 @@ describe('desktop main startup', () => {
   })
 
   it('ignores subresource failures and navigation cancellation but reports a failed main document', async () => {
-    await import('../src/main.ts')
+    await import('../src/main.ts').then(({ startDesktop }) => { startDesktop() })
     await harness.preparing.promise
     const window = harness.windows[0]!
     window.webContents.emit('did-fail-load', {}, -2, 'failed', 'dsh-app://app/image.png', false)
@@ -2293,7 +2302,7 @@ describe('desktop main startup', () => {
   })
 
   it('offers all recovery choices when resources fail before the Host starts', async () => {
-    await import('../src/main.ts')
+    await import('../src/main.ts').then(({ startDesktop }) => { startDesktop() })
     await harness.preparing.promise
     harness.prepared.reject(new Error('runtime resources missing'))
     await harness.dialogShown.promise
@@ -2303,7 +2312,7 @@ describe('desktop main startup', () => {
   })
 
   it.each(['preload', 'renderer'])('retains the document after a fatal %s failure and reports only the first error', async (kind) => {
-    await import('../src/main.ts')
+    await import('../src/main.ts').then(({ startDesktop }) => { startDesktop() })
     await harness.preparing.promise
     const window = harness.windows[0]!
     if (kind === 'preload') window.webContents.emit('preload-error', {}, 'preload-app.cjs', new Error('preload unavailable'))
@@ -2317,7 +2326,7 @@ describe('desktop main startup', () => {
   })
 
   it('ignores clean renderer exits and exits of a destroyed window', async () => {
-    await import('../src/main.ts')
+    await import('../src/main.ts').then(({ startDesktop }) => { startDesktop() })
     await harness.preparing.promise
     const window = harness.windows[0]!
     window.webContents.emit('render-process-gone', {}, { reason: 'clean-exit' })
@@ -2331,7 +2340,7 @@ describe('desktop main startup', () => {
     const shown = Promise.withResolvers<undefined>()
     harness.dialog.showMessageBox.mockImplementation(() => { shown.resolve(undefined); return new Promise(() => {}) })
     vi.spyOn(harness.FakeWindow.prototype, 'loadURL').mockRejectedValueOnce(new Error('document missing'))
-    await import('../src/main.ts')
+    await import('../src/main.ts').then(({ startDesktop }) => { startDesktop() })
     await shown.promise
     expect(harness.dialog.showMessageBox).toHaveBeenCalledOnce()
     expect((harness.dialog.showMessageBox.mock.calls[0]![0] as MessageBoxOptions).detail).toContain('document missing')
@@ -2339,7 +2348,7 @@ describe('desktop main startup', () => {
   })
 
   it('writes operation history under the instance userData instead of the shared logs directory', async () => {
-    await import('../src/main.ts')
+    await import('../src/main.ts').then(({ startDesktop }) => { startDesktop() })
     await harness.preparing.promise
     harness.prepared.resolve()
     await harness.hostStarted.promise
@@ -2353,7 +2362,7 @@ describe('desktop main startup', () => {
   })
 
   it('writes the Host\'s own diagnostic into a startup-phase crash report when the Host reports a fatal error before ready', async () => {
-    await import('../src/main.ts')
+    await import('../src/main.ts').then(({ startDesktop }) => { startDesktop() })
     await harness.preparing.promise
     harness.prepared.resolve()
     await harness.hostStarted.promise
@@ -2381,7 +2390,7 @@ describe('desktop main startup', () => {
 
   it('attaches the primary window\'s error-level console output to a running-phase Host crash report', async () => {
     harness.dialog.showMessageBox.mockResolvedValue({ response: 0, checkboxChecked: false })
-    await import('../src/main.ts')
+    await import('../src/main.ts').then(({ startDesktop }) => { startDesktop() })
     await harness.preparing.promise
     harness.prepared.resolve()
     await harness.hostStarted.promise
@@ -2481,7 +2490,7 @@ describe('desktop main startup', () => {
       return new Promise((resolve) => { finishReport = resolve })
     })
     harness.dialog.showMessageBox.mockResolvedValue({ response, checkboxChecked: false })
-    await import('../src/main.ts')
+    await import('../src/main.ts').then(({ startDesktop }) => { startDesktop() })
     await harness.preparing.promise
     harness.prepared.resolve()
     await harness.hostStarted.promise
@@ -2520,7 +2529,7 @@ describe('desktop main startup', () => {
     let finishRead!: () => void
     const read = new Promise<void>((resolve) => { finishRead = resolve })
     harness.loginShell.mockImplementation(async (base) => { await read; return harness.readLoginShell(base) })
-    await import('../src/main.ts')
+    await import('../src/main.ts').then(({ startDesktop }) => { startDesktop() })
     await harness.preparing.promise
     const boot = invoke(DESKTOP_IPC.boot)
     harness.prepared.resolve()
@@ -2538,7 +2547,7 @@ describe('desktop main startup', () => {
   })
 
   it('prepares recovery offscreen and starts one Host before choosing the first visible window', async () => {
-    await import('../src/main.ts')
+    await import('../src/main.ts').then(({ startDesktop }) => { startDesktop() })
     await harness.preparing.promise
     expect(harness.windows).toHaveLength(1)
     const window = harness.windows[0]!
@@ -2574,7 +2583,7 @@ describe('desktop main startup', () => {
   it('prepares an independent plugin profile for the unpackaged Host', async () => {
     harness.app.isPackaged = false
     vi.stubEnv('DSH_DESKTOP_DSH_DIR', undefined)
-    await import('../src/main.ts')
+    await import('../src/main.ts').then(({ startDesktop }) => { startDesktop() })
     await harness.preparing.promise
     harness.prepared.resolve()
     await harness.hostStarted.promise
@@ -2590,7 +2599,7 @@ describe('desktop main startup', () => {
   it('fails an unpackaged launch that receives no primary runtime directory', async () => {
     harness.app.isPackaged = false
     vi.stubEnv('DSH_DESKTOP_PRIMARY_RUNTIME_DIR', undefined)
-    await import('../src/main.ts')
+    await import('../src/main.ts').then(({ startDesktop }) => { startDesktop() })
     await harness.dialogShown.promise
     const options = harness.dialog.showMessageBox.mock.calls[0]![0] as MessageBoxOptions
     expect(options.detail).toContain('DSH_DESKTOP_PRIMARY_RUNTIME_DIR is required for an unpackaged launch')
@@ -2598,7 +2607,7 @@ describe('desktop main startup', () => {
   })
 
   it('keeps startup errors in the existing window without a retry handler', async () => {
-    await import('../src/main.ts')
+    await import('../src/main.ts').then(({ startDesktop }) => { startDesktop() })
     await harness.preparing.promise
     harness.prepared.resolve()
     await harness.hostStarted.promise
@@ -2614,7 +2623,7 @@ describe('desktop main startup', () => {
 
   it('keeps recovery visible when the backend fails during the welcome preference read', async () => {
     const preferences = Promise.withResolvers<Response>()
-    await import('../src/main.ts')
+    await import('../src/main.ts').then(({ startDesktop }) => { startDesktop() })
     await harness.preparing.promise
     harness.prepared.resolve()
     await harness.hostStarted.promise
@@ -2635,7 +2644,7 @@ describe('desktop main startup', () => {
   })
 
   it('waits for a pending child to exit on quit without late window navigation', async () => {
-    await import('../src/main.ts')
+    await import('../src/main.ts').then(({ startDesktop }) => { startDesktop() })
     await harness.preparing.promise
     harness.prepared.resolve()
     await harness.hostStarted.promise
@@ -2656,7 +2665,7 @@ describe('desktop main startup', () => {
 })
 
 it.each(['failed', 'expired'] as const)('focuses DSH once when browser authorization becomes %s', async (phase) => {
-  await import('../src/main.ts')
+  await import('../src/main.ts').then(({ startDesktop }) => { startDesktop() })
   await harness.preparing.promise
   harness.prepared.resolve()
   await harness.hostStarted.promise
@@ -2674,7 +2683,7 @@ it.each(['failed', 'expired'] as const)('focuses DSH once when browser authoriza
 })
 
 it.each([['light', false], ['dark', true]] as const)('opens Platform authorization in the effective %s palette', async (theme, shouldUseDarkColors) => {
-  await import('../src/main.ts')
+  await import('../src/main.ts').then(({ startDesktop }) => { startDesktop() })
   await harness.preparing.promise
   harness.prepared.resolve()
   await harness.hostStarted.promise
@@ -2693,7 +2702,7 @@ it.each([['light', false], ['dark', true]] as const)('opens Platform authorizati
 
 it('disables native product events for a disabled Desktop launch', async () => {
   harness.analyticsEnabled = false
-  await import('../src/main.ts')
+  await import('../src/main.ts').then(({ startDesktop }) => { startDesktop() })
   await harness.preparing.promise
   harness.prepared.resolve()
   await harness.hostStarted.promise

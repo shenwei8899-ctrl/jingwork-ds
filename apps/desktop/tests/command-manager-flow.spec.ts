@@ -7,7 +7,7 @@ import { afterEach, expect, it, onTestFinished, vi } from 'vitest'
 import type { ExecFileOptions } from 'node:child_process'
 import type { MessageBoxOptions, MessageBoxReturnValue } from 'electron'
 import { DesktopCommandManager } from '../src/command-management.ts'
-import { en, zh, type DesktopMessages } from '../src/locale.ts'
+import { en, zh, formatDesktopMessage, type DesktopMessages } from '../src/locale.ts'
 
 const external = vi.hoisted(() => ({ shell: null as string | null, cancelAuthorization: false, elevations: 0 }))
 
@@ -38,6 +38,7 @@ async function fixture(options: {
   shadowed?: boolean
   elevate?: boolean
   messages?: DesktopMessages
+  commandName?: 'dsh' | 'jingwork'
 } = {}) {
   const root = await mkdtemp(join(tmpdir(), 'dsh-command-dialog-'))
   onTestFinished(() => rm(root, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }))
@@ -52,13 +53,13 @@ async function fixture(options: {
   await writeFile(join(worker, 'package.json'), '{"type":"module"}\n')
   const state = {
     fingerprint: 'a'.repeat(64), managed: options.managed ?? false, available: true, kind: options.managed ? 'symlink' : 'file',
-    destination: join(root, process.platform === 'win32' ? 'dsh.cmd' : 'dsh'),
+    destination: join(root, process.platform === 'win32' ? 'dsh.cmd' : options.commandName ?? 'dsh'),
     directory: root, launcher: join(root, 'desktop-dsh'),
-    activeCommand: options.managed && !options.shadowed ? join(root, process.platform === 'win32' ? 'dsh.cmd' : 'dsh') : join(root, 'other-dsh'),
+    activeCommand: options.managed && !options.shadowed ? join(root, process.platform === 'win32' ? 'dsh.cmd' : options.commandName ?? 'dsh') : join(root, 'other-dsh'),
   }
   if (process.platform === 'darwin') {
     const shell = join(root, 'lookup-shell')
-    await writeFile(shell, '#!/bin/sh\nprintf "\\0DSH_COMMAND\\0"\ncat "$(dirname "$0")/selected-command"\nprintf "\\0"\n', { mode: 0o755 })
+    await writeFile(shell, '#!/bin/sh\nprintf "%s" "$*" > "$(dirname "$0")/lookup-args"\nprintf "\\0DSH_COMMAND\\0"\ncat "$(dirname "$0")/selected-command"\nprintf "\\0"\n', { mode: 0o755 })
     await writeFile(join(root, 'selected-command'), state.activeCommand + '\n')
     external.shell = shell
   }
@@ -83,11 +84,12 @@ async function fixture(options: {
   const show = vi.fn<(options: MessageBoxOptions) => Promise<MessageBoxReturnValue>>()
   const manager = new DesktopCommandManager({
     resources, isPackaged: true, isInstalledLocation: () => true, isInstalling: () => false, isQuitting: () => false,
+    ...options.commandName === undefined ? {} : { commandName: options.commandName },
     messages: () => options.messages ?? en, show,
   })
   const calls = async (): Promise<Array<{ operation: string; expected?: string }>> =>
     (await readFile(join(worker, 'calls.jsonl'), 'utf8')).trim().split('\n').map(line => JSON.parse(line) as { operation: string; expected?: string })
-  return { manager, show, calls }
+  return { manager, show, calls, root }
 }
 
 it('requires confirmation before replacing an existing command', async () => {
@@ -99,12 +101,21 @@ it('requires confirmation before replacing an existing command', async () => {
   expect(await f.calls()).toEqual([{ operation: 'inspect' }])
 })
 
+it.skipIf(process.platform !== 'darwin')('looks up and presents the JingWork command independently', async () => {
+  const f = await fixture({ commandName: 'jingwork', managed: true })
+  f.show.mockResolvedValue({ response: 0, checkboxChecked: false })
+  await f.manager.show()
+  expect(await readFile(join(f.root, 'lookup-args'), 'utf8')).toContain('command -v jingwork')
+  expect(f.show.mock.calls[0]![0].title).toBe(formatDesktopMessage(en.cliCommandTitle, { command: 'jingwork' }))
+  expect(await f.calls()).toEqual([{ operation: 'inspect' }])
+})
+
 it('passes the displayed fingerprint and reports a stale worker refusal', async () => {
   const f = await fixture({ failure: 'ESTALE' })
   f.show.mockResolvedValue({ response: 0, checkboxChecked: false })
   await f.manager.show()
   expect(await f.calls()).toEqual([{ operation: 'inspect' }, { operation: 'install', expected: 'a'.repeat(64) }])
-  expect(f.show.mock.lastCall![0].message).toBe(en.cliCommandChanged)
+  expect(f.show.mock.lastCall![0].message).toBe(formatDesktopMessage(en.cliCommandChanged, { command: 'dsh' }))
 })
 
 it.each([['en-US', en], ['zh-CN', zh]] as const)('repairs its own selected command without a switch confirmation in %s', async (locale, messages) => {
@@ -130,7 +141,7 @@ it.skipIf(process.platform !== 'darwin')('keeps a declined worker response throu
   await f.manager.show()
   expect(external.elevations).toBe(1)
   expect(await f.calls()).toEqual([{ operation: 'inspect' }, { operation: 'install', expected: 'a'.repeat(64) }, { operation: 'install', expected: 'a'.repeat(64) }])
-  expect(f.show.mock.lastCall![0]).toMatchObject({ message: en.cliCommandChanged, technicalDetails: 'worker declined' })
+  expect(f.show.mock.lastCall![0]).toMatchObject({ message: formatDesktopMessage(en.cliCommandChanged, { command: 'dsh' }), technicalDetails: 'worker declined' })
 })
 
 it.skipIf(process.platform !== 'darwin')('returns without an error dialog when administrator authorization is cancelled', async () => {

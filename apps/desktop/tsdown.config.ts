@@ -53,7 +53,8 @@ export default defineConfig([
     deps: { alwaysBundle: ['@deepseek-ai/dsh-atomic-write'] },
   },
   {
-    entry: ['lib/types/main.js'],
+    entry: { main: 'lib/types/bootstrap.js' },
+    outputOptions: { codeSplitting: false },
     plugins: [packagedImportsPlugin(mainProcessImports)],
     define: clientVersionDefine,
     onSuccess: async () => {

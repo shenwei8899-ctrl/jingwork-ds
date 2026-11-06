@@ -5,7 +5,7 @@ import { isAbsolute, join, normalize, win32 } from 'node:path'
 import { userInfo } from 'node:os'
 import { promisify } from 'node:util'
 import type { MessageBoxOptions, MessageBoxReturnValue } from 'electron'
-import type { DesktopMessages } from './locale.ts'
+import { formatDesktopMessage, type DesktopMessages } from './locale.ts'
 import type { UpdateDialogOptions } from './update-dialog.ts'
 
 interface CommandState {
@@ -35,6 +35,8 @@ export interface CommandPresentation {
 /** Shell-owned access to installed resources, locale and native dialogs. */
 export interface CommandManagerOptions {
   readonly resources: string
+  /** Packaged product command; Harness callers use `dsh` when omitted. */
+  readonly commandName?: 'dsh' | 'jingwork'
   readonly isPackaged: boolean
   readonly isInstalledLocation: () => boolean
   readonly isInstalling: () => boolean
@@ -76,6 +78,20 @@ function parseState(value: unknown, platform: NodeJS.Platform): CommandState {
 
 function format(text: string, path: string): string { return text.replace('{path}', path) }
 
+function commandMessages(messages: DesktopMessages, command: 'dsh' | 'jingwork'): DesktopMessages {
+  return {
+    ...messages,
+    cliCommandMenu: formatDesktopMessage(messages.cliCommandMenu, { command }),
+    cliCommandTitle: formatDesktopMessage(messages.cliCommandTitle, { command }),
+    cliCommandSelected: formatDesktopMessage(messages.cliCommandSelected, { command }),
+    cliCommandShadowed: formatDesktopMessage(messages.cliCommandShadowed, { command }),
+    cliCommandSelectionUnknown: formatDesktopMessage(messages.cliCommandSelectionUnknown, { command }),
+    cliCommandInstallApp: formatDesktopMessage(messages.cliCommandInstallApp, { command }),
+    cliCommandNewTerminal: formatDesktopMessage(messages.cliCommandNewTerminal, { command }),
+    cliCommandChanged: formatDesktopMessage(messages.cliCommandChanged, { command }),
+  }
+}
+
 function sameCommand(left: string, right: string, platform: NodeJS.Platform): boolean {
   return platform === 'win32' ? win32.normalize(left).toLowerCase() === win32.normalize(right).toLowerCase() : normalize(left) === normalize(right)
 }
@@ -85,11 +101,13 @@ function sameCommand(left: string, right: string, platform: NodeJS.Platform): bo
  * @param state - Observed link or PATH selection.
  * @param messages - Current Desktop locale.
  * @param platform - Command lookup semantics of the host operating system.
+ * @param commandName - Product-specific command displayed in localized copy.
  * @returns Native dialog with stable Close/Repair/Remove or Install/Cancel indices.
  */
 export function presentCommandManagement(
-  state: CommandPresentation, messages: DesktopMessages, platform: NodeJS.Platform,
+  state: CommandPresentation, messages: DesktopMessages, platform: NodeJS.Platform, commandName: 'dsh' | 'jingwork' = 'dsh',
 ): MessageBoxOptions {
+  messages = commandMessages(messages, commandName)
   const other = state.activeCommand !== undefined && !sameCommand(state.activeCommand, state.destination, platform)
   const detail = [
     format(messages.cliCommandLocation, state.destination),
@@ -109,10 +127,10 @@ export function presentCommandManagement(
   }
 }
 
-async function shellCommand(): Promise<{ activeCommand?: string; selectionUnknown?: boolean }> {
+async function shellCommand(commandName: 'dsh' | 'jingwork'): Promise<{ activeCommand?: string; selectionUnknown?: boolean }> {
   const shell = userInfo().shell
   if (shell === null) return { selectionUnknown: true }
-  const script = "printf '\\0DSH_COMMAND\\0'; command -v dsh; printf '\\0'"
+  const script = `printf '\\0DSH_COMMAND\\0'; command -v ${commandName}; printf '\\0'`
   const { stdout } = await promisify(execFile)(shell, ['-ilc', script], { timeout: 5000, maxBuffer: 65536 })
   const value = stdout.split('\0DSH_COMMAND\0')[1]?.split('\0')[0]?.trim()
   if (value === undefined) return { selectionUnknown: true }
@@ -173,7 +191,7 @@ export class DesktopCommandManager {
     const state = await this.worker('inspect')
     if (process.platform !== 'darwin') return state
     try {
-      return { ...state, ...await shellCommand() }
+      return { ...state, ...await shellCommand(this.options.commandName ?? 'dsh') }
     } catch {
       // A custom login shell can fail or wait for interaction; its output is not a diagnostic.
       return { ...state, selectionUnknown: true }
@@ -181,7 +199,7 @@ export class DesktopCommandManager {
   }
 
   private async run(): Promise<void> {
-    const messages = this.options.messages()
+    const messages = commandMessages(this.options.messages(), this.options.commandName ?? 'dsh')
     if (!this.options.isPackaged || !this.options.isInstalledLocation()) {
       await this.options.show({ type: 'info', title: messages.cliCommandTitle, message: messages.cliCommandInstallApp, buttons: [messages.cliCommandClose] })
       return
@@ -192,7 +210,7 @@ export class DesktopCommandManager {
     }
     try {
       const state = await this.inspect()
-      const choice = await this.options.show(presentCommandManagement(state, messages, process.platform))
+      const choice = await this.options.show(presentCommandManagement(state, messages, process.platform, this.options.commandName))
       if (this.options.isQuitting()) return
       const operation = state.managed ? (choice.response === 1 ? 'install' : choice.response === 2 ? 'remove' : undefined)
         : choice.response === 0 ? 'install' : undefined

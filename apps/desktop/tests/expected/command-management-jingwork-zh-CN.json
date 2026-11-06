@@ -1,0 +1,13 @@
+{
+  "type": "warning",
+  "title": "管理 jingwork 命令",
+  "message": "Desktop 命令已安装。",
+  "detail": "Desktop 命令：/usr/local/bin/jingwork\n\n当前 jingwork 命令：/opt/homebrew/bin/jingwork\n\n另一个 jingwork 的优先级更高。请移除或调整该安装的顺序，以默认使用 Desktop 命令；也可以通过完整路径运行 Desktop 命令。",
+  "buttons": [
+    "关闭",
+    "修复",
+    "移除"
+  ],
+  "defaultId": 0,
+  "cancelId": 0
+}

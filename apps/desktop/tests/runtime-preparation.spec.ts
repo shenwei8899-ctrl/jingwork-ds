@@ -53,6 +53,7 @@ beforeEach(() => {
   state.failure = undefined
   process.argv = [process.execPath, 'prepare-runtime.ts']
   vi.stubEnv('DSH_DESKTOP_PACKAGING_RUN_DIR', undefined)
+  vi.stubEnv('DSH_DESKTOP_PRODUCT', undefined)
   state.extractElectron.mockImplementation(async () => {
     if (state.failure === 'electron') throw new Error('Electron extraction failed')
   })
@@ -87,6 +88,7 @@ it.each(['mac-arm64', 'mac-x64', 'win-x64'] as const)('prepares %s with one pnpm
   expect(existsSync(join(runtime, 'primary-runtime', 'dependencies', 'pnpm', 'bin', 'pnpm.mjs'))).toBe(true)
   expect(existsSync(join(runtime, 'bin', 'node'))).toBe(true)
   expect(existsSync(join(runtime, 'cli', 'bin', windows ? 'dsh.cmd' : 'dsh'))).toBe(true)
+  expect(readFileSync(join(runtime, 'cli', 'command-name'), 'utf8')).toBe('dsh\n')
   expect(readFileSync(join(runtime, 'cli', 'command-manager.js'), 'utf8')).toBe('command manager fixture')
   expect(existsSync(join(runtime, 'cli', 'command-path.ps1'))).toBe(true)
   expect(JSON.parse(readFileSync(join(runtime, 'versions.json'), 'utf8'))).toEqual({
@@ -95,6 +97,22 @@ it.each(['mac-arm64', 'mac-x64', 'win-x64'] as const)('prepares %s with one pnpm
   expect(state.preparePrimary).toHaveBeenCalledWith({ deferSmoke: windows })
   if (windows) expect(state.commandLink).not.toHaveBeenCalled()
   else expect(state.commandLink).toHaveBeenCalledWith(join(runtime, 'cli'), target === 'mac-arm64' ? 'arm64' : 'x64', '12.0')
+})
+
+it.each(['mac-arm64', 'mac-x64'] as const)('prepares an independent JingWork command for %s', async (target) => {
+  state.target = target
+  vi.stubEnv('DSH_DESKTOP_PRODUCT', 'jingwork')
+  await import('../scripts/prepare-runtime.ts')
+  const cli = join(state.root, 'runtime', 'cli')
+  expect(existsSync(join(cli, 'bin', 'jingwork'))).toBe(true)
+  expect(existsSync(join(cli, 'bin', 'dsh'))).toBe(false)
+  expect(readFileSync(join(cli, 'command-name'), 'utf8')).toBe('jingwork\n')
+})
+
+it('rejects an unknown packaged CLI product without publishing versions', async () => {
+  vi.stubEnv('DSH_DESKTOP_PRODUCT', 'other')
+  await expect(import('../scripts/prepare-runtime.ts')).rejects.toThrow('unsupported application product')
+  expect(existsSync(join(state.root, 'runtime', 'versions.json'))).toBe(false)
 })
 
 it.each([
