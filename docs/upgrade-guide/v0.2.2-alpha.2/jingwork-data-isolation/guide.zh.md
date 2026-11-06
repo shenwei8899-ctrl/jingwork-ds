@@ -16,7 +16,8 @@ macOS 终端命令为 `jingwork`，应用打开链接为 `jingwork://open`。
 
 ## 迁移
 
-1. 完全退出 JingWork，使用重新构建且适配这台 Mac 芯片的应用替换 `/Applications/JingWork.app`。
-2. 启动 JingWork，登录账号、配置所需提供方凭据，并安装所需插件与技能。新的工作区从空白本地历史开始。
-3. 如果使用 Desktop 终端命令，请打开 JingWork 的命令管理对话框注册 `jingwork`。打开新终端并运行 `jingwork --version`。
-4. 同时打开 DeepSeek Harness 和 JingWork。确认两个窗口都保持可用，且新建的 JingWork 会话仅出现在 JingWork 中。目录位置与项目文件共享范围见[安装归属参考](../../../../apps/desktop/README.zh.md#installation-ownership)。
+1. 如果旧版 JingWork 安装了 `/usr/local/bin/dsh`，请在替换应用前，通过旧版应用的命令管理对话框移除其 `dsh` 注册。
+2. 完全退出 JingWork，使用重新构建且适配这台 Mac 芯片的应用替换 `/Applications/JingWork.app`。
+3. 启动 JingWork，登录账号、配置所需提供方凭据，并安装所需插件与技能。新的工作区从空白本地历史开始。
+4. 如果使用 Desktop 终端命令，请打开重建后的 JingWork 命令管理对话框注册 `jingwork`。打开新终端并运行 `jingwork --version`。Harness 的 `dsh` 注册通过 Harness 单独管理。
+5. 同时打开 DeepSeek Harness 和 JingWork。确认两个窗口都保持可用，且新建的 JingWork 会话仅出现在 JingWork 中。目录位置与项目文件共享范围见[安装归属参考](../../../../apps/desktop/README.zh.md#installation-ownership)。

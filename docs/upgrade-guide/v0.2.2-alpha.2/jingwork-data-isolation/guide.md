@@ -16,7 +16,8 @@ The macOS terminal command is `jingwork`, and the application open link is `jing
 
 ## Migration
 
-1. Fully quit JingWork and replace `/Applications/JingWork.app` with the rebuilt application for the Mac's processor.
-2. Start JingWork, sign in, configure the required provider credentials, and install the required plugins and skills. The new workspace starts with an empty local history.
-3. If you use the Desktop terminal command, open JingWork's command-management dialog to register `jingwork`. Open a new terminal and run `jingwork --version`.
-4. Open DeepSeek Harness and JingWork together. Confirm that both windows remain available and that new JingWork conversations appear only in JingWork. See the [installation ownership reference](../../../../apps/desktop/README.md#installation-ownership) for the directory locations and project-file sharing scope.
+1. If the older JingWork installed `/usr/local/bin/dsh`, use that application's command-management dialog to remove its `dsh` registration before replacing the application.
+2. Fully quit JingWork and replace `/Applications/JingWork.app` with the rebuilt application for the Mac's processor.
+3. Start JingWork, sign in, configure the required provider credentials, and install the required plugins and skills. The new workspace starts with an empty local history.
+4. If you use the Desktop terminal command, open the rebuilt JingWork's command-management dialog to register `jingwork`. Open a new terminal and run `jingwork --version`. Manage Harness's `dsh` registration separately from Harness.
+5. Open DeepSeek Harness and JingWork together. Confirm that both windows remain available and that new JingWork conversations appear only in JingWork. See the [installation ownership reference](../../../../apps/desktop/README.md#installation-ownership) for the directory locations and project-file sharing scope.
