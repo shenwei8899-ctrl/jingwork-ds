@@ -1,0 +1,70 @@
+.hero {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.mascot {
+  flex: 0 0 auto;
+  object-fit: contain;
+}
+
+.description,
+.steps,
+.feedback {
+  font-size: 14px;
+  line-height: 24px;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.description,
+.feedback p {
+  margin: 0;
+}
+
+.steps {
+  margin: 20px 0 0;
+  padding-left: 24px;
+}
+
+.steps li + li {
+  margin-top: 8px;
+}
+
+.feedback {
+  min-height: 24px;
+  margin-top: 16px;
+}
+
+.feedback .error {
+  color: var(--dsw-alias-state-error-primary);
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 24px;
+}
+
+@media (max-width: 560px) {
+  .hero {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .mascot {
+    align-self: center;
+  }
+
+  .actions > button {
+    width: 100%;
+  }
+}

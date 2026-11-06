@@ -524,6 +524,26 @@ it('opens Account from the contributed sidebar launcher', () => {
   expect(renderSlot.mock.calls.filter(call => call[0] === 'settings.launcher').at(-1)?.[1]).toMatchObject({ settingsOpen: false })
 })
 
+it('opens Models directly from the contributed sidebar launcher', () => {
+  const { renderSlot } = mount({ onboardingActive: false })
+  const launcher = renderSlot.mock.calls.find(call => call[0] === 'settings.launcher')!
+  act(() => { (launcher[1] as { openSection: (id: string) => void }).openSection('models') })
+  expect(screen.getByTestId('section-models')).toBeTruthy()
+  expect(screen.queryByTestId('section-general')).toBeNull()
+})
+
+it('keeps onboarding ownership while exposing Settings visibility to its step', () => {
+  const { renderSlot } = mount()
+  const step = () => renderSlot.mock.calls.filter(call => call[0] === 'settings.onboarding').at(-1)!
+  expect(step()[1]).toMatchObject({ stepId: 'welcome', settingsOpen: false })
+  act(() => { (step()[1] as { openSection: (id: string) => void }).openSection('models') })
+  expect(screen.getByTestId('section-models')).toBeTruthy()
+  expect(step()[1]).toMatchObject({ stepId: 'welcome', settingsOpen: true })
+  fireEvent.keyDown(document, { key: 'Escape' })
+  expect(screen.queryByRole('dialog')).toBeNull()
+  expect(step()[1]).toMatchObject({ stepId: 'welcome', settingsOpen: false })
+})
+
 it('shows the effective settings binding on focus and exposes it to assistive technology', () => {
   mount({ shortcuts: [{ id: 'settings.open' as ShortcutCommandId, label: 'Open settings', aliases: [], keys: ['⌘', ','], aria: 'Meta+,', binding: { code: 'Comma', modifiers: ['meta'] }, modified: false, conflicts: [], issue: null }] })
   const trigger = screen.getByRole('button', { name: 'Settings' })

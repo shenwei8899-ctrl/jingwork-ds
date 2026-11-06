@@ -90,6 +90,7 @@ function mount(
   const unusedHook = (() => { throw new Error('unused standard hook') }) as never
   const props: WelcomeNoticeProps = {
     stepId: 'welcome-notice',
+    settingsOpen: false,
     complete,
     openSection: vi.fn(),
     useSessions: unusedHook,
