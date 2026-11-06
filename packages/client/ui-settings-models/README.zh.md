@@ -11,7 +11,7 @@ kind: "package-reference"
 
 ## 概述
 
-`dsh-client-ui-settings-models` 是 dsh Web 客户端的 Models 设置页面：用户可以配置 API 密钥（以只写方式存入 profile 的凭据引用之下）、编辑每个提供商的模型列表，并手工声明自定义 pi-ai 路由；页面以提供商行展示，一次只展开一张编辑卡片。该页面把提供商目录、设置文档与凭据描述合并为一个共享快照，因此行的状态在三个方面始终一致。它还会带首次运行的用户走两个有序弹窗——版本化预览版说明，以及按条件显示的官方 DeepSeek 凭据步骤。
+用户可以在模型设置中配置只写 API 密钥、编辑提供商的模型列表，并添加自定义 pi-ai 路由。页面通过共享快照关联提供商、设置和凭据元数据。浏览器首次运行弹窗提供版本化预览说明，以及按条件显示的官方 DeepSeek 凭据输入。原生 JingWork 企业登录使用模型设置引导。
 
 ## 目录
 
@@ -37,7 +37,7 @@ kind: "package-reference"
 
 应用设置并关闭编辑器后，当前提供商、settings 与凭据快照就绪时才显示保存状态。打开任一行的编辑器、添加提供商和打开移除确认都会等待该刷新。新打开的 Models 区域或页面加载失败后的重试会等到 ready 快照后才挂载编辑器。后台刷新期间，只要编辑器仍挂载，已打开的草稿就会保留用户的修改；页面加载失败或提供商被移除可能关闭编辑器。
 
-Host 配置 `credentialOnboarding` 默认为 `true`。Electron preload 标记会抑制自动凭证引导和 Web 欢迎须知；模型设置页与显式 API Key 编辑仍然可用。[账号插件](../ui-settings-account/README.zh.md#desktop-onboarding)负责 Desktop 引导。其他原生壳可以通过 `credentialOnboarding: false` 仅禁用凭证步骤。Host 通过 `webserver/index-inject` 发布这个公开的布尔值，Client 在注册弹窗前校验它。它是页面初始化数据，不是持久化的完成标记。
+Host 配置 `credentialOnboarding` 默认为 `true`。Electron preload 标记会抑制自动凭证引导和 Web 欢迎须知。模型设置页提供显式 API Key 编辑。[账号插件](../ui-settings-account/README.zh.md#desktop-onboarding)负责 Harness Desktop 引导。其他原生壳可以通过 `credentialOnboarding: false` 仅禁用凭证步骤。Host 通过 `webserver/index-inject` 发布这个公开的布尔值，Client 在注册弹窗前校验它。这个页面初始化值控制向用户提供的凭证弹窗。
 
 ### API 密钥
 
@@ -72,6 +72,10 @@ pi-ai 容量字段为空时，上下文窗口显示 `1M`，最大输出 token �
 ### 首次运行弹窗
 
 版本化声明步骤完成后，DeepSeek 步骤从同一份合并快照投影首次运行就绪状态。用户已经能够到达的**任何**提供商都会直接结束该步骤、不做渲染；只有没有任何提供商的用户才会被询问官方 DeepSeek 密钥。「稍后配置」只完成这次协调器遍历；适配器缺失、路由不活动、合并失败、只读部署或能力不可用时，该步骤不渲染即完成——Models 仍是诊断界面。
+
+原生 JingWork 企业 Desktop 在产品与企业登录桥均存在时注册 `jingwork-setup`。引导先介绍 JingWork，再说明模型设置。点击「配置模型」会打开现有模型分区，同时暂停引导弹窗。关闭设置后回到保留的模型设置步骤，并刷新同一个提供商快照。配置就绪后可点击「开始使用 JingWork」。就绪状态由活跃提供商、脱敏凭据元数据与提供商原生认证能力共同决定。元数据读取失败时保留设置步骤并提供重试。
+
+Host 保存 `ui-settings-models.jingworkSetupComplete`，缺省值为 `false`，因此新安装和未包含该标记的已有安装都会获得引导。只有「开始使用 JingWork」或明确选择「稍后配置」才记录完成。打开模型设置会保留未完成的引导。完成状态写入被拒绝或失败时，页面保留并提供「重新保存」。[设置协调器](../ui-settings-general/README.zh.md)仅在空白主 Session 中显示自动首次引导，显式重新打开会忽略已保存的完成状态。进度存储只读或不可用时，自动引导会释放界面。显式打开的引导会显示存储问题并提供关闭入口。
 
 ### 扩展 slot
 

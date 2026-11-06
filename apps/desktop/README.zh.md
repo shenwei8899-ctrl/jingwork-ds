@@ -310,7 +310,7 @@ Electron 主进程在启动时读取一次 `app.getPath('userData')/desktop/sett
 
 已有文件不会被覆盖；缺少 `updates` 对象或该字段时均按 `false` 处理。将字段设为 `true` 后完全退出并重启应用，即可允许测试鉴权弹窗。改回 `false` 并重启即可再次禁止。创建、读取或校验失败时使用默认值 `false`，不阻止启动。Desktop 尝试在 Electron 控制台记录包含文件路径的警告；日志不可用也不阻止启动。修正文件并重启后才会应用显式设置。未知字段会保留。安装更新保留此用户数据文件；Windows 卸载按[卸载规则](#windows-uninstall-rules)删除它。
 
-JingWork 安装包包含 `resources/jingwork-login.json`，其中的公共部署源地址为 `https://jingwork.openswarm.run`。全新的 JingWork 安装会在原生登录窗口中打开该部署现有的登录与注册页面。服务端负责注册、登录和设备授权。原生 JingWork 账号桥接在授权后打开工作区，并挂载 JingWork 账号菜单。此账号部署会跳过通用的 DeepSeek 额度、用途和过程引导流程。
+JingWork 安装包包含 `resources/jingwork-login.json`，其中的公共部署源地址为 `https://jingwork.openswarm.run`。全新的 JingWork 安装会在原生登录窗口中打开该部署现有的登录与注册页面。服务端负责注册、登录和设备授权。原生 JingWork 账号桥接在授权后打开工作区，并挂载 JingWork 账号菜单。JingWork 首次使用引导在空白对话中打开，带用户进入模型设置，关闭设置后返回引导。完成或明确跳过后，结果保存于此安装的 Host 设置中。账号菜单提供模型设置和使用引导的直达入口。通用的 DeepSeek 额度、用途和过程流程由 Harness 账号使用。
 
 如需选择其他 Jingwork 部署，创建 `app.getPath('userData')/desktop/jingwork.json`，内容为 `{ "url": "http://127.0.0.1:45173", "requestTimeoutMs": 15000 }` 后重启 Desktop。URL 为部署的 HTTPS 源地址，也支持 HTTP 回环地址。此安装专属文件优先于安装包默认配置。JingWork 要求覆盖文件或安装包配置可读且有效。无效的覆盖文件、缺失或无效的所选安装包配置都会拒绝启动。Harness 安装可通过同一安装专属文件启用 Jingwork 登录。可选的请求超时默认值为 15,000 毫秒。
 

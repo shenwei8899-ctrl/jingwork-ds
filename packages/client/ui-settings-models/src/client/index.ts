@@ -29,6 +29,8 @@ import { createSettingsSchemaOperations } from './schema-operations.ts'
 import { en, ja, es, fr, de, ru, pt, zh, type ModelsKey } from './locales.ts'
 import { WELCOME_NOTICE_SETTINGS_NAMESPACE } from '../onboarding-copy.ts'
 import { Config, ONBOARDING_CONFIG_GLOBAL } from '../onboarding-config.ts'
+import { JINGWORK_SETUP_NAMESPACE, type JingworkSetupSettings } from '../onboarding-config.ts'
+import { JingworkSetupGuide, type JingworkSetupGuideInjected } from './JingworkSetupGuide.tsx'
 
 export type { ModelsSectionInjected, ModelsSectionProps } from './ModelsSection.tsx'
 export type { ModelsFooterOwnerProps, ProviderCardExtrasOwnerProps } from './slot-contract.ts'
@@ -144,6 +146,27 @@ export function apply(ctx: ClientContext): void {
       'settings.models.footer': { kind: 'list', scope: 'root' },
     },
   }, ModelsSection))
+  const native = globalThis as typeof globalThis & {
+    dshJingwork?: object
+    dshDesktop?: { product?: 'harness' | 'jingwork' }
+  }
+  if (native.dshJingwork !== undefined && native.dshDesktop?.product === 'jingwork') {
+    const progress = ctx.configForms.get<JingworkSetupSettings>(JINGWORK_SETUP_NAMESPACE)
+    const settings = ctx.configForms.describe()
+    const refreshModels = () => controller.load()
+    const retrySettings = () => settings.ensure()
+    const saveCompletion = async (): Promise<boolean> => {
+      const accepted = await progress.set('jingworkSetupComplete', true)
+      return accepted && progress.getSnapshot().value?.jingworkSetupComplete === true
+    }
+    ctx.slots.inject('settings.onboarding', () => ctx.slots.register({
+      name: 'settings.onboarding', id: 'jingwork-setup', order: -50,
+      inject: (): JingworkSetupGuideInjected => ({
+        hooks: { progress, models: controller.store, settings },
+        refreshModels, retrySettings, saveCompletion, t,
+      }),
+    }, JingworkSetupGuide))
+  }
   if (!('dshDesktop' in globalThis)) ctx.slots.inject('settings.onboarding', () => ctx.slots.register({
     name: 'settings.onboarding',
     id: 'welcome-notice',

@@ -1,6 +1,8 @@
 /** Sidebar menu for the account validated by the native Jingwork login. */
 import { useRef, useState } from 'react'
-import { Menu, Toast, IconUserOutlineMedium, IconSettingsOutlineMedium } from '@deepseek-ai/dsh-client-ui-primitives'
+import {
+  Menu, Toast, IconUserOutlineMedium, IconSettingsOutlineMedium, IconDataOutlineMedium, IconQuestionOutlineMedium,
+} from '@deepseek-ai/dsh-client-ui-primitives'
 import type { HostObservable, InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import { LogoutIcon } from './LogoutIcon.tsx'
 import css from './AccountMenu.module.css'
@@ -11,14 +13,17 @@ export interface JingworkAccountMenuInjected {
   hooks: { identity: HostObservable<string | null> }
   /** Remove the local account session and return to native login. */
   signOut: () => Promise<void>
+  /** Whether the installed product registers the JingWork getting-started guide. */
+  guideAvailable: boolean
 }
 
 /** Render the Jingwork account and shared application settings.
  * @param props Settings navigation and native account operations.
  * @returns Sidebar account launcher.
  */
-export function JingworkAccountMenu({ wide, openSettings, settingsShortcut, useIdentity, signOut, t }:
-  PropsRuntime<'settings.launcher'> & PropsLocale<'settings.account'> & InjectFace<JingworkAccountMenuInjected>) {
+export function JingworkAccountMenu({
+  wide, openSettings, openSection, openOnboarding, settingsShortcut, useIdentity, signOut, guideAvailable, t,
+}: PropsRuntime<'settings.launcher'> & PropsLocale<'settings.account'> & InjectFace<JingworkAccountMenuInjected>) {
   const name = useIdentity(value => value)
   const [open, setOpen] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -35,11 +40,15 @@ export function JingworkAccountMenu({ wide, openSettings, settingsShortcut, useI
       items={[
         { id: 'settings', label: t('settings'), icon: <IconSettingsOutlineMedium size={16} />,
           ...(settingsShortcut === undefined ? {} : { shortcut: settingsShortcut }) },
+        { id: 'models', label: t('modelSettings'), icon: <IconDataOutlineMedium size={16} /> },
+        ...(guideAvailable ? [{ id: 'guide', label: t('usageGuide'), icon: <IconQuestionOutlineMedium size={16} /> }] : []),
         { id: 'signout', label: t('signOut'), icon: <LogoutIcon />, disabled: busy },
       ]}
       onClose={() => { setOpen(false) }} onSelect={(id) => {
         setOpen(false)
         if (id === 'settings') { trigger.current?.focus(); openSettings(); return }
+        if (id === 'models') { trigger.current?.focus(); openSection('models'); return }
+        if (id === 'guide') { trigger.current?.focus(); openOnboarding('jingwork-setup'); return }
         setBusy(true)
         void signOut().catch(() => { setFailed(true) }).finally(() => { setBusy(false) })
       }} />

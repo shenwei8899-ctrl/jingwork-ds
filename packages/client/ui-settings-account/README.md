@@ -11,7 +11,7 @@ Desktop product events use the optional [product analytics service](../product-a
 
 Server-expired account credentials clear the displayed account details and emit a localized sign-in reminder toast once; account snapshot replay does not repeat it.
 
-When native Jingwork login is configured, the plugin mounts the JingWork sidebar account menu, reads its validated public identity through the desktop bridge, and signs out of that local session. This deployment skips the generic DeepSeek account settings, authorization, and Desktop credit, purpose, and process onboarding flow.
+When native Jingwork login is configured, the plugin mounts the JingWork sidebar account menu, reads its validated public identity through the desktop bridge, and signs out of that local session. **Model settings** opens the Models section directly. JingWork packages also offer **Getting started** to reopen their setup guide. This deployment skips the generic DeepSeek account settings, authorization, and Desktop credit, purpose, and process onboarding flow.
 
 ## Summary
 

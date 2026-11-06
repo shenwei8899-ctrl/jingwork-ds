@@ -69,6 +69,7 @@ export function apply(ctx: Context): void {
     ctx.slots.inject('settings.launcher', () => ctx.slots.register({
       name: 'settings.launcher', locale: 'settings.account',
       inject: (): JingworkAccountMenuInjected => ({
+        guideAvailable: product === 'jingwork',
         hooks: { identity: { getSnapshot: () => name,
           subscribe: (listener) => { listeners.add(listener); return () => { listeners.delete(listener) } } } },
         signOut: () => jingwork.signOut(),

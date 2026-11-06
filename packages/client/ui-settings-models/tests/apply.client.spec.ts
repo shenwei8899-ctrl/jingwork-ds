@@ -17,9 +17,10 @@ import {
 import { ModelsSection } from '../src/client/ModelsSection.tsx'
 import { DeepSeekOnboardingDialog } from '../src/client/DeepSeekOnboardingDialog.tsx'
 import { WelcomeNotice } from '../src/client/WelcomeNotice.tsx'
+import { JingworkSetupGuide, type JingworkSetupGuideInjected } from '../src/client/JingworkSetupGuide.tsx'
 import type { IndexInjection, WebServer } from '@deepseek-ai/dsh-host-webserver'
 import * as hostPlugin from '../src/index.ts'
-import { ONBOARDING_CONFIG_GLOBAL } from '../src/onboarding-config.ts'
+import { JINGWORK_SETUP_NAMESPACE, ONBOARDING_CONFIG_GLOBAL } from '../src/onboarding-config.ts'
 
 /** The Peer an index render speaks for; this listener reads no field of it. */
 const PAGE_PEER = { principal: { kind: 'owner' } } as Parameters<WebServer['renderIndex']>[1]
@@ -98,8 +99,11 @@ describe('ui-settings-models apply', () => {
   })
 
   it('defaults to browser onboarding and rejects malformed bootstrap options', async () => {
-    expect(hostPlugin.Config({})).toEqual({ credentialOnboarding: true })
+    const defaults = hostPlugin.Config({})
+    expect(defaults.credentialOnboarding).toBe(true)
+    expect(defaults.jingworkSetupComplete.get()).toBe(false)
     expect(hostPlugin.Config['~standard'].validate({ credentialOnboarding: 'false' })).toHaveProperty('issues')
+    expect(hostPlugin.Config['~standard'].validate({ jingworkSetupComplete: 'false' })).toHaveProperty('issues')
     const { ctx } = await bench()
     try {
       vi.stubGlobal(ONBOARDING_CONFIG_GLOBAL, { credentialOnboarding: 'false' })
@@ -114,6 +118,87 @@ describe('ui-settings-models apply', () => {
       'slots', 'locale', 'remote', 'remote.credentials', 'remote.llm', 'remote.settings', 'remote.session',
       'configForms', 'settingsSchema',
     ])
+  })
+
+  it.each([
+    { product: undefined, enterprise: false, expected: false },
+    { product: undefined, enterprise: true, expected: false },
+    { product: 'harness', enterprise: true, expected: false },
+    { product: 'jingwork', enterprise: false, expected: false },
+    { product: 'jingwork', enterprise: true, expected: true },
+  ])('registers JingWork setup only for the native enterprise product ($product, $enterprise)', async ({ product, enterprise, expected }) => {
+    if (product !== undefined) vi.stubGlobal('dshDesktop', { product })
+    if (enterprise) vi.stubGlobal('dshJingwork', {})
+    const b = await bench()
+    declare(b.slots)
+    try {
+      const plugin = b.ctx.plugin({ inject: [...inject], apply })
+      await plugin.await()
+      const entry = b.slots.entries('settings.onboarding').find(candidate => candidate.options.id === 'jingwork-setup')
+      expect(entry !== undefined).toBe(expected)
+      if (entry !== undefined) {
+        expect(entry.component).toBe(JingworkSetupGuide)
+        expect(entry.options.order).toBe(-50)
+        const guide = (entry.inject!() as object) as JingworkSetupGuideInjected
+        const models = (b.slots.entries('settings.section')[0]!.inject!() as object) as import('../src/client/ModelsSection.tsx').ModelsSectionInjected
+        expect(guide.hooks.models).toBe(models.hooks.snapshot)
+        const load = vi.spyOn(models.controller, 'load').mockResolvedValue()
+        await guide.refreshModels()
+        expect(load).toHaveBeenCalledOnce()
+      }
+      await plugin.dispose()
+      expect(b.slots.entries('settings.onboarding')).toEqual([])
+    } finally {
+      await b.ctx.fiber.dispose()
+    }
+  })
+
+  it('confirms JingWork completion through its own Host settings field', async () => {
+    vi.stubGlobal('dshDesktop', { product: 'jingwork' })
+    vi.stubGlobal('dshJingwork', {})
+    const mock = RemoteMock.create().load(remoteDefaultResponses)
+    const namespace = {
+      ns: JINGWORK_SETUP_NAMESPACE,
+      schema: JSON.parse(JSON.stringify(Schema.object({ jingworkSetupComplete: Schema.boolean().default(false) }).toJSON())) as JsonValue,
+      value: { jingworkSetupComplete: false },
+      autoGenerate: false, applies: 'live' as const, secrets: [], revision: 0,
+    }
+    mock.remote.settings.describe.mockResolvedValue(ok({ writable: true, hasDocument: true, namespaces: [namespace] }))
+    const b = await bench(mock)
+    declare(b.slots)
+    try {
+      await b.ctx.plugin({ inject: [...inject], apply }).await()
+      const entry = b.slots.entries('settings.onboarding').find(candidate => candidate.options.id === 'jingwork-setup')!
+      const guide = (entry.inject!() as object) as JingworkSetupGuideInjected
+      await guide.retrySettings()
+      expect(guide.hooks.progress.getSnapshot()).toMatchObject({ status: 'ready', value: { jingworkSetupComplete: false } })
+      mock.remote.settings.mutate.mockResolvedValueOnce(ok({ ...namespace, revision: 1 }))
+      expect(await guide.saveCompletion()).toBe(false)
+      mock.remote.settings.mutate.mockResolvedValueOnce(ok({ ...namespace, value: { jingworkSetupComplete: true }, revision: 2 }))
+      expect(await guide.saveCompletion()).toBe(true)
+      expect(mock.remote.settings.mutate).toHaveBeenLastCalledWith(JINGWORK_SETUP_NAMESPACE,
+        [{ op: 'set', path: ['jingworkSetupComplete'], value: true }], 1)
+      expect(guide.hooks.progress.getSnapshot().value?.jingworkSetupComplete).toBe(true)
+    } finally {
+      await b.ctx.fiber.dispose()
+    }
+  })
+
+  it('keeps the Host-owned JingWork completion field out of generated settings cards', async () => {
+    const b = await bench()
+    const dispose = vi.fn()
+    const configure = vi.fn((_options: { auto: boolean }) => dispose)
+    b.ctx.provide('settings', { configure } as never)
+    try {
+      const plugin = b.ctx.plugin(hostPlugin, {})
+      await plugin.await()
+      expect(configure).toHaveBeenCalledOnce()
+      expect(configure.mock.calls[0]?.[0]).toEqual({ auto: false })
+      await plugin.dispose()
+      expect(dispose).toHaveBeenCalledOnce()
+    } finally {
+      await b.ctx.fiber.dispose()
+    }
   })
 
   it('registers the models nav entry for declarations before or after apply', async () => {

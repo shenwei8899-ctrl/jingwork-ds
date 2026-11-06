@@ -146,6 +146,7 @@ function harness(options: {
   const props: DeepSeekOnboardingDialogProps = {
     automatic: true,
     stepId: 'deepseek-official',
+    settingsOpen: false,
     complete,
     openSection,
     renderSlot: (_name, _props, options) => options?.fallback,
