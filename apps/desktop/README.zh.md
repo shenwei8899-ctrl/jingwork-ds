@@ -215,6 +215,8 @@ Web 侧的对应命令是 `pnpm run dev:web` 与 `pnpm run start:web`，见[开�
 
 ### 启动引导
 
+原生 preload 将已安装的产品标识传给欢迎窗口和工作区。JingWork 的入口页、登录状态页和 API Key 页面使用 JingWork 名称与标志。桌面账号引导挂载时也使用同一产品标识选择文案和插图。
+
 API Key 输入框初始为空，并通过 `autocomplete="new-password"` 请求 Chromium 不要自动填入已保存的登录密码。
 
 重复启动和产品打开链接会保持工作区隐藏，直到启动凭据检查或欢迎页操作允许进入。从 Welcome 进入时，键盘焦点落在文档上，不选中侧边栏控件；Tab 导航仍可使用。
@@ -227,7 +229,7 @@ Desktop 在 Host 启动后、打开工作区前检查模型 API Key 引用是否
 
 ### 欢迎窗口外观
 
-欢迎窗口使用设计稿的 Platform light/dark 颜色跟随系统外观，展示 600 × 700 的入口布局和 API Key 表单，包含原生窗口控件、可拖动标题区域、本地品牌 SVG、系统无衬线字体回退，以及非按钮文字使用的本地 Montserrat Light 字体。窗口使用 macOS menu vibrancy 或 Windows acrylic，叠加 onboarding 的窗口背景色：浅色模式为 40% 白色，深色模式为 50% rgb(24 25 28)。本地 React 欢迎入口将 React、公共 `StateDot` 加载指示器及其 CSS 一起打包；它通过隔离 preload 工作，不加载主 Web 应用。入口、登录状态和 API Key 页面共用固定的底部操作行；“返回登录”链接位于操作行下方。按钮共用平台的过渡时序，开启“减少动态效果”会禁用过渡。操作系统控制模糊强度和外部圆角。macOS 的“降低透明度”会抑制半透明效果，“增强对比度”会强制开启该设置。“保存并继续”写入开发环境的凭证存储；“稍后配置”打开真实工作区，不保存密钥或完成标记。生成的开发项目同时链接已声明的 workspace 依赖闭包和 pnpm 提升的包，因此未提升的配置插件仍能解析。[窗口记录](../../.agents/notes/implemented/architecture/2026-09-08-desktop-welcome-window-material.zh.md)负责材质与引导决策。
+欢迎窗口使用设计稿的 Platform light/dark 颜色跟随系统外观，展示 600 × 700 的入口布局和 API Key 表单，包含原生窗口控件、可拖动标题区域、本地产品标志、系统无衬线字体回退，以及非按钮文字使用的本地 Montserrat Light 字体。窗口使用 macOS menu vibrancy 或 Windows acrylic，叠加 onboarding 的窗口背景色：浅色模式为 40% 白色，深色模式为 50% rgb(24 25 28)。本地 React 欢迎入口将 React、公共 `StateDot` 加载指示器及其 CSS 一起打包；它通过隔离 preload 工作，不加载主 Web 应用。入口、登录状态和 API Key 页面共用固定的底部操作行；“返回登录”链接位于操作行下方。按钮共用平台的过渡时序，开启“减少动态效果”会禁用过渡。操作系统控制模糊强度和外部圆角。macOS 的“降低透明度”会抑制半透明效果，“增强对比度”会强制开启该设置。“保存并继续”写入开发环境的凭证存储；“稍后配置”打开真实工作区，不保存密钥或完成标记。生成的开发项目同时链接已声明的 workspace 依赖闭包和 pnpm 提升的包，因此未提升的配置插件仍能解析。[窗口记录](../../.agents/notes/implemented/architecture/2026-09-08-desktop-welcome-window-material.zh.md)负责材质与引导决策。
 
 <a id="package"></a>
 
@@ -308,7 +310,11 @@ Electron 主进程在启动时读取一次 `app.getPath('userData')/desktop/sett
 
 已有文件不会被覆盖；缺少 `updates` 对象或该字段时均按 `false` 处理。将字段设为 `true` 后完全退出并重启应用，即可允许测试鉴权弹窗。改回 `false` 并重启即可再次禁止。创建、读取或校验失败时使用默认值 `false`，不阻止启动。Desktop 尝试在 Electron 控制台记录包含文件路径的警告；日志不可用也不阻止启动。修正文件并重启后才会应用显式设置。未知字段会保留。安装更新保留此用户数据文件；Windows 卸载按[卸载规则](#windows-uninstall-rules)删除它。
 
-要使用 Jingwork 部署进行桌面账号登录，创建 `app.getPath('userData')/desktop/jingwork.json`，内容为 `{ "url": "http://127.0.0.1:45173", "requestTimeoutMs": 15000 }` 后重启 Desktop。URL 为部署的 HTTPS 源地址，也支持 HTTP 回环地址。无效的 Jingwork 配置会拒绝启动。原生登录窗口显示 Jingwork 登录页面。账号登录后，页面自动授权名为 `DeepSeek Harness` 的待处理设备请求，并显示进度提示，直到桌面端打开工作区。授权失败时，错误保留在登录窗口中。Electron 使用私有设备码换取 Jingwork 凭据，通过操作系统加密保存，并在后续启动时调用 `/api/auth/me` 校验。模型供应商 API Key 独立配置。可选的请求超时默认值为 15,000 毫秒。
+JingWork 安装包包含 `resources/jingwork-login.json`，其中的公共部署源地址为 `https://jingwork.openswarm.run`。全新的 JingWork 安装会在原生登录窗口中打开该部署现有的登录与注册页面。服务端负责注册、登录和设备授权。原生 JingWork 账号桥接在授权后打开工作区，并挂载 JingWork 账号菜单。此账号部署会跳过通用的 DeepSeek 额度、用途和过程引导流程。
+
+如需选择其他 Jingwork 部署，创建 `app.getPath('userData')/desktop/jingwork.json`，内容为 `{ "url": "http://127.0.0.1:45173", "requestTimeoutMs": 15000 }` 后重启 Desktop。URL 为部署的 HTTPS 源地址，也支持 HTTP 回环地址。此安装专属文件优先于安装包默认配置。JingWork 要求覆盖文件或安装包配置可读且有效。无效的覆盖文件、缺失或无效的所选安装包配置都会拒绝启动。Harness 安装可通过同一安装专属文件启用 Jingwork 登录。可选的请求超时默认值为 15,000 毫秒。
+
+账号登录后，服务端页面自动授权名为 `DeepSeek Harness` 的待处理设备请求，并显示进度提示，直到桌面端打开工作区。该设备名是已部署授权协议使用的匹配值。授权失败时，错误保留在登录窗口中。Electron 使用私有设备码换取 Jingwork 凭据，通过操作系统加密保存，并在后续启动时调用 `/api/auth/me` 校验。模型供应商 API Key 独立配置。
 
 桌面端登录后，将已提交的用户消息文本和 AI 回复文本同步到 Jingwork 的 `/api/system/conversation-logs/sync` 接口。首次登录的账号接收尚未分配归属的本地会话，包括历史消息；已记录的会话归属在切换账号后保持固定。后台通过原生凭据确定用户。设备和来源事件标识在重试及重启后保持稳定，只有后台确认批次后才推进本地确认进度。后台对话日志页面随后可按用户、智能体和会话筛选消息副本。附件、思考过程、系统上下文、工具结果和子智能体会话不参与同步。
 

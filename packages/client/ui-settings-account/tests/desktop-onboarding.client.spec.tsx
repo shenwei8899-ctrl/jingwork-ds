@@ -8,7 +8,7 @@ import { en, zh } from '../src/client/locales.ts'
 
 afterEach(() => { cleanup(); vi.unstubAllGlobals() })
 
-function mount(step: DesktopOnboardingState['progress']['step'] = 'welcome', balance: 'zero' | 'positive' | 'bonus' | 'failed' | 'loading' = 'positive', status: DesktopOnboardingState['status'] = 'ready', copy: typeof zh = zh, creditFunded = false) {
+function mount(step: DesktopOnboardingState['progress']['step'] = 'welcome', balance: 'zero' | 'positive' | 'bonus' | 'failed' | 'loading' = 'positive', status: DesktopOnboardingState['status'] = 'ready', copy: typeof zh = zh, creditFunded = false, product: DesktopOnboardingProps['product'] = 'harness') {
   vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} })
   const track = vi.fn()
   const complete = vi.fn(async () => true)
@@ -28,7 +28,7 @@ function mount(step: DesktopOnboardingState['progress']['step'] = 'welcome', bal
       progress: { version: 1, step, purpose: null, process: null, completion: null, usage: 'compact', developerTools: false },
     })
     changeStatus = (value) => { setState(current => ({ ...current, status: value })) }
-    return <DesktopOnboarding track={track} locale={copy === zh ? 'zh' : 'en'} state={state} t={key => copy[key]} complete={complete} retry={retry}
+    return <DesktopOnboarding track={track} product={product} locale={copy === zh ? 'zh' : 'en'} state={state} t={key => copy[key]} complete={complete} retry={retry}
       update={async (change) => {
         setState(current => ({ ...current, status: 'saving' }))
         const saved = await update(change)
@@ -160,6 +160,33 @@ it.each(['welcome', 'credit', 'purpose', 'process'] as const)('records English %
   document.querySelectorAll('[data-desktop-onboarding] [aria-hidden="true"]').forEach((element) => { element.remove() })
   await expect(`${document.querySelector('[data-desktop-onboarding]')?.textContent}\n`)
     .toMatchFileSnapshot(`./expected/onboarding-${step}-en.txt`)
+})
+
+it.each((['welcome', 'credit', 'purpose', 'process'] as const).flatMap(step => [
+  [step, 'zh', zh] as const, [step, 'en', en] as const,
+]))('records JingWork %s copy in %s without Harness artwork', async (step, locale, copy) => {
+  mount(step, 'zero', 'ready', copy, false, 'jingwork')
+  const page = document.querySelector('[data-desktop-onboarding]')!
+  expect(page.getAttribute('data-product')).toBe('jingwork')
+  expect(page.textContent).not.toContain('DeepSeek Harness')
+  expect(page.querySelector('img[src*="onboarding-welcome"]')).toBeNull()
+  expect(page.querySelector('img[src*="onboarding-recharge"]')).toBeNull()
+  if (step === 'welcome' || step === 'credit') {
+    const artwork = page.querySelector(`[data-onboarding-artwork="jingwork-${step}"]`)
+    expect(artwork).not.toBeNull()
+    expect(artwork?.textContent).toContain('JingWork')
+    expect(artwork?.querySelector('img')?.getAttribute('src')).toContain('onboarding-jingwork.png')
+  }
+  page.querySelectorAll('[aria-hidden="true"]').forEach((element) => { element.remove() })
+  await expect(`${page.textContent}\n`).toMatchFileSnapshot(`./expected/onboarding-${step}-jingwork-${locale}.txt`)
+})
+
+it('uses JingWork copy in the unavailable-credit confirmation', async () => {
+  mount('credit', 'zero', 'ready', zh, false, 'jingwork')
+  await act(async () => { fireEvent.click(screen.getByRole('button', { name: zh.onboardingLater })) })
+  const dialog = screen.getByRole('dialog', { name: zh.onboardingNoCreditTitle })
+  expect(dialog.textContent).toContain('JingWork')
+  expect(dialog.textContent).not.toContain('DeepSeek Harness')
 })
 
 it.each([zh, en])('offers Continue and recharge for a balance confirmed before entry', async (copy) => {

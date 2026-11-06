@@ -15,6 +15,7 @@ import { en, zh, formatDesktopMessage } from '../src/locale.ts'
 import { DesktopUpdatePreparationError } from '../src/update-error.ts'
 import { writeCrashReport } from '../src/crash-report.ts'
 import { runOperationReportJob } from '../src/operation-report-job.ts'
+import { readJingworkLoginConfig } from '../src/jingwork-auth.ts'
 
 type InvokeEvent = { sender?: unknown; senderFrame: { url: string } }
 type InvokeHandler = (event: InvokeEvent, ...args: unknown[]) => unknown
@@ -23,6 +24,10 @@ const fileDrag = vi.hoisted(() => ({ dispose: vi.fn<() => Promise<void>>(), inst
 vi.mock('../src/file-drag.ts', () => ({ installDesktopFileDrag: () => { fileDrag.install(); return fileDrag.dispose } }))
 
 vi.mock('../src/web-document.ts', () => ({ authenticateWebHost: async () => 'test-cookie', serveWebDocument: vi.fn(), forwardWebRequest: vi.fn() }))
+vi.mock('../src/jingwork-auth.ts', async importOriginal => ({
+  ...await importOriginal<typeof import('../src/jingwork-auth.ts')>(),
+  readJingworkLoginConfig: vi.fn(() => undefined),
+}))
 vi.mock('../src/operation-report-job.ts', () => ({ runOperationReportJob: vi.fn(async () => ({ appended: false, timedOut: false, cancelled: false })) }))
 // Report persistence has its own unit tests; here it resolves within microtasks so the fatal
 // dialog never outlives the test that triggered it.
@@ -1271,7 +1276,9 @@ describe('desktop main startup', () => {
     vi.stubGlobal('process', { ...process, platform: 'darwin' })
     harness.app.isPackaged = true
     await readyForUpdate('jingwork')
+    expect(readJingworkLoginConfig).toHaveBeenCalledWith(harness.app.getPath('userData'), join(process.resourcesPath, 'jingwork-login.json'))
     expect(harness.app.setAsDefaultProtocolClient).toHaveBeenCalledExactlyOnceWith('jingwork')
+    expect(harness.windows[0]!.options).toMatchObject({ webPreferences: { additionalArguments: ['--dsh-desktop-product=jingwork'] } })
     expect(applicationMenuItems().map(item => item.label)).toContain(formatDesktopMessage(en.cliCommandMenu, { command: 'jingwork' }))
   })
 

@@ -729,6 +729,13 @@ it('forwards live account notices and removes their subscriptions', async ({ sta
   expect(expired).toHaveBeenCalledOnce()
   expect(unavailable).toHaveBeenCalledOnce()
 })
+
+for (const product of ['harness', 'jingwork'] as const) it(`injects the native ${product} product into Desktop onboarding`, async ({ start }) => {
+  vi.stubGlobal('dshDesktop', { product })
+  const c = await start()
+  const entry = c.ctx.slots.entries('shell.overlay').find(entry => entry.options.id === 'desktop-onboarding')!
+  expect(entry.inject!()).toMatchObject({ product })
+})
 for (const native of [false, true]) it(`exposes desktop progress actions and disposes its subscriptions (native platform: ${native})`, async ({ start, mock }) => {
   vi.stubGlobal('dshDesktop', {})
   const platform = { open: vi.fn(), setBounds: vi.fn(), close: vi.fn() }
@@ -789,7 +796,7 @@ it('uses the native Jingwork identity without starting DeepSeek account surfaces
   const name = vi.fn(async () => 'jingwork-user')
   const signOut = vi.fn(async () => {})
   vi.stubGlobal('dshDesktop', { protocolVersion: 1 })
-  vi.stubGlobal('dshJingwork', { name, signOut })
+  vi.stubGlobal('dshJingwork', { name, signOut, agents: async () => [] })
   const c = await start()
   const nativeFace: object = c.ctx.slots.entries('settings.launcher')[0]!.inject!()
   const injected = nativeFace as

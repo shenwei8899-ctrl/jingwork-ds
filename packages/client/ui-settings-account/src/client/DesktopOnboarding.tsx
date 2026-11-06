@@ -11,6 +11,7 @@ import { OnboardingPurposeStep } from './OnboardingPurposeStep.tsx'
 import { OnboardingProcessStep } from './OnboardingProcessStep.tsx'
 import { OnboardingConfirmation, type OnboardingConfirmationKind } from './OnboardingConfirmation.tsx'
 import backIcon from './assets/onboarding-back.svg'
+import { onboardingProductCopy } from './onboarding-product.ts'
 import css from './DesktopOnboarding.module.css'
 
 const onboardingPages = {
@@ -26,8 +27,9 @@ const onboardingPages = {
  * @returns the active first-run page.
  */
 export function DesktopOnboarding({
-  state, account, openPlatformPage, update, complete, retry, t, locale, track, exiting = false,
+  state, account, openPlatformPage, update, complete, retry, t: translate, locale, track, exiting = false, product = 'harness',
 }: DesktopOnboardingProps) {
+  const t = onboardingProductCopy(translate, product)
   const [dialog, setDialog] = useState<OnboardingConfirmationKind | null>(null)
   const heading = useRef<HTMLHeadingElement>(null)
   const page = useRef<HTMLElement>(null)
@@ -103,9 +105,9 @@ export function DesktopOnboarding({
   }
   return <>
     <OnboardingSurface exiting={exiting}>
-      <section key={step} ref={page} className={`${css.page} ${dialog !== null ? css.blurred : ''}`} data-desktop-onboarding={step} lang={locale} aria-labelledby="desktop-onboarding-title" aria-busy={busy}>
-        {step === 'welcome' && <OnboardingWelcomeStep t={t} locale={locale} heading={heading} busy={busy} onStart={() => { click('next'); go('credit') }} />}
-        {step === 'credit' && <OnboardingCreditStep t={t} locale={locale} heading={heading} busy={busy}
+      <section key={step} ref={page} className={`${css.page} ${dialog !== null ? css.blurred : ''}`} data-desktop-onboarding={step} data-product={product} lang={locale} aria-labelledby="desktop-onboarding-title" aria-busy={busy}>
+        {step === 'welcome' && <OnboardingWelcomeStep t={t} locale={locale} product={product} heading={heading} busy={busy} onStart={() => { click('next'); go('credit') }} />}
+        {step === 'credit' && <OnboardingCreditStep t={t} locale={locale} product={product} heading={heading} busy={busy}
           funded={state.creditFunded} canRecharge={canRecharge} onContinue={() => { click('continue'); go('purpose') }} onRecharge={() => { click('charge'); recharge() }} onLater={() => { click('later'); later() }} />}
         {step === 'purpose' && <OnboardingPurposeStep t={t} heading={heading} busy={busy} purpose={progress.purpose}
           onSelect={(purpose) => { void update({ purpose }) }} onContinue={() => { click('next'); purposeNext() }} />}

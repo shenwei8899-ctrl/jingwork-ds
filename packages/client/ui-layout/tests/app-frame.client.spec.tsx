@@ -63,7 +63,7 @@ function resize(width: number): void {
   })
 }
 
-function mountFrame(windowWidth = frameWidth, content?: AppFrameProps['renderSlot']) {
+function mountFrame(windowWidth = frameWidth, content?: AppFrameProps['renderSlot'], productTitle?: string) {
   vi.stubGlobal('innerWidth', windowWidth)
   const instance = createLayoutStore().create()
   const slotCalls: { key: string; props: object; options: RenderOpts | undefined }[] = []
@@ -93,6 +93,7 @@ function mountFrame(windowWidth = frameWidth, content?: AppFrameProps['renderSlo
   })
   const element = () => (
     <AppFrame
+      productTitle={productTitle}
       useStore={useStore}
       actions={instance.actions}
       renderSlot={renderSlot}
@@ -193,6 +194,15 @@ describe('AppFrame', () => {
   it('localizes the product title without a configured build title', () => {
     mountFrame()
     expect(document.title).toBe('DSH Local Build')
+  })
+
+  it('uses the native JingWork title for the product and its selected Session', () => {
+    vi.stubEnv('DSH_CLIENT_TITLE', 'DeepSeek Harness')
+    const { rerenderFrame } = mountFrame(frameWidth, undefined, 'JingWork')
+    expect(document.title).toBe('JingWork')
+    selectedSessionTitle = 'Planning'
+    rerenderFrame()
+    expect(document.title).toBe('Planning — JingWork')
   })
 
   it('follows the selected durable Session title', () => {

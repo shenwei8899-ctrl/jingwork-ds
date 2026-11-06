@@ -6,14 +6,16 @@ import { fileURLToPath } from 'node:url'
 import { app, BrowserWindow, ipcMain, type BrowserWindowConstructorOptions, type IpcMainInvokeEvent } from 'electron'
 import type { DesktopLocale } from './locale.ts'
 import { WELCOME_IPC, type WelcomeOperations } from './welcome-api.ts'
+import { desktopWelcomeLocale, type DesktopProduct } from './product-presentation.ts'
 
 /**
  * Resolve the fixed-size welcome window's native material and controls.
  * @param platform - operating system hosting Electron.
  * @param locale - shell-owned localized copy.
- * @returns sandboxed window options with a locale-only preload.
+ * @param product - Installed presentation identity.
+ * @returns sandboxed window options with product and locale arguments.
  */
-export function welcomeWindowOptions(platform: NodeJS.Platform, locale: DesktopLocale): BrowserWindowConstructorOptions {
+export function welcomeWindowOptions(platform: NodeJS.Platform, locale: DesktopLocale, product: DesktopProduct = 'harness'): BrowserWindowConstructorOptions {
   return {
     width: 600,
     height: 700,
@@ -23,7 +25,7 @@ export function welcomeWindowOptions(platform: NodeJS.Platform, locale: DesktopL
     maximizable: false,
     fullscreenable: false,
     show: false,
-    title: locale.messages.welcomeTitle,
+    title: desktopWelcomeLocale(locale, product).messages.welcomeTitle,
     backgroundColor: platform === 'darwin' || platform === 'win32' ? '#00000000' : '#FFFFFF',
     ...(platform === 'darwin' ? {
       titleBarStyle: 'hidden',
@@ -38,7 +40,7 @@ export function welcomeWindowOptions(platform: NodeJS.Platform, locale: DesktopL
     } as const : {}),
     webPreferences: {
       preload: fileURLToPath(new URL('./preload-welcome.cjs', import.meta.url)),
-      additionalArguments: [`--dsh-welcome-locale=${locale.id}`],
+      additionalArguments: [`--dsh-welcome-locale=${locale.id}`, ...product === 'jingwork' ? ['--dsh-desktop-product=jingwork'] : []],
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: true,
@@ -54,10 +56,11 @@ let disposeActiveHandlers: (() => void) | undefined
  * Replaces IPC ownership immediately; the caller closes the previous native window.
  * @param locale - shell-owned localized copy.
  * @param operations - credential write and this-launch-only skip actions.
+ * @param product - Installed presentation identity.
  * @returns the visible window; a failed load destroys it before rejecting.
  */
-export async function openWelcomeWindow(locale: DesktopLocale, operations: WelcomeOperations): Promise<BrowserWindow> {
-  const options = welcomeWindowOptions(process.platform, locale)
+export async function openWelcomeWindow(locale: DesktopLocale, operations: WelcomeOperations, product: DesktopProduct = 'harness'): Promise<BrowserWindow> {
+  const options = welcomeWindowOptions(process.platform, locale, product)
   const window = new BrowserWindow(options)
   disposeActiveHandlers?.()
   let active = true

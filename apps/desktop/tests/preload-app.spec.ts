@@ -20,6 +20,16 @@ vi.mock('../src/preload-mandatory-overlay.ts', () => ({ installMandatoryUpdateOv
 beforeEach(() => { vi.stubGlobal('process', { ...process, isMainFrame: true }) })
 afterEach(() => { document.body.replaceChildren(); vi.unstubAllGlobals(); vi.restoreAllMocks(); vi.clearAllMocks(); vi.resetModules() })
 
+it.each(['harness', 'jingwork'] as const)('exposes the %s product independently of account integration', async (product) => {
+  vi.stubGlobal('location', new URL('dsh-app://app/'))
+  vi.stubGlobal('process', { ...process, isMainFrame: true, argv: ['electron', `--dsh-desktop-product=${product}`] })
+  await import('../src/preload-app.ts')
+  const api = electron.contextBridge.exposeInMainWorld.mock.calls.find(([name]) => name === 'dshDesktop')?.[1] as DshDesktopProductApi
+  expect(api.product).toBe(product)
+  expect(api.productName).toBe(product === 'jingwork' ? 'JingWork' : 'DeepSeek Harness')
+  expect(electron.contextBridge.exposeInMainWorld.mock.calls.some(([name]) => name === 'dshJingwork')).toBe(false)
+})
+
 it('reads only native login API-key presence through the onboarding bridge', async () => {
   vi.stubGlobal('location', new URL('dsh-app://app/'))
   electron.ipcRenderer.invoke.mockResolvedValueOnce(true)

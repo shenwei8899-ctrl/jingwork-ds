@@ -4,6 +4,7 @@ import type { OnboardingProgress } from '../onboarding-settings.ts'
 import type { AccountSnapshot } from './AccountSection.tsx'
 import type { PlatformPages } from './platform-pages.ts'
 import type { AccountKey } from './locales.ts'
+import type { OnboardingProduct } from './onboarding-product.ts'
 
 /** Render state with pending choices previewed over durable Host progress. */
 export interface DesktopOnboardingState {
@@ -20,6 +21,8 @@ export type OnboardingChange = Partial<Pick<OnboardingProgress, 'step' | 'purpos
 
 /** Data and callbacks consumed by the presentational desktop flow. */
 export interface DesktopOnboardingProps {
+  /** Native product identity; absent in older Harness preload bridges. */
+  product?: OnboardingProduct
   /** Keep the saved final step visible while revealing the workspace. */
   exiting?: boolean
   /** Desktop collection callback; absent when analytics is disabled. */

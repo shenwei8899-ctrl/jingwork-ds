@@ -102,6 +102,23 @@ body {
   -webkit-user-drag: none;
 }
 
+.jingwork-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-size: 26px;
+  font-weight: 500;
+  line-height: 40px;
+}
+
+.jingwork-brand img {
+  display: block;
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
 .tagline {
   margin: 0;
   color: var(--dsw-alias-label-secondary);

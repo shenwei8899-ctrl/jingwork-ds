@@ -73,7 +73,7 @@ import { DesktopUpdateOverlays } from './update-overlay.ts'
 import { DesktopQuitConfirmation } from './quit-confirmation.ts'
 import { DesktopTray } from './tray.ts'
 import { DesktopBackgroundNotice } from './background-notice.ts'
-import type { DesktopProduct } from './product-identity.ts'
+import type { DesktopProduct } from './product-presentation.ts'
 
 let focusPrimaryWindow = (): void => {}
 let stopForRecovery = async (): Promise<void> => { await stopOperationReports() }
@@ -266,7 +266,7 @@ function platformLoginUrl(authorizeUrl: string): string {
   return url.href
 }
 
-function createWindow(preload: string, show = false, primary = false, jingwork = false): BrowserWindow {
+function createWindow(preload: string, show = false, primary = false, jingwork = false, product: DesktopProduct = 'harness'): BrowserWindow {
   const window = new BrowserWindow({
     width: 1280,
     height: 820,
@@ -291,7 +291,7 @@ function createWindow(preload: string, show = false, primary = false, jingwork =
     } : {}),
     webPreferences: {
       preload,
-      additionalArguments: jingwork ? ['--dsh-jingwork-account'] : [],
+      additionalArguments: [...jingwork ? ['--dsh-jingwork-account'] : [], ...product === 'jingwork' ? ['--dsh-desktop-product=jingwork'] : []],
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: true,
@@ -379,7 +379,8 @@ function createWindow(preload: string, show = false, primary = false, jingwork =
 async function main(product: DesktopProduct): Promise<void> {
   const commandName = product === 'jingwork' ? 'jingwork' : 'dsh'
   const desktopSettings = readDesktopSettings(app.getPath('userData'))
-  const jingworkConfig = readJingworkLoginConfig(app.getPath('userData'))
+  const jingworkConfig = readJingworkLoginConfig(app.getPath('userData'),
+    app.isPackaged && product === 'jingwork' ? join(process.resourcesPath, 'jingwork-login.json') : undefined)
   const jingworkAuth = jingworkConfig === undefined ? undefined : new JingworkDesktopAuth(
     jingworkConfig, app.getPath('userData'), {
       encrypt(value) {
@@ -1267,7 +1268,7 @@ async function main(product: DesktopProduct): Promise<void> {
     }
   }
   const createMainWindow = (): BrowserWindow => {
-    const window = createWindow(appPreload, false, true, jingworkAuth !== undefined)
+    const window = createWindow(appPreload, false, true, jingworkAuth !== undefined, product)
     mainWindow = window
     browserGuests.bind(window, (guest, name) => shortcuts.attachGuest(window, guest, name))
     shortcuts.attach(window)
@@ -1381,7 +1382,7 @@ async function main(product: DesktopProduct): Promise<void> {
             return { ok: true }
           },
           skip: enterWorkspace,
-        })
+        }, product)
       const window = welcomeWindow
       window.once('closed', () => {
         void welcomeBackend?.account.state().then((state) => {

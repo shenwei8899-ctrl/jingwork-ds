@@ -350,3 +350,45 @@
   background: var(--dsw-alias-brand-primary);
 }
 .cardCheckbox input:checked + .indicator svg { visibility: visible; }
+
+.page[data-product='jingwork'] { --page-padding: clamp(24px, 5vw, 64px); overflow: auto; }
+.page[data-product='jingwork'] .welcome {
+  position: relative;
+  top: auto;
+  left: auto;
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  align-items: center;
+  gap: clamp(32px, 5vw, 80px);
+  width: min(calc(100% - 2 * var(--page-padding)), 1200px);
+  min-height: 100%;
+  height: auto;
+  margin: 0 auto;
+  padding-block: 64px;
+  transform: none;
+}
+.page[data-product='jingwork'] .welcome .copy { position: static; width: auto; transform: none; }
+.page[data-product='jingwork'] .welcomeIllustration { position: relative; top: auto; left: auto; width: 100%; height: auto; }
+.page[data-product='jingwork'] .welcomeArtwork { position: relative; top: auto; left: auto; width: 100%; height: auto; }
+.page[data-product='jingwork'] .welcome .start { margin-top: 40px; }
+
+@media (max-width: 800px), (max-height: 650px) {
+  .page[data-product='jingwork'] .content { position: relative; top: auto; left: auto; width: calc(100% - 2 * var(--page-padding)); height: auto; margin: 0 auto; padding-block: 56px 24px; transform: none; }
+  .page[data-product='jingwork'] .welcome { min-height: 100%; }
+  .page[data-product='jingwork'] .purpose, .page[data-product='jingwork'] .process { gap: 32px; }
+  .page[data-product='jingwork'] .primaryAction { position: static; margin-top: 8px; }
+  .page[data-product='jingwork'] .navigation { position: static; width: calc(100% - 2 * var(--page-padding)); margin: 20px auto 24px; transform: none; }
+}
+
+@media (max-width: 800px) {
+  .page[data-product='jingwork'] .welcome, .page[data-product='jingwork'] .credit { display: flex; flex-direction: column; justify-content: center; align-items: stretch; gap: 32px; }
+  .page[data-product='jingwork'] .copy h1 { line-height: 40px; }
+  .page[data-product='jingwork'] .heroDescription { margin-top: 16px; }
+  .page[data-product='jingwork'] .welcome .start { margin-top: 24px; }
+  .page[data-product='jingwork'] .welcomeIllustration { width: min(100%, 480px); margin: 0 auto; }
+  .page[data-product='jingwork'] .creditIllustration { order: 1; width: min(100%, 480px); margin: 0 auto; }
+  .page[data-product='jingwork'] .credit .copy { max-width: none; }
+  .page[data-product='jingwork'] .creditActions { margin-top: 24px; gap: 16px; }
+  .page[data-product='jingwork'] .purposeCards, .page[data-product='jingwork'] .processCards { grid-template-columns: minmax(0, 1fr); }
+  .page[data-product='jingwork'] .card { min-height: 0; padding: 24px; }
+}

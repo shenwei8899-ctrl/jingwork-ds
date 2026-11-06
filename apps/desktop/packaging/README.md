@@ -176,6 +176,8 @@ Add `--check` to validate local configuration and tools without building, or `--
 
 These commands package `JingWork.app` with application ID `com.jingwork.desktop` and the `jingwork://open` link. JingWork starts with [fresh, product-owned data directories](../README.md#installation-ownership) and can run alongside DeepSeek Harness. Its optional terminal command is `jingwork`.
 
+JingWork packaging copies the public deployment settings in `config/jingwork-login.json` to `resources/jingwork-login.json`. Fresh installations use the deployed JingWork login and registration page. Per-installation overrides and configuration failures follow the [native account configuration rules](../README.md#local-desktop-settings).
+
 These commands ignore `.env.macos` and inherited release settings and omit automatic-update and mandatory-update configuration. Build tools, standard network proxies, and `DSH_DESKTOP_NPM_REGISTRY` remain available from the shell. They skip Developer ID signing, Apple notarization, temporary signing keychains, and notarization proxy changes. Electron receives a local ad-hoc signature without certificates so the modified executable can run; the DMG is unsigned. Both preparation and the assembled application still run runtime integrity and smoke checks. Local builds omit update feeds, ZIPs, and release completion records, and the upload commands cannot publish them. macOS may require approval in System Settings → Privacy & Security to open an unnotarized application.
 
 <a id="macos-release-signing"></a>

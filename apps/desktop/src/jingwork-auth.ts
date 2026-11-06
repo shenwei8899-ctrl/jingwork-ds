@@ -63,16 +63,20 @@ export function jingworkOrigin(value: string): string {
 /** A terminal device authorization response requires a fresh server-issued attempt. */
 export class JingworkLoginRefused extends Error {}
 
-/** Read the opt-in account deployment independently of best-effort update preferences.
+/** Read the user-owned account deployment before a packaged JingWork deployment.
  * @param userData Electron-owned private data directory.
- * @returns Validated Jingwork settings, or undefined when this installation has no Jingwork configuration.
- * @throws If an existing authentication configuration cannot be read or validated.
+ * @param packagedDefaultsPath Required package configuration when no user override exists; omitted for opt-in Harness installations.
+ * @returns Validated Jingwork settings, or undefined when an opt-in installation has no configuration.
+ * @throws If the selected user configuration or required packaged configuration cannot be read or validated.
  */
-export function readJingworkLoginConfig(userData: string): JingworkLoginConfig | undefined {
+export function readJingworkLoginConfig(userData: string, packagedDefaultsPath?: string): JingworkLoginConfig | undefined {
   let raw: string
   try { raw = readFileSync(join(userData, 'desktop', 'jingwork.json'), 'utf8') } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return undefined
-    throw new Error('Desktop Jingwork authentication configuration cannot be read')
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw new Error('Desktop Jingwork authentication configuration cannot be read')
+    if (packagedDefaultsPath === undefined) return undefined
+    try { raw = readFileSync(packagedDefaultsPath, 'utf8') } catch (_error) {
+      throw new Error('Desktop Jingwork packaged authentication configuration cannot be read; reinstall the application')
+    }
   }
   try {
     const value: unknown = JSON.parse(raw)
@@ -152,6 +156,7 @@ export class JingworkDesktopAuth {
   async begin(signal: AbortSignal): Promise<JingworkLoginAttempt> {
     const response = await this.request('/api/auth/cli/sessions', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
+      // The deployed authorization page recognizes this protocol label for automatic approval.
       body: JSON.stringify({ key_name: 'DeepSeek Harness' }), signal,
     })
     if (!response.ok) throw new Error('Jingwork login is unavailable')

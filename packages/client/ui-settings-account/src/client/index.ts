@@ -47,6 +47,8 @@ export const inject = ['slots', 'locale', 'remote', 'remote.account', 'remote.se
 /** Register account UI in Desktop and plain Web clients. @param ctx - client plugin context. */
 export function apply(ctx: Context): void {
   const desktop = 'dshDesktop' in globalThis
+  const product = (globalThis as typeof globalThis & { dshDesktop?: { product?: 'harness' | 'jingwork' } }).dshDesktop?.product === 'jingwork'
+    ? 'jingwork' : 'harness'
   ctx.effect(() => ctx.locale.register('settings.account', { en, zh, ja, es, fr, de, ru, pt }), 'account: dictionaries')
   const t = ctx.locale.bind('settings.account')
   const jingwork = (globalThis as typeof globalThis & {
@@ -324,6 +326,7 @@ export function apply(ctx: Context): void {
     ctx.slots.inject('shell.overlay', () => ctx.slots.register({
       name: 'shell.overlay', id: 'desktop-onboarding', locale: 'settings.account',
       inject: (): DesktopOnboardingInjected => ({
+        product,
         hooks: { account: operations.hooks.account, onboarding: controller.state },
         setVisible: (visible: boolean) => {
           if (snapshot.desktopOnboardingVisible !== visible) publish({ ...snapshot, desktopOnboardingVisible: visible })

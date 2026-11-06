@@ -85,6 +85,10 @@ export interface DesktopUpdatePresentation {
 
 /** Product documents cannot supply update versions, package URLs, or installation authorization. */
 export interface DshDesktopProductApi {
+  /** Installed presentation identity; absent in older Harness preloads. */
+  readonly product?: 'harness' | 'jingwork'
+  /** Native-owned proper name for the installed product. */
+  readonly productName?: string
   readonly fileActions: DesktopFileActions
   readonly protocolVersion: 1
   readonly browser: DesktopBrowserBridge

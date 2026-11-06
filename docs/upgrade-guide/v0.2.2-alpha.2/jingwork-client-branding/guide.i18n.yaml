@@ -1,0 +1,16 @@
+# Bilingual-pair consistency record for guide.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/upgrade-guide/v0.2.2-alpha.2/jingwork-client-branding/guide.md
+/:
+  en: 7344639e2c8bc5c6
+  zh: c4104d702724106e
+/jingwork-packaged-login-and-product-branding:
+  en: 59aee80904651cb7
+  zh: 53d010612edb2bf2
+/jingwork-packaged-login-and-product-branding/change:
+  en: f103b004695a4b2a
+  zh: 477effa12ed4bbb0
+/jingwork-packaged-login-and-product-branding/migration:
+  en: e8fa3d82711d8f31
+  zh: 2570b057b06a43e4

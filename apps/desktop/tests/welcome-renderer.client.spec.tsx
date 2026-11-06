@@ -7,11 +7,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { resolveDesktopLocale } from '../src/locale.ts'
 import type { AccountView } from '@deepseek-ai/dsh-deepseek-account/types'
 import type { WelcomeSaveResult, WelcomeNotice } from '../src/welcome-api.ts'
+import { desktopWelcomeLocale, type DesktopProduct } from '../src/product-presentation.ts'
 
 const html = readFileSync(join(import.meta.dirname, '../renderer/welcome.html'), 'utf8')
 afterEach(cleanup)
 
-function mount(language = 'zh-CN', takeNotice = vi.fn<() => Promise<WelcomeNotice | undefined>>().mockResolvedValue(undefined)) {
+function mount(language = 'zh-CN', takeNotice = vi.fn<() => Promise<WelcomeNotice | undefined>>().mockResolvedValue(undefined), product: DesktopProduct = 'harness') {
   cleanup()
   const stopAccount = vi.fn()
   const api = {
@@ -22,7 +23,8 @@ function mount(language = 'zh-CN', takeNotice = vi.fn<() => Promise<WelcomeNotic
     startSignIn: vi.fn(async (): Promise<AccountView> => ({ links: { usageUrl: 'http://localhost/usage', topUpUrl: 'http://localhost/top_up' }, status: 'signed-out', attempt: null })),
     cancelSignIn: vi.fn(async (): Promise<AccountView> => ({ links: { usageUrl: 'http://localhost/usage', topUpUrl: 'http://localhost/top_up' }, status: 'signed-out', attempt: null })),
     copySignInLink: vi.fn(async () => undefined),
-    ...resolveDesktopLocale(language),
+    ...desktopWelcomeLocale(resolveDesktopLocale(language), product),
+    product,
     saveApiKey: vi.fn<(value: string) => Promise<WelcomeSaveResult>>().mockResolvedValue({ ok: true }),
     skip: vi.fn<() => Promise<void>>().mockResolvedValue(undefined),
   }
@@ -36,7 +38,7 @@ function mount(language = 'zh-CN', takeNotice = vi.fn<() => Promise<WelcomeNotic
   const copy = () => {
     const heading = document.querySelector('main')!.getAttribute('aria-labelledby')!
     return [
-      document.title, document.querySelector('img')!.alt, document.getElementById(heading)!.textContent,
+      document.title, document.querySelector('[role="img"]')?.getAttribute('aria-label') ?? document.querySelector('img')!.alt, document.getElementById(heading)!.textContent,
       ...heading === 'welcome-heading' ? [document.querySelector('#welcome-description')!.textContent] : [],
       ...heading === 'key-title' ? [document.querySelector('#key-description')!.textContent, `${input.placeholder} [password]`] : [],
       ...[...document.querySelectorAll('button')].filter(item => item.closest('[hidden]') === null)
@@ -48,6 +50,17 @@ function mount(language = 'zh-CN', takeNotice = vi.fn<() => Promise<WelcomeNotic
 }
 
 describe('desktop welcome presentation', () => {
+  it.each(['zh-CN', 'en'])('renders the JingWork %s entry and API-key step with the existing mascot', async (language) => {
+    const view = mount(language, vi.fn(async () => undefined), 'jingwork')
+    expect(screen.getByRole('img', { name: 'JingWork' })).toBeTruthy()
+    expect(view.document.querySelector('img')!.getAttribute('src')).toBe('assets/welcome-jingwork.png')
+    expect(view.document.body.textContent).not.toContain('DeepSeek Harness')
+    await expect(view.copy()).toMatchFileSnapshot(`./expected/welcome/jingwork-${language}.expected.txt`)
+    fireEvent.click(view.button('#api-key'))
+    expect(view.document.activeElement).toBe(view.input)
+    await expect(view.copy()).toMatchFileSnapshot(`./expected/welcome/jingwork-${language}-api-key.expected.txt`)
+  })
+
   it.each(['zh-CN', 'en'])('renders the %s entry and API-key step', async (language) => {
     const view = mount(language)
     expect(view.document.documentElement.lang).toBe(language)

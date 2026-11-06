@@ -176,6 +176,8 @@ pnpm run package:desktop:mac:x64:unsigned
 
 这些命令打包 `JingWork.app`，使用应用 ID `com.jingwork.desktop` 和 `jingwork://open` 链接。JingWork 从[全新、产品专属的数据目录](../README.zh.md#installation-ownership)启动，可与 DeepSeek Harness 同时运行。其可选终端命令为 `jingwork`。
 
+JingWork 打包会将 `config/jingwork-login.json` 中的公共部署设置复制到 `resources/jingwork-login.json`。全新安装使用已部署的 JingWork 登录与注册页面。安装专属覆盖配置和配置失败的处理遵循[原生账号配置规则](../README.zh.md#local-desktop-settings)。
+
 这些命令忽略 `.env.macos` 和继承的发布配置，并省略自动更新和强制更新配置。构建工具、标准网络代理与 `DSH_DESKTOP_NPM_REGISTRY` 仍可从 shell 提供。它们跳过 Developer ID 签名、Apple 公证、临时签名钥匙串和公证代理修改。Electron 使用无需证书的本地 ad-hoc 签名，以便修改后的可执行文件能够运行；DMG 不签名。准备阶段和组装后的应用仍执行运行时完整性与冒烟检查。本地构建不生成更新源、ZIP 或发布完成记录，上传命令无法发布这些产物。macOS 可能要求在“系统设置 → 隐私与安全性”中批准打开未经公证的应用。
 
 <a id="macos-release-signing"></a>

@@ -3,9 +3,7 @@
 import { mkdirSync, readFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
-
-/** Application identity embedded by the Desktop packager. */
-export type DesktopProduct = 'harness' | 'jingwork'
+import type { DesktopProduct } from './product-presentation.ts'
 
 /** Electron operations available before application readiness. */
 export interface DesktopProductApplication {

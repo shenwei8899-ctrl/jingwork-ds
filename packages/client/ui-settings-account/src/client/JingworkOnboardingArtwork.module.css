@@ -1,0 +1,92 @@
+.artwork {
+  position: relative;
+  isolation: isolate;
+  color: var(--dsw-alias-label-primary);
+  font-family: var(--dsw-font-family);
+  font-size: 13px;
+  font-weight: 400;
+  pointer-events: none;
+}
+
+.artwork * { box-sizing: border-box; }
+.welcome { aspect-ratio: 620 / 510; }
+.credit { aspect-ratio: 594 / 509; }
+
+.window {
+  position: absolute;
+  inset: 4% 0 12% 8%;
+  overflow: hidden;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 20px;
+  background: var(--dsw-alias-bg-layer-3);
+  box-shadow: 0 16px 56px color-mix(in srgb, var(--dsw-alias-state-done-primary) 18%, transparent);
+}
+
+.windowControls { display: flex; align-items: center; gap: 6px; height: 38px; padding: 0 16px; }
+.windowControls > span { width: 8px; height: 8px; border-radius: 50%; background: var(--dsw-alias-label-caption); opacity: 0.4; }
+.workbench { display: flex; height: calc(100% - 38px); }
+.sidebar { width: 36%; min-width: 0; padding: 12px; border-right: 1px solid var(--dsw-alias-border-l2); background: var(--dsw-alias-bg-layer-1); }
+.brand { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.brand img { display: block; width: 30px; height: 30px; object-fit: contain; }
+.brand span { font-family: var(--dsw-font-family-brand); font-size: 16px; font-weight: 500; }
+.newTask { display: flex; align-items: center; justify-content: center; gap: 6px; height: 34px; margin: 18px 0 24px; border: 1px solid var(--dsw-alias-border-l2); border-radius: 10px; background: var(--dsw-alias-bg-layer-3); font-size: 12px; }
+.sectionLabel { margin: 0 8px 10px; color: var(--dsw-alias-label-secondary); font-size: 12px; }
+.taskList { display: flex; flex-direction: column; gap: 6px; }
+.taskList > div { overflow: hidden; padding: 9px 8px; border-radius: 8px; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.taskList .selected { color: var(--dsw-alias-state-done-primary); background: color-mix(in srgb, var(--dsw-alias-state-done-primary) 9%, transparent); }
+.canvas { display: flex; flex: 1; min-width: 0; flex-direction: column; align-items: center; justify-content: center; padding: 16px; }
+.heroMark { width: 60px; height: 60px; object-fit: contain; }
+.heroName { margin-top: 12px; font-family: var(--dsw-font-family-brand); font-size: 24px; font-weight: 500; }
+.caption { margin-top: 8px; color: var(--dsw-alias-label-secondary); font-size: 12px; }
+.prompt { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; min-height: 58px; margin-top: 28px; padding: 12px; border: 1px solid var(--dsw-alias-border-l2); border-radius: 12px; color: var(--dsw-alias-label-secondary); font-size: 11px; }
+.prompt > span { display: grid; flex: none; place-items: center; width: 22px; height: 22px; border-radius: 50%; color: var(--dsw-alias-label-primary-foreground); background: var(--dsw-alias-state-done-primary); font-size: 16px; }
+.capabilities { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 12px; }
+.capabilities > span { padding: 5px 8px; border: 1px solid var(--dsw-alias-border-l2); border-radius: 8px; color: var(--dsw-alias-label-secondary); font-size: 11px; }
+
+.files { position: absolute; bottom: 0; left: 0; width: 56%; padding: 18px; border: 1px solid var(--dsw-alias-settings-card-stroke); border-radius: 18px; background: var(--dsw-alias-bg-layer-3); box-shadow: 0 12px 40px color-mix(in srgb, var(--dsw-alias-state-done-primary) 12%, transparent); }
+.filesHeading { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-size: 14px; font-weight: 500; }
+.fileRow { display: flex; align-items: center; gap: 10px; padding: 8px 0; font-size: 12px; }
+.fileRow > svg { flex: none; }
+
+.accountWindow { inset: 4% 24% 5% 0; }
+.accountSidebar { width: 57%; padding: 12px 16px; }
+.account { position: absolute; inset: 22% 0 0 28%; display: flex; flex-direction: column; gap: 14px; padding: 22px; border: 1px solid var(--dsw-alias-settings-card-stroke); border-radius: 20px; background: var(--dsw-alias-bg-layer-3); box-shadow: 0 16px 56px color-mix(in srgb, var(--dsw-alias-state-done-primary) 16%, transparent); }
+.accountHeading { font-size: 15px; font-weight: 500; }
+.profile { display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--dsw-alias-border-l2); border-radius: 12px; }
+.profile img { width: 36px; height: 36px; object-fit: contain; }
+.profile > div { display: flex; flex-direction: column; gap: 4px; }
+.profile strong { font-family: var(--dsw-font-family-brand); font-size: 15px; font-weight: 500; }
+.profile span { color: var(--dsw-alias-label-secondary); font-size: 11px; }
+.balance { padding: 16px; border: 1px solid var(--dsw-alias-border-l2); border-radius: 12px; }
+.balance > div { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.balance strong { font-size: 18px; font-weight: 500; }
+.balance .accountActions { justify-content: flex-end; margin-top: 18px; padding-top: 12px; border-top: 1px solid var(--dsw-alias-border-l2); }
+.accountActions > span { padding: 6px 10px; border: 1px solid var(--dsw-alias-border-l2); border-radius: 8px; font-size: 11px; }
+.accountActions > span:last-child { border-color: transparent; color: var(--dsw-alias-label-primary-foreground); background: var(--dsw-alias-state-done-primary); }
+.activity { min-height: 0; flex: 1; color: var(--dsw-alias-label-secondary); font-size: 11px; }
+.bars { display: flex; align-items: flex-end; gap: 8px; height: 38px; margin-top: 8px; }
+.bars > span { flex: 1; border-radius: 4px 4px 0 0; background: color-mix(in srgb, var(--dsw-alias-state-done-primary) 30%, transparent); }
+
+@media (max-width: 800px) {
+  .artwork { font-size: 12px; }
+
+  .brand { gap: 6px; }
+  .brand span { font-size: 14px; }
+  .brand img { width: 24px; height: 24px; }
+  .canvas { padding: 12px; }
+  .heroMark { width: 44px; height: 44px; }
+  .heroName { margin-top: 8px; font-size: 20px; }
+  .caption, .capabilities, .activity { display: none; }
+  .prompt { min-height: 50px; margin-top: 20px; padding: 10px; font-size: 10px; }
+  .newTask { margin: 14px 0; }
+  .taskList > div { padding: 8px 6px; font-size: 11px; }
+  .files { padding: 14px; }
+  .account { gap: 10px; padding: 16px; }
+  .accountSidebar { padding: 12px; }
+  .profile { padding: 8px; }
+  .profile img { width: 28px; height: 28px; }
+  .balance { padding: 10px; }
+  .balance strong { font-size: 14px; }
+  .balance .accountActions { margin-top: 10px; padding-top: 8px; }
+  .accountActions > span { padding: 4px 6px; font-size: 10px; }
+}

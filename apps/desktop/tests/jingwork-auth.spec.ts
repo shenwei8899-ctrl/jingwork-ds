@@ -48,6 +48,7 @@ it('opens the original login page with only the public verification code in its 
   expect(url.searchParams.get('redirect')).toBe('/auth/cli/authorize?user_code=ABCD-EFGH')
   expect(attempt.url).not.toContain(issued.device_code)
   expect(send.mock.calls[0]![1]).toMatchObject({ redirect: 'error', credentials: 'omit' })
+  expect(send.mock.calls[0]![1]?.body).toBe(JSON.stringify({ key_name: 'DeepSeek Harness' }))
 })
 it.each(['https://other.example/auth/cli/authorize', '/other-path'])('refuses a foreign verification address %s', async (path) => {
   const { auth, send, signal } = await fixture()
@@ -120,6 +121,47 @@ it('reads an opt-in Jingwork deployment and leaves other installations unconfigu
   await mkdir(join(directory, 'desktop'))
   await writeFile(join(directory, 'desktop', 'jingwork.json'), JSON.stringify({ url: origin }))
   expect(readJingworkLoginConfig(directory)).toEqual({ url: origin, requestTimeoutMs: 15000 })
+})
+it('uses packaged Jingwork deployment settings for a fresh user directory', async () => {
+  const { directory } = await fixture()
+  const defaults = join(directory, 'packaged-login.json')
+  await writeFile(defaults, JSON.stringify({ url: 'https://jingwork.example', conversationLogIntervalMs: 7000 }))
+  expect(readJingworkLoginConfig(join(directory, 'fresh-user-data'), defaults)).toEqual({
+    url: 'https://jingwork.example', requestTimeoutMs: 15000, conversationLogIntervalMs: 7000,
+  })
+  expect(await readdir(directory)).toEqual(['packaged-login.json'])
+})
+it('selects a user-owned deployment before reading packaged defaults', async () => {
+  const { directory } = await fixture()
+  await mkdir(join(directory, 'desktop'))
+  await writeFile(join(directory, 'desktop', 'jingwork.json'), JSON.stringify({ url: origin, requestTimeoutMs: 2000 }))
+  expect(readJingworkLoginConfig(directory, join(directory, 'missing-packaged-login.json')))
+    .toEqual({ url: origin, requestTimeoutMs: 2000 })
+})
+it('reports a required missing or unreadable packaged deployment', async () => {
+  const { directory } = await fixture()
+  expect(() => readJingworkLoginConfig(directory, join(directory, 'missing-login.json')))
+    .toThrow('packaged authentication configuration cannot be read')
+  expect(() => readJingworkLoginConfig(directory, directory)).toThrow('packaged authentication configuration cannot be read')
+})
+it.each(['{', '{}', '{"url":"http://remote.example"}', '{"url":"https://example.com/path"}',
+  '{"url":"https://example.com","requestTimeoutMs":0}'])('refuses invalid packaged account configuration %s', async (raw) => {
+  const { directory } = await fixture()
+  const defaults = join(directory, 'packaged-login.json')
+  await writeFile(defaults, raw)
+  expect(() => readJingworkLoginConfig(directory, defaults)).toThrow('authentication configuration requires')
+})
+it('reports invalid or unreadable user configuration without using a packaged deployment', async () => {
+  const { directory } = await fixture()
+  const defaults = join(directory, 'packaged-login.json')
+  const override = join(directory, 'desktop', 'jingwork.json')
+  await writeFile(defaults, JSON.stringify({ url: 'https://jingwork.example' }))
+  await mkdir(join(directory, 'desktop'))
+  await writeFile(override, '{}')
+  expect(() => readJingworkLoginConfig(directory, defaults)).toThrow('authentication configuration requires')
+  await rm(override)
+  await mkdir(override)
+  expect(() => readJingworkLoginConfig(directory, defaults)).toThrow('authentication configuration cannot be read')
 })
 it.each(['{', '{}', '{"url":"http://remote.example"}', '{"url":"https://example.com/path"}',
   '{"url":"https://example.com","requestTimeoutMs":0}'])('refuses invalid account configuration %s', async (raw) => {
@@ -215,10 +257,10 @@ it('authenticates the private retrieval relay and rechecks account access after 
   await persist(context)
   const relay = await startJingworkKnowledge(context.auth, 1000)
   onTestFinished(relay.dispose)
-  const endpoint = relay.environment.DSH_KNOWLEDGE_URL + '/retrieve?id=product-kb&query=policy'
+  const endpoint = new URL('/retrieve?id=product-kb&query=policy', relay.environment.DSH_KNOWLEDGE_URL)
   expect((await fetch(endpoint)).status).toBe(401)
   const headers = { Authorization: `Bearer ${relay.environment.DSH_KNOWLEDGE_TOKEN}` }
-  expect((await fetch(relay.environment.DSH_KNOWLEDGE_URL + '/other', { headers })).status).toBe(400)
+  expect((await fetch(new URL('/other', relay.environment.DSH_KNOWLEDGE_URL), { headers })).status).toBe(400)
   context.send.mockResolvedValueOnce(Response.json({ chunks: [{ text: 'Policy' }] }))
   expect(await (await fetch(endpoint, { headers })).json()).toEqual({ chunks: [{ text: 'Policy' }] })
   await context.auth.signOut()
@@ -235,7 +277,7 @@ it('cancels in-flight backend retrieval before disposing the relay', async () =>
     captured.signal = init?.signal ?? null
     captured.signal?.addEventListener('abort', () => { reject(new Error('cancelled')) }, { once: true })
   }))
-  const pending = fetch(relay.environment.DSH_KNOWLEDGE_URL + '/retrieve?id=product&query=policy', {
+  const pending = fetch(new URL('/retrieve?id=product&query=policy', relay.environment.DSH_KNOWLEDGE_URL), {
     headers: { Authorization: `Bearer ${relay.environment.DSH_KNOWLEDGE_TOKEN}` },
   }).catch((error: unknown) => error)
   await vi.waitFor(() => { expect(captured.signal).toBeDefined() })
@@ -256,7 +298,7 @@ it('delivers conversation logs with native credentials and validates durable ack
   expect(context.send.mock.calls.at(-1)?.[0]).toBe(origin + '/api/system/conversation-logs/sync')
   const request = context.send.mock.calls.at(-1)?.[1]
   expect(request?.headers).toMatchObject({ Authorization: `Bearer ${granted.secret}` })
-  expect(JSON.parse(String(request?.body))).toEqual(batch)
+  expect(request?.body).toBe(JSON.stringify(batch))
   context.send.mockResolvedValueOnce(Response.json({ received: 1, inserted: 0 }))
   await context.auth.syncConversationLogs(granted.user.uid, batch, context.signal)
   context.send.mockResolvedValueOnce(Response.json({ received: 0, inserted: 0 }))

@@ -50,6 +50,12 @@ const operations = {
 }
 
 describe('desktop welcome window', () => {
+  it('passes the independent JingWork identity to its native welcome renderer', () => {
+    const options = welcomeWindowOptions('darwin', resolveDesktopLocale('zh-CN'), 'jingwork')
+    expect(options.title).toBe('JingWork')
+    expect(options.webPreferences?.additionalArguments).toEqual(['--dsh-welcome-locale=zh-CN', '--dsh-desktop-product=jingwork'])
+  })
+
   it.each(['darwin', 'win32', 'linux'] as const)('keeps the %s preview fixed-size and sandboxed', (platform) => {
     const options = welcomeWindowOptions(platform, resolveDesktopLocale('zh-CN'))
     expect(options).toMatchObject({

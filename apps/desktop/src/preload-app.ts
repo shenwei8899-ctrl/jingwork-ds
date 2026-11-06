@@ -11,9 +11,13 @@ import { syncWindowsAppearance } from './preload-windows.ts'
 import { installMandatoryUpdateOverlay } from './preload-mandatory-overlay.ts'
 import { createDesktopBrowserBridge } from './preload-browser.ts'
 import type { FileDragHandle } from '@deepseek-ai/dsh-util-file-drag'
+import { desktopPresentationProduct, desktopProductName } from './product-presentation.ts'
 
 function createProductApi(): DshDesktopProductApi {
+  const product = desktopPresentationProduct(process.argv)
   return {
+    product,
+    productName: desktopProductName(product),
     protocolVersion: 1,
     fileActions: {
       save: request => ipcRenderer.invoke(DESKTOP_IPC.fileSave, request) as Promise<FileSaveResult>,
