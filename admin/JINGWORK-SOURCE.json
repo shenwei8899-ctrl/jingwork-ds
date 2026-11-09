@@ -10,7 +10,8 @@
   ],
   "importAdjustments": [
     "web/test/browser/fixtures/.gitignore keeps the original tracked PDF fixture visible in this checkout",
-    "Normalize trailing whitespace in 50 imported text files for the parent repository commit gate; preserve Markdown hard line breaks with backslashes."
+    "Normalize trailing whitespace in 50 imported text files for the parent repository commit gate; preserve Markdown hard line breaks with backslashes.",
+    "Refresh eight stale checksum entries to match the imported working-tree snapshot."
   ],
   "localModifications": {
     "web/src/views/CLIAuthAuthorizeView.vue": "Show desktop sign-in and return-to-Harness copy for device sessions named DeepSeek Harness."
