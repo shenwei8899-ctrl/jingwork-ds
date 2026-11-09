@@ -1,0 +1,69 @@
+name: Desktop installers
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_version:
+        description: '完整安装包版本号，须符合当前产品版本规则'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: mac-arm64
+            runner: macos-15
+          - target: mac-x64
+            runner: macos-15-intel
+          - target: win-x64
+            runner: windows-2025
+          - target: win-arm64
+            runner: windows-11-arm
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 180
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v5.0.0
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: '24'
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Build installer
+        env:
+          INSTALLER_TARGET: ${{ matrix.target }}
+          INSTALLER_VERSION: ${{ inputs.build_version }}
+        run: |
+          pnpm exec node apps/desktop/scripts/package-installers.mjs $env:INSTALLER_TARGET --build-version $env:INSTALLER_VERSION
+          exit $LASTEXITCODE
+      - name: Upload installer
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: JingWork-${{ matrix.target }}
+          include-hidden-files: true
+          compression-level: 0
+          path: |
+            apps/desktop/.desktop-build/targets/${{ matrix.target }}/unsigned-artifacts/*.dmg
+            apps/desktop/.desktop-build/targets/${{ matrix.target }}/unsigned-artifacts/*.exe
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload diagnostics
+        if: always()
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: packaging-logs-${{ matrix.target }}
+          include-hidden-files: true
+          path: apps/desktop/.desktop-build/packaging-runs/
+          if-no-files-found: ignore
+          retention-days: 14

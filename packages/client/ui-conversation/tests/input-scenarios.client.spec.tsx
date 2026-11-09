@@ -247,6 +247,24 @@ async function bench(executeImpl?: (line: string) => Promise<SubmitOutcome>) {
   return { ...base, execute, executed, envelopes }
 }
 
+describe('command launcher toggle', () => {
+  it('closes on a second click after opening over a command draft', async () => {
+    const { view, type, controller } = await bench()
+    type('/goal')
+    const launcher = view.getByLabelText('添加文件或调用指令')
+    fireEvent.mouseDown(launcher)
+    fireEvent.click(launcher)
+    await act(async () => {})
+    expect(controller.menu.getSnapshot().open).toBe(true)
+    expect(launcher.getAttribute('aria-expanded')).toBe('true')
+    fireEvent.mouseDown(launcher)
+    fireEvent.click(launcher)
+    await act(async () => {})
+    expect(controller.menu.getSnapshot().open).toBe(false)
+    expect(launcher.getAttribute('aria-expanded')).toBe('false')
+  })
+})
+
 describe('scenario A: menu-pick /goal, type args, enter submits', () => {
   it('runs the whole claim chain through the real pipeline', async () => {
     const b = await bench()

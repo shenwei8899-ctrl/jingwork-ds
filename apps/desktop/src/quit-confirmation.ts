@@ -3,6 +3,7 @@
 import type { MessageBoxOptions, MessageBoxReturnValue, NativeImage } from 'electron'
 import type { DesktopQuitInspection } from './host-process.ts'
 import type { DesktopLocale, DesktopMessages } from './locale.ts'
+import { desktopProductName, type DesktopProduct } from './product-presentation.ts'
 
 /** Locale key of the explanation shown before quitting, or none when quitting interrupts nothing. */
 export type DesktopQuitPrompt = Extract<keyof DesktopMessages, 'quitActiveTasks' | 'quitScheduledTasks' | 'quitActiveAndScheduledTasks'> | undefined
@@ -22,6 +23,7 @@ export function resolveDesktopQuitPrompt(inspection: DesktopQuitInspection | 'un
 
 /** Main-process collaborators of the confirmation. */
 export interface DesktopQuitConfirmationOptions {
+  readonly product: DesktopProduct
   readonly locale: () => DesktopLocale
   /** Start one Host inspection; undefined while no Host is ready, when nothing can be running and the quit proceeds. */
   readonly inspect: () => Promise<DesktopQuitInspection> | undefined
@@ -75,14 +77,15 @@ export class DesktopQuitConfirmation {
     if (this.disposed) return false
     if (prompt === undefined) return true
     const { messages } = this.options.locale()
+    const productName = desktopProductName(this.options.product)
     const windows = (this.options.platform ?? process.platform) === 'win32'
     // Button order follows each platform: macOS lays buttons out right-to-left from index 0, so
     // "Quit" sits right of "Cancel"; the Windows task dialog keeps array order, "Quit" left of "Cancel".
     const result = await this.options.show({
       type: windows ? 'none' : 'warning',
       ...(windows && this.options.icon !== undefined ? { icon: this.options.icon } : {}),
-      title: messages.aboutProduct,
-      message: messages.quitTitle,
+      title: productName,
+      message: messages.quitTitle.replaceAll(desktopProductName('harness'), productName),
       detail: messages[prompt],
       buttons: [messages.quit, messages.cancel],
       defaultId: 0,

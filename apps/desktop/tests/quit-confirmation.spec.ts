@@ -2,17 +2,18 @@ import type { MessageBoxOptions, MessageBoxReturnValue, NativeImage } from 'elec
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { DesktopQuitInspection } from '../src/host-process.ts'
 import { resolveDesktopLocale } from '../src/locale.ts'
+import type { DesktopProduct } from '../src/product-presentation.ts'
 import { DesktopQuitConfirmation, resolveDesktopQuitPrompt } from '../src/quit-confirmation.ts'
 
 afterEach(() => { vi.restoreAllMocks() })
 
-function setup(platform: NodeJS.Platform, inspect: () => Promise<DesktopQuitInspection> | undefined, locale = 'zh') {
+function setup(platform: NodeJS.Platform, inspect: () => Promise<DesktopQuitInspection> | undefined, locale = 'zh', product: DesktopProduct = 'harness') {
   const shown: MessageBoxOptions[] = []
   let answer: MessageBoxReturnValue = { response: 0, checkboxChecked: false }
   const focus = vi.fn()
   const icon: NativeImage = { isEmpty: () => false } as never
   const confirmation = new DesktopQuitConfirmation({
-    locale: () => resolveDesktopLocale(locale), inspect, focus, platform, icon,
+    product, locale: () => resolveDesktopLocale(locale), inspect, focus, platform, icon,
     show: async (options) => { shown.push(options); return answer },
   })
   return { confirmation, shown, focus, icon, answer: (value: number) => { answer = { response: value, checkboxChecked: false } } }
@@ -60,6 +61,14 @@ describe('DesktopQuitConfirmation', () => {
     }])
   })
 
+  it.each(['zh-CN', 'en', 'ja', 'es', 'fr', 'de', 'ru', 'pt'])('names JingWork in the %s quit dialog', async (language) => {
+    const f = setup('darwin', async () => ({ activeTasks: false, scheduledTasks: true }), language, 'jingwork')
+    expect(await f.confirmation.confirm()).toBe(true)
+    expect(f.shown[0]?.title).toBe('JingWork')
+    expect(f.shown[0]?.message).toBe(resolveDesktopLocale(language).messages.quitTitle.replaceAll('DeepSeek Harness', 'JingWork'))
+    expect(f.shown[0]?.message).not.toContain('DeepSeek Harness')
+  })
+
   it('warns about running tasks when the inspection fails', async () => {
     vi.spyOn(console, 'warn').mockImplementation(() => {})
     const f = setup('darwin', async () => { throw new Error('desktop quit: inspection timed out') })
@@ -101,6 +110,7 @@ describe('DesktopQuitConfirmation', () => {
   it('does not approve a quit from a box answered after disposal', async () => {
     const answered = Promise.withResolvers<MessageBoxReturnValue>()
     const confirmation = new DesktopQuitConfirmation({
+      product: 'harness',
       locale: () => resolveDesktopLocale('en'), inspect: async () => ({ activeTasks: true, scheduledTasks: false }),
       focus: () => {}, platform: 'darwin', show: () => answered.promise,
     })

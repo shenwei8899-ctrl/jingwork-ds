@@ -123,7 +123,7 @@
 }
 
 /* Floating overlay anchor (menu / popupSelect shell): entries position
-   themselves against the card (bottom: 100% + gap); closed entries render null. */
+   themselves above the toolbar beside its launcher; closed entries render null. */
 .overlayAnchor {
   position: absolute;
   inset: 0 0 auto;
@@ -260,6 +260,7 @@
 /* Toolbar: attach + Plan + Read-only on the left; model + send on the right
    (figma Input_Bottom chrome). */
 .row {
+  position: relative;
   display: flex;
   flex-wrap: wrap;
   align-items: center;

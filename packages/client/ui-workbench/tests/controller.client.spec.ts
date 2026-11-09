@@ -66,7 +66,7 @@ describe('workbench editor and library commands', () => {
     expect(await controller.save('experts', expert, expert.slug, 5, [skill])).toBeNull()
     expect(mutate).toHaveBeenCalledTimes(1)
     expect(mutate.mock.calls[0]?.[0]).toEqual([
-      { op: 'set', path: ['experts'], value: expect.arrayContaining([expert]) },
+      { op: 'set', path: ['experts'], value: defaultWorkbench().experts.map(item => item.slug === expert.slug ? expert : item) },
       { op: 'set', path: ['skills'], value: [skill] },
     ])
     expect(mutate.mock.calls[0]?.[1]).toBe(5)

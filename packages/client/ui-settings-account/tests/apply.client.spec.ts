@@ -796,7 +796,7 @@ it('uses the native Jingwork identity without starting DeepSeek account surfaces
   const name = vi.fn(async () => 'jingwork-user')
   const signOut = vi.fn(async () => {})
   vi.stubGlobal('dshDesktop', { protocolVersion: 1 })
-  vi.stubGlobal('dshJingwork', { name, signOut, agents: async () => [] })
+  vi.stubGlobal('dshJingwork', { name, subscribe: () => () => {}, signOut, agents: async () => [] })
   const c = await start()
   const nativeFace: object = c.ctx.slots.entries('settings.launcher')[0]!.inject!()
   const injected = nativeFace as
@@ -806,4 +806,22 @@ it('uses the native Jingwork identity without starting DeepSeek account surfaces
   expect(platformHostEntry(c)).toBeUndefined()
   await injected.signOut()
   expect(signOut).toHaveBeenCalledOnce()
+})
+
+it('refreshes the native identity when login enters a preloaded workspace', async ({ start }) => {
+  const name = vi.fn().mockResolvedValueOnce(null).mockResolvedValueOnce('signed-in-user')
+  let entered = (): void => {}
+  const unsubscribe = vi.fn()
+  vi.stubGlobal('dshDesktop', { protocolVersion: 1 })
+  vi.stubGlobal('dshJingwork', { name, agents: async () => [], signOut: vi.fn(), subscribe: (listener: () => void) => {
+    entered = listener
+    return unsubscribe
+  } })
+  const c = await start()
+  const nativeFace: object = c.ctx.slots.entries('settings.launcher')[0]!.inject!()
+  const injected = nativeFace as
+    import('../src/client/JingworkAccountMenu.tsx').JingworkAccountMenuInjected
+  await vi.waitFor(() => { expect(name).toHaveBeenCalledOnce() })
+  entered()
+  await vi.waitFor(() => { expect(injected.hooks.identity.getSnapshot()).toBe('signed-in-user') })
 })

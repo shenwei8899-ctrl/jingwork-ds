@@ -34,6 +34,8 @@ Run local commands from the repository root after installing locked dependencies
 
 Set `DSH_DESKTOP_PACKAGE_CACHE_DIR` to an absolute build-cache directory for reuse across checkouts; see [cache configuration and lifecycle](#desktop-runtime-preparation).
 
+Use `pnpm exec node apps/desktop/scripts/package-installers.mjs` for unsigned installers on the current host. Apple Silicon builds both Mac architectures sequentially, Intel Mac builds x64, and Windows builds its native architecture. Select one target with `mac-arm64`, `mac-x64`, `win-x64`, or `win-arm64`; `--dry-run` prints commands, `--build-version VERSION` selects the build version, and `--signed` uses the existing signing configuration (Windows ARM64 supports unsigned builds only). Outputs remain under `apps/desktop/.desktop-build/targets/<target>/unsigned-artifacts/`, or `artifacts/` for signed builds. The manual `Desktop installers` Actions workflow builds all four targets on matching hosted runners and uploads DMG/EXE artifacts separately. It requires an explicit build version and a committed source branch containing the workflow. A failed target retains its diagnostics and does not cancel the other jobs.
+
 <a id="release-versions"></a>
 
 ## Release versions

@@ -2067,7 +2067,7 @@ describe('command launcher chrome and control seats', () => {
     // Every seat dispatched, nothing rendered (render passes may repeat; the
     // seat set is the contract).
     expect([...new Set(slotCalls.map(c => c.key))]).toEqual([
-      'conversation.input.overlay', 'conversation.input.attachments',
+      'conversation.input.attachments', 'conversation.input.overlay',
       'conversation.input.permission', 'conversation.input.plan', 'conversation.input.left',
       'conversation.input.right', 'conversation.input.model', 'conversation.input.activity',
       'conversation.composer.dock',
@@ -2086,6 +2086,13 @@ describe('command launcher chrome and control seats', () => {
     expect(toggleCommandMenu).toHaveBeenCalledExactlyOnceWith({ start: 2, end: 7 })
     act(() => { menuLauncher.set('command') })
     expect(launcher.getAttribute('aria-expanded')).toBe('true')
+    const focus = vi.spyOn(shell.editor, 'focus')
+    fireEvent.click(launcher)
+    expect(focus).not.toHaveBeenCalled()
+    expect(toggleCommandMenu).toHaveBeenCalledTimes(2)
+    const overlay = view.container.querySelector('[data-composer-overlay]')!
+    expect(overlay.parentElement?.contains(launcher)).toBe(true)
+    expect(overlay.parentElement?.hasAttribute('data-composer-card')).toBe(false)
   })
 
   it('follows the access answers over a running Session, and restores the actions when they return', () => {

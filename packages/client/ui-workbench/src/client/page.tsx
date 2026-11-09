@@ -31,7 +31,7 @@ import { saveDownload } from './controller.ts'
 import type { WorkbenchKey } from './locales.ts'
 import cardStyles from './card.module.css'
 import css from './page.module.css'
-import jingworkAgent from './assets/jingwork-agent.png'
+import { expertAvatars } from './expert-avatars.ts'
 import type { createAssistantNoticeStore } from './assistant-notice.tsx'
 import { Connectors } from './Connectors.tsx'
 import { BuiltinSkills } from './BuiltinSkills.tsx'
@@ -587,7 +587,7 @@ export function WorkbenchPage(props: PageProps) {
               <article className={`${cardStyles.surface} ${cardStyles.catalogSurface} ${css.templateCard}`} key={expert.slug}>
                 <header className={css.templateHeader}>
                   <span className={css.templateAvatar} aria-hidden="true">
-                    <img src={jingworkAgent} alt="" />
+                    <img src={expertAvatars[expert.slug]} alt="" />
                   </span>
                   <div className={css.templateIdentity}>
                     <h2>{expert.name}</h2>
@@ -750,7 +750,7 @@ export function WorkbenchPage(props: PageProps) {
         }
       >
         {edit && (
-          <div className={editing?.kind === 'skills' ? `${css.form} ${css.skillForm}` : css.form}>
+          <div className={editing.kind === 'skills' ? `${css.form} ${css.skillForm}` : css.form}>
             <label>
               {t('name')}
               <Input
@@ -801,7 +801,7 @@ export function WorkbenchPage(props: PageProps) {
                   <textarea
                     rows={14}
                     value={edit.content}
-                    placeholder={editing !== null && editing.original === undefined ? t('skillExample') : undefined}
+                    placeholder={editing.original === undefined ? t('skillExample') : undefined}
                     onChange={(e) => {
                       update({ content: e.target.value })
                     }}

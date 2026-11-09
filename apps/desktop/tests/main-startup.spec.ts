@@ -394,15 +394,23 @@ vi.mock('../src/platform-view.ts', async importOriginal => ({
     dispose(): Promise<void> { return harness.platformDispose() }
   },
 }))
+const welcomeTransport = vi.hoisted(() => vi.fn<(
+  send: (input: string, init?: RequestInit) => Promise<Response>, cookies: () => Promise<string>,
+) => void>())
 vi.mock('../src/welcome-backend.ts', () => ({
-  connectDesktopWelcome: async () => ({
-    analyticsEnabled: async () => harness.analyticsEnabled,
-    report: harness.analytics,
-    readLocalePreference: async () => null,
-    read: async (): Promise<unknown> => (await harness.hosts.at(-1)!.fetch()).json() as Promise<unknown>,
-    save: async () => ({ ok: true }),
-    account: { watch: harness.watchAccount, state: async () => ({ status: 'signed-out', attempt: null }) },
-  }),
+  connectDesktopWelcome: async (
+    _url: string, send: (input: string, init?: RequestInit) => Promise<Response>, cookies: () => Promise<string>,
+  ) => {
+    welcomeTransport(send, cookies)
+    return {
+      analyticsEnabled: async () => harness.analyticsEnabled,
+      report: harness.analytics,
+      readLocalePreference: async () => null,
+      read: async (): Promise<unknown> => (await harness.hosts.at(-1)!.fetch()).json() as Promise<unknown>,
+      save: async () => ({ ok: true }),
+      account: { watch: harness.watchAccount, state: async () => ({ status: 'signed-out', attempt: null }) },
+    }
+  },
 }))
 
 function configureTestAuthPopup(allow: boolean): void {
@@ -478,6 +486,24 @@ afterEach(async () => {
 })
 
 describe('desktop main startup', () => {
+  it('authenticates native local requests with the owned Host cookie', async () => {
+    await readyForUpdate()
+    await vi.advanceTimersByTimeAsync(0)
+    const [send, cookies] = welcomeTransport.mock.lastCall!
+    const request = vi.fn<typeof fetch>().mockResolvedValue(Response.json({ ok: true }))
+    vi.stubGlobal('fetch', request)
+    await send('http://127.0.0.1:1234/api/settings/list', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}',
+    })
+    const init = request.mock.lastCall![1]!
+    const headers = new Headers(init.headers)
+    expect(headers.get('cookie')).toBe('test-cookie')
+    expect(headers.get('content-type')).toBe('application/json')
+    expect(init.method).toBe('POST')
+    expect(init.body).toBe('{}')
+    expect(await cookies()).toBe('test-cookie')
+  })
+
   it.each([true, false])('selects the package manager before Host startup (packaged=%s)', async (packaged) => {
     harness.app.isPackaged = packaged
     await readyForUpdate()
@@ -1280,6 +1306,25 @@ describe('desktop main startup', () => {
     expect(harness.app.setAsDefaultProtocolClient).toHaveBeenCalledExactlyOnceWith('jingwork')
     expect(harness.windows[0]!.options).toMatchObject({ webPreferences: { additionalArguments: ['--dsh-desktop-product=jingwork'] } })
     expect(applicationMenuItems().map(item => item.label)).toContain(formatDesktopMessage(en.cliCommandMenu, { command: 'jingwork' }))
+  })
+
+  it('uses the JingWork product name when quitting its desktop application', async () => {
+    const host = await readyForUpdate('jingwork')
+    await Promise.resolve(invoke(DESKTOP_IPC.boot))
+    host.inspectQuit.mockResolvedValue({ activeTasks: false, scheduledTasks: true })
+    harness.dialog.showMessageBox.mockResolvedValue({ response: 1, checkboxChecked: false })
+    harness.app.quit()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(harness.dialog.showMessageBox).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({
+      title: 'JingWork', message: 'Quit JingWork?', detail: en.quitScheduledTasks,
+    }))
+    expect(host.stop).not.toHaveBeenCalled()
+    harness.dialog.showMessageBox.mockResolvedValue({ response: 0, checkboxChecked: false })
+    harness.app.quit()
+    await vi.advanceTimersByTimeAsync(0)
+    await host.stopping.promise
+    host.exited.resolve()
+    await harness.quitCompleted.promise
   })
 
   async function readyForUpdate(product: 'harness' | 'jingwork' = 'harness') {

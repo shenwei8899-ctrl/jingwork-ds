@@ -1,0 +1,18 @@
+{
+  "source": "jin work/Yuxi",
+  "revision": "031e2c72681edb8f95f71b60ceb66881f7915b8d",
+  "snapshot": "current working tree",
+  "files": 2046,
+  "excluded": [
+    "runtime credentials and environment files except .env.template",
+    "databases, caches, dependency installations and build output",
+    "desktop installers and downloads"
+  ],
+  "importAdjustments": [
+    "web/test/browser/fixtures/.gitignore keeps the original tracked PDF fixture visible in this checkout",
+    "Normalize trailing whitespace in 50 imported text files for the parent repository commit gate; preserve Markdown hard line breaks with backslashes."
+  ],
+  "localModifications": {
+    "web/src/views/CLIAuthAuthorizeView.vue": "Show desktop sign-in and return-to-Harness copy for device sessions named DeepSeek Harness."
+  }
+}

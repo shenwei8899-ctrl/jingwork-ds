@@ -55,12 +55,14 @@ export function BuiltinSkills({ t, query }: Props) {
       </section>
       <Modal
         open={selected !== undefined}
+        className={`${css.skillModal}`}
         onClose={() =>{  setSelectedName(null) }}
         title={t('skillDetails')}
         closeLabel={t('close')}
+        footer={<Button onClick={() => { setSelectedName(null) }}>{t('close')}</Button>}
       >
         {selected && (
-          <div className={css.builtinSkillDetails}>
+          <div className={`${css.form} ${css.skillForm} ${css.builtinSkillDetails}`}>
             <h3>{selected.title}</h3>
             <code>{selected.name}</code>
             <p>{selected.summary}</p>

@@ -1,0 +1,28 @@
+# Local launch over the imported Jingwork service definitions and installed images.
+services:
+  api:
+    image: yuxi-fresh-api:0.7.3
+    ports: !override
+      - '127.0.0.1:45050:5050'
+  worker:
+    image: yuxi-fresh-api:0.7.3
+  storage-migrator:
+    image: yuxi-fresh-api:0.7.3
+  sandbox-provisioner:
+    image: yuxi-fresh-sandbox-provisioner:0.7.3
+    ports: !reset []
+  web:
+    image: yuxi-fresh-web:0.7.3
+    ports: !override
+      - '127.0.0.1:45173:5173'
+  minio:
+    image: yuxi-fresh-minio:RELEASE.2023-03-20T20-16-18Z
+    ports: !reset []
+  postgres:
+    ports: !reset []
+  redis:
+    ports: !reset []
+  graph:
+    ports: !reset []
+  milvus:
+    ports: !reset []

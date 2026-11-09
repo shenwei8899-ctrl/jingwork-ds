@@ -1,0 +1,568 @@
+.download-intro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 52px 24px 56px;
+  text-align: center;
+}
+.download-mascot {
+  width: 132px;
+  height: 132px;
+  object-fit: contain;
+}
+.download-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 12px;
+  padding: 5px 14px;
+  border: 1px solid var(--jing-border);
+  border-radius: 30px;
+  font-size: 12px;
+  color: var(--jing-muted);
+  background: var(--jing-soft);
+}
+.download-eyebrow svg {
+  color: var(--jing-blue);
+}
+.download-intro h1 {
+  margin-top: 20px;
+  font-size: 42px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.download-intro h1 span {
+  background: var(--jing-gradient);
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.download-intro > p {
+  margin-top: 16px;
+  font-size: 16px;
+  color: var(--jing-muted);
+}
+.download-products {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  max-width: 1328px;
+  margin: 0 auto;
+  scroll-margin-top: 96px;
+}
+.download-product-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--jing-border);
+  border-radius: 16px;
+  background: var(--jing-surface);
+  box-shadow: 0 2px 0 color-mix(in srgb, var(--jing-border) 32%, transparent);
+}
+.download-product-visual {
+  position: relative;
+  height: 208px;
+  flex-shrink: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 20% 0, #96e4f9, transparent 72%),
+    linear-gradient(130deg, #cbe9ff, #cad5ff);
+}
+.download-client-visual {
+  padding: 24px 24px 0;
+}
+.download-client-visual > img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid #ffffffbd;
+  border-radius: 9px;
+}
+.download-product-visual::after {
+  position: absolute;
+  inset: auto 0 0;
+  height: 80px;
+  content: '';
+  background: linear-gradient(transparent, var(--jing-surface));
+  pointer-events: none;
+}
+.download-web-visual {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 24px;
+  background:
+    radial-gradient(ellipse at 85% 0, #b7f3f6, transparent 72%),
+    linear-gradient(140deg, #d6e4ff, #d0caff);
+}
+.download-web-visual > img {
+  width: 175px;
+  height: 175px;
+  object-fit: contain;
+}
+.download-web-visual > span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: 1px solid #ffffffb8;
+  border-radius: 30px;
+  background: #ffffffa8;
+  color: #31527a;
+  font-size: 13px;
+}
+.download-product-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 28px 0;
+}
+.download-product-heading h2,
+.download-team h2,
+.download-release-details h2 {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+.download-product-heading p {
+  margin-top: 5px;
+  font-size: 14px;
+  color: var(--jing-muted);
+}
+.download-version {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 11px;
+  border-radius: 25px;
+  background: var(--jing-soft);
+  color: var(--jing-blue);
+  white-space: nowrap;
+  font-size: 12px;
+}
+.download-product-body {
+  flex: 1;
+  padding: 22px 28px 28px;
+}
+.download-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 48px;
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: var(--jing-gradient);
+  color: #fff !important;
+  font-size: 15px;
+  font-weight: 500;
+}
+.download-primary > img {
+  filter: brightness(0) invert(1);
+}
+.download-primary:hover {
+  filter: brightness(0.94);
+}
+.download-primary:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+.download-file-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: 12px !important;
+  font-size: 11px;
+  color: var(--jing-muted);
+}
+.download-preview-note {
+  min-height: 44px;
+  margin-top: 12px !important;
+  font-size: 12px;
+  line-height: 1.8;
+  color: var(--jing-muted);
+}
+.download-preview-note a {
+  display: inline-flex;
+  align-items: center;
+  color: var(--jing-blue);
+}
+.download-product-body h3 {
+  margin: 23px 0 10px;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--jing-muted);
+}
+.download-platforms {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.download-platform-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  min-height: 62px;
+  padding: 10px 14px;
+  border: 1px solid var(--jing-border);
+  border-radius: 8px;
+}
+a.download-platform-row:hover {
+  background: var(--jing-soft);
+  border-color: var(--jing-blue);
+}
+.download-platform-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 7px;
+  background: var(--jing-soft);
+  color: var(--jing-blue);
+}
+.download-platform-icon img {
+  width: 18px;
+  height: 18px;
+}
+.download-row-copy {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+}
+.download-row-copy strong {
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 500;
+}
+.download-row-copy small {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--jing-muted);
+}
+.download-unavailable {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--jing-muted);
+}
+.download-card-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 22px;
+  padding: 16px 28px;
+  border-top: 1px solid var(--jing-border);
+  font-size: 13px;
+}
+.download-card-footer a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.download-card-footer a:hover {
+  color: var(--jing-blue);
+}
+.download-team {
+  display: grid;
+  grid-template-columns: 36% minmax(0, 1fr);
+  max-width: 1328px;
+  margin: 24px auto 0;
+  border: 1px solid var(--jing-border);
+  border-radius: 16px;
+  overflow: hidden;
+}
+.download-team-visual {
+  position: relative;
+  overflow: hidden;
+  padding: 24px 0 0 24px;
+  background: linear-gradient(135deg, #bceaf9, #d2daff);
+}
+.download-team-visual > img {
+  display: block;
+  width: 620px;
+  max-width: none;
+  height: auto;
+  border-radius: 10px 0 0;
+}
+.download-team-content {
+  padding: 28px;
+}
+.download-team h2 {
+  margin-top: 12px;
+}
+.download-team-content > p {
+  margin: 8px 0 22px;
+  color: var(--jing-muted);
+  font-size: 14px;
+}
+.download-team-content > a + a {
+  margin-top: 8px;
+}
+.download-release-details {
+  max-width: 1328px;
+  margin: 48px auto 0;
+  padding: 28px;
+  background: var(--jing-soft);
+  border: 1px solid var(--jing-border);
+  border-radius: 16px;
+}
+.download-release-details > div > p {
+  margin-top: 8px;
+  color: var(--jing-muted);
+  font-size: 13px;
+}
+.download-release-details dl {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 24px;
+  margin: 26px 0;
+}
+.download-release-details dt {
+  margin-bottom: 4px;
+  font-size: 12px;
+  color: var(--jing-muted);
+}
+.download-release-details dd {
+  margin: 0;
+  font-size: 13px;
+}
+.download-mac-guide {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.65fr);
+  gap: 20px;
+  margin: 20px 0;
+}
+.download-mac-card {
+  margin: 0;
+  padding: 20px;
+  border: 1px solid var(--jing-border);
+  border-radius: 14px;
+  background: var(--jing-surface);
+}
+.download-mac-card figcaption {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.download-mac-card figcaption > span {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #1677e8;
+  color: #fff;
+  font-weight: 700;
+}
+.download-mac-card h3 { margin: 0 0 6px; font-size: 15px; color: var(--jing-text); }
+.download-mac-card p { margin: 0; font-size: 13px; line-height: 1.7; color: var(--jing-muted); }
+.download-mac-card a { display: flex; align-items: center; justify-content: center; min-height: 300px; }
+.download-mac-card img { display: block; width: 100%; height: auto; max-height: 350px; object-fit: contain; border-radius: 10px; }
+.download-mac-finish { margin: 0 0 12px; font-size: 14px; line-height: 1.8; color: var(--jing-text); }
+@media (max-width: 700px) {
+  .download-mac-guide { grid-template-columns: minmax(0, 1fr); }
+  .download-mac-card { padding: 16px; }
+  .download-mac-card a { min-height: 0; }
+}
+.download-release-warning {
+  font-size: 13px;
+  line-height: 1.9;
+  color: var(--jing-muted);
+}
+.download-checksum {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--jing-border);
+}
+.download-checksum > span {
+  font-size: 12px;
+  font-weight: 600;
+}
+.download-checksum code {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+}
+.download-checksum button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--jing-border);
+  border-radius: 6px;
+  background: var(--jing-surface);
+  font-size: 12px;
+}
+.download-copy-status {
+  min-height: 18px;
+  margin-top: 5px !important;
+  font-size: 12px;
+  color: var(--jing-blue);
+}
+.jing-download .site-footer {
+  margin-top: 64px;
+}
+:root.dark .download-product-visual,
+:root.dark .download-team-visual {
+  background: linear-gradient(135deg, #173248, #273964);
+}
+:root.dark .download-platform-icon img {
+  filter: invert(1);
+}
+:root.dark .download-primary {
+  background: linear-gradient(115deg, #147fae, #187cf6 55%, #2152db);
+}
+@media (max-width: 1400px) {
+  .download-products,
+  .download-team,
+  .download-release-details {
+    margin-left: 32px;
+    margin-right: 32px;
+  }
+}
+@media (max-width: 1000px) {
+  .download-product-heading {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .download-web-visual {
+    gap: 4px;
+  }
+  .download-web-visual > img {
+    width: 132px;
+    height: 132px;
+  }
+  .download-web-visual > span {
+    padding: 8px;
+    font-size: 12px;
+  }
+  .download-primary {
+    font-size: 13px;
+  }
+  .download-release-details dl {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 760px) {
+  .download-products {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .download-products,
+  .download-team,
+  .download-release-details {
+    margin-left: 24px;
+    margin-right: 24px;
+  }
+  .download-intro {
+    padding: 48px 20px 40px;
+  }
+  .download-mascot {
+    width: 104px;
+    height: 104px;
+  }
+  .download-intro h1 {
+    font-size: 32px;
+    margin-top: 18px;
+  }
+  .download-intro > p {
+    margin-top: 14px;
+    font-size: 14px;
+  }
+  .download-product-visual {
+    height: 154px;
+  }
+  .download-client-visual {
+    padding: 20px 16px 0;
+  }
+  .download-web-visual > img {
+    width: 130px;
+    height: 130px;
+  }
+  .download-web-visual {
+    gap: 16px;
+  }
+  .download-product-heading {
+    padding: 16px 20px 0;
+  }
+  .download-product-heading h2 {
+    font-size: 19px;
+  }
+  .download-product-body {
+    padding: 20px;
+  }
+  .download-primary {
+    font-size: 13px;
+    gap: 8px;
+    padding: 12px;
+  }
+  .download-primary > svg:last-child {
+    display: none;
+  }
+  .download-card-footer {
+    padding: 16px 20px;
+    gap: 16px;
+    font-size: 12px;
+  }
+  .download-team {
+    grid-template-columns: 1fr;
+  }
+  .download-team-visual {
+    height: 190px;
+  }
+  .download-team-visual > img {
+    width: 100%;
+  }
+  .download-team-content {
+    padding: 24px 20px;
+  }
+  .download-release-details {
+    padding: 24px 20px;
+    margin-top: 24px;
+  }
+  .download-release-details h2 {
+    font-size: 18px;
+  }
+  .download-release-details dl {
+    gap: 18px;
+  }
+  .download-checksum code {
+    flex-basis: 100%;
+    order: 3;
+  }
+  .download-checksum button {
+    margin-left: auto;
+  }
+}
+@media (max-width: 390px) {
+  .download-product-heading {
+    gap: 8px;
+  }
+  .download-version {
+    font-size: 10px;
+    padding: 4px 8px;
+  }
+  .download-product-heading h2 {
+    font-size: 18px;
+  }
+  .download-primary {
+    font-size: 12px;
+  }
+  .download-platform-row {
+    gap: 9px;
+    padding: 10px;
+  }
+}

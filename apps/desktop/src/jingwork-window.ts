@@ -15,6 +15,15 @@ export function openJingworkWelcome(
   const window = new BrowserWindow({
     width: 1040, height: 780, minWidth: 600, minHeight: 640, show: false,
     title: locale.messages.jingworkLoginTitle, autoHideMenuBar: true,
+    backgroundColor: '#edf3fb',
+    ...(process.platform === 'darwin' ? {
+      titleBarStyle: 'hiddenInset' as const,
+      trafficLightPosition: { x: 16, y: 18 },
+    } : {}),
+    ...(process.platform === 'win32' ? {
+      titleBarStyle: 'hidden' as const,
+      titleBarOverlay: { color: '#00000000', height: 42 },
+    } : {}),
     webPreferences: { nodeIntegration: false, contextIsolation: true, sandbox: true, webSecurity: true,
       partition: 'persist:jingwork-login' },
   })

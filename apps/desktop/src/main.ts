@@ -572,11 +572,16 @@ async function main(product: DesktopProduct): Promise<void> {
     return {
       start: async () => {
         const ready = await host.start()
-        hostCookie = await authenticateWebHost(ready.url)
+        const cookie = await authenticateWebHost(ready.url)
+        hostCookie = cookie
         hostUrl = ready.url
         if (ready.injections === undefined) throw new Error('Desktop Host did not provide boot injections')
         injections = ready.injections
-        welcomeBackend = await connectDesktopWelcome(ready.url, (input, init) => net.fetch(input, init), async () => (await session.defaultSession.cookies.get({ url: ready.url })).map(cookie => `${cookie.name}=${cookie.value}`).join('; '))
+        welcomeBackend = await connectDesktopWelcome(ready.url, (input, init) => {
+          const headers = new Headers(init?.headers)
+          headers.set('cookie', cookie)
+          return fetch(input, { ...init, headers })
+        }, () => Promise.resolve(cookie))
         await stopConversationSync?.()
         if (jingworkAuth !== undefined && jingworkConfig !== undefined) {
           stopConversationSync = startJingworkConversationSync(jingworkAuth, welcomeBackend.conversationLogs,
@@ -1201,6 +1206,7 @@ async function main(product: DesktopProduct): Promise<void> {
       locale: () => locale, show: ordinaryMessageBox, focus: () => { updateDialog.focus() } })
     : undefined
   const quitConfirmation = new DesktopQuitConfirmation({
+    product,
     locale: () => locale,
     inspect: () => backend.host?.inspectQuit(),
     // No owner window: a hidden window stays hidden and the native box is its own top-level window.

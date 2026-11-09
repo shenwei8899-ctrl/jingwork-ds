@@ -1,0 +1,799 @@
+.jing-guide {
+  --guide-accent: #2876b8;
+  --guide-accent-soft: #eaf3ff;
+  --guide-background: #f7f9fc;
+  --guide-sidebar-width: 320px;
+  --guide-outline-width: 268px;
+  min-height: 100vh;
+  padding: 76px calc(var(--guide-outline-width) + 12px) 36px calc(var(--guide-sidebar-width) + 12px);
+  background: var(--guide-background);
+  color: var(--gray-900);
+  font-size: 15px;
+  line-height: 1.75;
+}
+
+:root.dark .jing-guide {
+  --guide-accent: #80bdff;
+  --guide-accent-soft: #182b43;
+  --guide-background: #151a23;
+}
+
+.jing-guide *,
+.jing-guide *::before,
+.jing-guide *::after {
+  box-sizing: border-box;
+}
+.jing-guide button,
+.jing-guide input {
+  font: inherit;
+}
+.jing-guide button {
+  cursor: pointer;
+}
+.jing-guide button,
+.jing-guide a {
+  -webkit-tap-highlight-color: transparent;
+}
+.jing-guide a {
+  color: inherit;
+  text-decoration: none;
+}
+.jing-guide :focus-visible {
+  outline: 2px solid var(--guide-accent);
+  outline-offset: 4px;
+}
+.jing-guide svg {
+  flex-shrink: 0;
+}
+.jing-guide .guide-header {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 30;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 0 24px;
+  background: var(--guide-background);
+}
+.jing-guide .guide-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+}
+.jing-guide .guide-brand img {
+  object-fit: contain;
+}
+.jing-guide .guide-brand > span {
+  font-size: 19px;
+  font-weight: 650;
+}
+.jing-guide .guide-brand small {
+  margin-left: 10px;
+  padding-left: 12px;
+  border-left: 1px solid var(--gray-200);
+  font-size: 13px;
+  color: var(--gray-600);
+}
+.jing-guide .guide-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+.jing-guide .guide-search-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 174px;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--gray-200);
+  border-radius: 20px;
+  background: var(--gray-50);
+  color: var(--gray-600);
+  font-size: 13px;
+}
+.jing-guide kbd {
+  padding: 1px 5px;
+  border: 1px solid var(--gray-200);
+  border-radius: 4px;
+  background: var(--gray-0);
+  color: var(--gray-600);
+  font-family: inherit;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.jing-guide .guide-search-trigger kbd {
+  margin-left: auto;
+}
+.jing-guide .guide-top-links {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  font-size: 14px;
+  color: var(--gray-600);
+}
+.jing-guide .guide-top-links a:hover,
+.jing-guide .guide-top-links .active {
+  color: var(--guide-accent);
+}
+.jing-guide .guide-icon-button {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--gray-700);
+}
+.jing-guide .guide-icon-button:hover {
+  background: var(--gray-100);
+}
+.jing-guide .guide-header-menu,
+.jing-guide .guide-mobile-bar,
+.jing-guide .guide-backdrop {
+  display: none;
+}
+.jing-guide .guide-sidebar {
+  position: fixed;
+  inset: 64px auto 0 0;
+  width: var(--guide-sidebar-width);
+  padding: 20px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+.jing-guide .guide-nav-group {
+  margin-bottom: 28px;
+}
+.jing-guide .guide-nav-group h2 {
+  margin: 5px 12px 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.jing-guide .guide-nav-group a {
+  display: block;
+  padding: 7px 12px;
+  margin-bottom: 2px;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--gray-700);
+}
+.jing-guide .guide-nav-group a:hover {
+  background: var(--gray-100);
+}
+.jing-guide .guide-nav-group a.active {
+  color: var(--guide-accent);
+  background: var(--guide-accent-soft);
+  font-weight: 500;
+}
+.jing-guide .guide-sidebar-footer {
+  border-top: 1px solid var(--gray-200);
+  padding: 20px 12px;
+  color: var(--gray-600);
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+.jing-guide .guide-sidebar-footer span {
+  margin-left: 8px;
+  letter-spacing: 0;
+}
+.jing-guide .guide-article {
+  min-width: 0;
+  min-height: calc(100vh - 112px);
+  padding: 36px 48px 56px;
+  background: var(--gray-0);
+  border: 1px solid var(--gray-200);
+  border-radius: 16px;
+  outline: none;
+}
+.jing-guide .guide-article h1 {
+  margin: 0 0 28px;
+  font-size: 36px;
+  line-height: 1.45;
+  font-weight: 600;
+  color: var(--gray-1000);
+  overflow-wrap: anywhere;
+}
+.jing-guide .guide-prose {
+  font-size: 16px;
+  line-height: 1.85;
+  overflow-wrap: anywhere;
+}
+.jing-guide .guide-prose p {
+  margin: 0 0 22px;
+}
+.jing-guide .guide-prose strong {
+  font-weight: 600;
+}
+.jing-guide .guide-prose h2,
+.jing-guide .guide-prose h3 {
+  margin: 42px 0 18px;
+  color: var(--gray-1000);
+  font-size: 24px;
+  line-height: 1.5;
+  font-weight: 600;
+  scroll-margin-top: 88px;
+}
+.jing-guide .guide-prose h3 {
+  font-size: 20px;
+  margin-top: 28px;
+}
+.jing-guide .guide-prose a {
+  color: var(--guide-accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.jing-guide .guide-prose a:hover {
+  text-decoration-thickness: 2px;
+}
+.jing-guide .guide-prose ul,
+.jing-guide .guide-prose ol {
+  margin: 0 0 24px;
+  padding-left: 24px;
+}
+.jing-guide .guide-prose li {
+  margin: 8px 0;
+}
+.jing-guide .guide-prose img {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 28px 0;
+  border: 1px solid var(--gray-200);
+  border-radius: 16px;
+}
+.jing-guide .guide-introduction > p:first-child {
+  color: var(--gray-600);
+  font-size: 18px;
+  margin-bottom: 24px;
+}
+.jing-guide .guide-prose code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  padding: 2px 5px;
+  border: 1px solid var(--gray-200);
+  border-radius: 5px;
+  background: var(--gray-50);
+  font-size: 0.86em;
+}
+.jing-guide .guide-prose pre {
+  max-width: 100%;
+  padding: 22px;
+  margin: 24px 0;
+  overflow-x: auto;
+  border: 1px solid var(--gray-200);
+  border-radius: 12px;
+  background: var(--gray-50);
+  line-height: 1.75;
+}
+.jing-guide .guide-prose pre code {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  white-space: pre;
+}
+.jing-guide .guide-prose table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  margin: 24px 0;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.jing-guide .guide-prose th,
+.jing-guide .guide-prose td {
+  padding: 12px 16px;
+  border: 1px solid var(--gray-200);
+  text-align: left;
+  min-width: 100px;
+}
+.jing-guide .guide-prose th {
+  background: var(--gray-50);
+  font-weight: 600;
+}
+.jing-guide .guide-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin: 24px 0 36px;
+}
+.jing-guide .guide-card {
+  padding: 20px 24px;
+  border: 1px solid var(--gray-200);
+  border-radius: 16px;
+}
+.jing-guide .guide-card:hover {
+  border-color: var(--guide-accent);
+  background: var(--main-10);
+}
+.jing-guide .guide-card > span {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.jing-guide .guide-card strong {
+  font-size: 15px;
+  font-weight: 600;
+}
+.jing-guide .guide-card svg:first-child {
+  color: var(--guide-accent);
+}
+.jing-guide .guide-card svg:last-child {
+  margin-left: auto;
+  color: var(--gray-600);
+}
+.jing-guide .guide-card p {
+  margin: 10px 0 0;
+  font-size: 14px;
+  color: var(--gray-600);
+  line-height: 1.8;
+}
+.jing-guide .guide-article-note {
+  margin-top: 40px;
+  color: var(--gray-600);
+  font-size: 12px;
+}
+.jing-guide .guide-pagination {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  border-top: 1px solid var(--gray-150);
+  margin-top: 52px;
+  padding-top: 28px;
+}
+.jing-guide .guide-pagination a {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.jing-guide .guide-pagination a:hover {
+  color: var(--guide-accent);
+}
+.jing-guide .guide-pagination small {
+  font-size: 12px;
+  color: var(--gray-600);
+}
+.jing-guide .guide-pagination span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.jing-guide .guide-pagination .next {
+  margin-left: auto;
+  text-align: right;
+}
+.jing-guide .guide-outline {
+  position: fixed;
+  inset: 64px 0 0 auto;
+  width: var(--guide-outline-width);
+  padding: 36px 22px;
+  overflow-y: auto;
+  font-size: 14px;
+}
+.jing-guide .guide-outline h2 {
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.jing-guide .guide-outline nav {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-left: 16px;
+  margin-left: -17px;
+  border-left: 1px solid var(--gray-200);
+}
+.jing-guide .guide-outline a {
+  color: var(--gray-600);
+  line-height: 1.7;
+}
+.jing-guide .guide-outline a.active,
+.jing-guide .guide-outline a:hover {
+  color: var(--guide-accent);
+}
+.jing-guide .guide-outline a.nested {
+  padding-left: 12px;
+  font-size: 13px;
+}
+.jing-guide .guide-outline button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 24px;
+  padding: 16px 0;
+  border: 0;
+  border-top: 1px solid var(--gray-200);
+  background: transparent;
+  color: var(--gray-600);
+  font-size: 12px;
+}
+.jing-guide .guide-copy-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 24px;
+  font-size: 13px;
+  color: var(--gray-600);
+}
+.jing-guide .guide-copy-row button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--gray-200);
+  border-radius: 8px;
+  background: var(--gray-50);
+  color: var(--guide-accent);
+}
+.jing-guide .guide-not-found {
+  padding: 80px 0;
+  text-align: center;
+}
+.jing-guide .guide-not-found > svg {
+  color: var(--guide-accent);
+  margin-bottom: 24px;
+}
+.jing-guide .guide-not-found h1 {
+  font-size: 28px;
+}
+.jing-guide .guide-not-found p {
+  color: var(--gray-600);
+}
+.jing-guide .guide-not-found a {
+  display: inline-flex;
+  align-items: center;
+  color: var(--guide-accent);
+}
+.jing-guide .guide-search-dialog {
+  position: fixed;
+  inset: 100px 0 auto;
+  width: min(640px, calc(100vw - 32px));
+  max-height: calc(100dvh - 140px);
+  margin: 0 auto;
+  padding: 0;
+  border: 1px solid var(--gray-200);
+  border-radius: 16px;
+  background: var(--gray-0);
+  color: var(--gray-900);
+  box-shadow: 0 24px 80px #0003;
+}
+.jing-guide .guide-search-dialog::backdrop {
+  background: #11182766;
+  backdrop-filter: blur(3px);
+}
+.jing-guide .guide-search-field {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--gray-200);
+  color: var(--guide-accent);
+}
+.jing-guide .guide-search-field input {
+  flex: 1;
+  width: 0;
+  padding: 5px 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--gray-900);
+  font-size: 18px;
+}
+.jing-guide .guide-search-field button {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--gray-50);
+  color: var(--gray-600);
+}
+.jing-guide .guide-search-results {
+  max-height: calc(100dvh - 310px);
+  overflow-y: auto;
+  padding: 12px;
+}
+.jing-guide .guide-search-hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 190px;
+  color: var(--gray-600);
+}
+.jing-guide .guide-search-hint p {
+  margin: 0;
+  font-size: 16px;
+  color: var(--gray-900);
+}
+.jing-guide .guide-search-hint span {
+  font-size: 13px;
+}
+.jing-guide .guide-result-count {
+  margin: 0 8px 10px;
+  color: var(--gray-600);
+  font-size: 12px;
+}
+.jing-guide .guide-search-result {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 12px 16px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: var(--gray-50);
+  color: var(--gray-900);
+  text-align: left;
+}
+.jing-guide .guide-search-result.selected,
+.jing-guide .guide-search-result:hover {
+  border-color: var(--guide-accent);
+  background: var(--guide-accent-soft);
+}
+.jing-guide .guide-search-result small {
+  color: var(--guide-accent);
+  font-size: 11px;
+}
+.jing-guide .guide-search-result strong {
+  font-size: 15px;
+  font-weight: 600;
+}
+.jing-guide .guide-search-result span {
+  color: var(--gray-600);
+  font-size: 12px;
+  line-height: 1.65;
+}
+.jing-guide .guide-search-footer {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 12px 20px;
+  border-top: 1px solid var(--gray-200);
+  color: var(--gray-600);
+  font-size: 11px;
+}
+.jing-guide .guide-search-footer span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.jing-guide .guide-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.jing-guide .guide-skip {
+  position: fixed;
+  top: -60px;
+  left: 20px;
+  z-index: 60;
+  padding: 8px 16px;
+  background: var(--gray-0);
+  color: var(--guide-accent);
+  border: 1px solid var(--guide-accent);
+  border-radius: 8px;
+}
+.jing-guide .guide-skip:focus {
+  top: 10px;
+}
+
+@media (min-width: 1700px) {
+  .jing-guide {
+    --guide-sidebar-width: calc((100vw - 1440px) / 2 + 260px);
+    --guide-outline-width: calc((100vw - 1440px) / 2 + 220px);
+  }
+  .jing-guide .guide-sidebar {
+    padding-left: calc((100vw - 1440px) / 2);
+  }
+}
+@media (max-width: 1250px) {
+  .jing-guide {
+    --guide-sidebar-width: 260px;
+    --guide-outline-width: 220px;
+  }
+  .jing-guide .guide-article {
+    padding: 32px;
+  }
+  .jing-guide .guide-article h1 {
+    font-size: 32px;
+  }
+  .jing-guide .guide-header-actions {
+    gap: 14px;
+  }
+  .jing-guide .guide-top-links {
+    gap: 20px;
+  }
+}
+@media (max-width: 1100px) {
+  .jing-guide {
+    --guide-outline-width: 0px;
+  }
+  .jing-guide .guide-outline {
+    display: none;
+  }
+  .jing-guide .guide-header-actions {
+    gap: 12px;
+  }
+}
+@media (max-width: 900px) {
+  .jing-guide {
+    padding: 118px 10px 16px;
+  }
+  .jing-guide .guide-header {
+    padding: 0 20px;
+  }
+  .jing-guide .guide-header-menu {
+    display: grid;
+  }
+  .jing-guide .guide-mobile-bar {
+    position: fixed;
+    top: 64px;
+    left: 0;
+    right: 0;
+    z-index: 29;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 44px;
+    padding: 0 20px;
+    background: var(--gray-0);
+    border-bottom: 1px solid var(--gray-200);
+  }
+  .jing-guide .guide-mobile-bar button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--gray-700);
+    font-size: 14px;
+  }
+  .jing-guide .guide-sidebar {
+    display: none;
+    top: 108px;
+    z-index: 28;
+    width: min(320px, 86vw);
+    background: var(--guide-background);
+    border-right: 1px solid var(--gray-200);
+  }
+  .jing-guide .guide-sidebar.is-open {
+    display: block;
+  }
+  .jing-guide .guide-outline.is-open {
+    display: block;
+    top: 108px;
+    bottom: auto;
+    z-index: 28;
+    width: 100%;
+    max-height: 65dvh;
+    padding: 24px 32px;
+    background: var(--gray-0);
+    border-bottom: 1px solid var(--gray-200);
+  }
+  .jing-guide .guide-backdrop {
+    position: fixed;
+    inset: 108px 0 0;
+    display: block;
+    z-index: 27;
+    border: 0;
+    background: #11182755;
+  }
+  .jing-guide .guide-top-links {
+    display: none;
+    position: absolute;
+    top: 64px;
+    left: 0;
+    right: 0;
+    z-index: 32;
+    padding: 20px;
+    background: var(--gray-0);
+    border-bottom: 1px solid var(--gray-200);
+  }
+  .jing-guide .guide-top-links.is-open {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  .jing-guide .guide-prose h2,
+  .jing-guide .guide-prose h3 {
+    scroll-margin-top: 128px;
+  }
+}
+@media (max-width: 600px) {
+  .jing-guide .guide-header {
+    padding: 0 16px;
+    gap: 10px;
+  }
+  .jing-guide .guide-brand {
+    gap: 6px;
+  }
+  .jing-guide .guide-brand > span {
+    font-size: 17px;
+  }
+  .jing-guide .guide-brand small {
+    font-size: 12px;
+    margin-left: 7px;
+    padding-left: 8px;
+  }
+  .jing-guide .guide-header-actions {
+    gap: 4px;
+  }
+  .jing-guide .guide-search-trigger {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 36px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--gray-700);
+  }
+  .jing-guide .guide-search-trigger span,
+  .jing-guide .guide-search-trigger kbd {
+    display: none;
+  }
+  .jing-guide .guide-icon-button {
+    width: 30px;
+  }
+  .jing-guide .guide-article {
+    padding: 24px;
+    border-radius: 16px;
+  }
+  .jing-guide .guide-article h1 {
+    margin-bottom: 30px;
+    font-size: 28px;
+    line-height: 1.3;
+  }
+  .jing-guide .guide-prose {
+    line-height: 1.8;
+  }
+  .jing-guide .guide-prose h2 {
+    font-size: 22px;
+    margin-top: 34px;
+  }
+  .jing-guide .guide-prose img {
+    margin: 26px 0;
+    border-radius: 12px;
+  }
+  .jing-guide .guide-prose pre {
+    padding: 16px;
+  }
+  .jing-guide .guide-cards {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  .jing-guide .guide-card {
+    padding: 20px;
+  }
+  .jing-guide .guide-introduction > p:first-child {
+    font-size: 17px;
+  }
+  .jing-guide .guide-search-dialog {
+    top: 72px;
+    max-height: calc(100dvh - 90px);
+  }
+  .jing-guide .guide-search-results {
+    max-height: calc(100dvh - 235px);
+  }
+  .jing-guide .guide-search-footer {
+    gap: 12px;
+    padding: 12px;
+  }
+}

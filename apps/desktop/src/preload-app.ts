@@ -93,6 +93,11 @@ if (location.protocol === `${SCHEME}:` && location.hostname === 'app') {
       >,
       openAgent: (id: string) => ipcRenderer.invoke(DESKTOP_IPC.jingworkOpenAgent, id) as Promise<string>,
       name: () => ipcRenderer.invoke(DESKTOP_IPC.jingworkAccount) as Promise<string | null>,
+      subscribe: (listener: () => void) => {
+        const handle = (): void => { listener() }
+        ipcRenderer.on(DESKTOP_IPC.enterWorkspace, handle)
+        return () => { ipcRenderer.off(DESKTOP_IPC.enterWorkspace, handle) }
+      },
       signOut: () => ipcRenderer.invoke(DESKTOP_IPC.jingworkSignOut) as Promise<void>,
     })
   }

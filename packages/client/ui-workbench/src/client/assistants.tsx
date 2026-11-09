@@ -44,6 +44,7 @@ import { builtinSkills } from './builtin-skills.ts'
 import { BUILTIN_SKILL_COPY } from './builtin-skill-copy.ts'
 import { parseUploadedSkill } from './skill-upload.ts'
 import jingworkAgent from './assets/jingwork-agent.png'
+import { expertAvatars } from './expert-avatars.ts'
 
 type Props = PropsRuntime<'main'> &
   PropsLocale<'workbench'> &
@@ -376,7 +377,7 @@ export function AssistantsPage(props: Props) {
                     aria-current={editor.step === step ? 'step' : undefined}
                     disabled={busy}
                     onClick={() => {
-                      if (step !== undefined) selectStep(step)
+                      selectStep(step)
                     }}
                   >
                     <Icon size={20} />
@@ -428,7 +429,7 @@ export function AssistantsPage(props: Props) {
                         {draft.avatar ? (
                           <img src={draft.avatar} alt="" />
                         ) : (
-                          <img src={jingworkAgent} alt="" />
+                          <img src={expertAvatars[draft.slug] ?? jingworkAgent} alt="" />
                         )}
                       </div>
                       <div>
@@ -1132,28 +1133,16 @@ export function AssistantsPage(props: Props) {
               {t('refresh')}
             </Button>
             {category !== 'enterprise' && (
-              <>
-                <Button
-                  variant="primary"
-                  icon={<IconPlusOutlineRegular size={18} />}
-                  disabled={!canWrite}
-                  onClick={() => {
-                    begin()
-                  }}
-                >
-                  {t('newAgent')}
-                </Button>
-                <Button
-                  variant="outline"
-                  disabled={!canWrite}
-                  onClick={() => {
-                    setCategory('builtin')
-                    setQuery('')
-                  }}
-                >
-                  {t('agentFromBuiltin')}
-                </Button>
-              </>
+              <Button
+                variant="primary"
+                icon={<IconPlusOutlineRegular size={18} />}
+                disabled={!canWrite}
+                onClick={() => {
+                  begin()
+                }}
+              >
+                {t('newAgent')}
+              </Button>
             )}
           </div>
           {catalog.error && (
@@ -1239,7 +1228,7 @@ export function AssistantsPage(props: Props) {
                         {agent.avatar ? (
                           <img src={agent.avatar} alt="" />
                         ) : (
-                          <img src={jingworkAgent} alt="" />
+                          <img src={expertAvatars[agent.slug] ?? jingworkAgent} alt="" />
                         )}
                       </div>
                       <div className={css.identity}>

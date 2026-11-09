@@ -302,3 +302,19 @@ const imageProtocol = (value: import('../src/ipc.ts').DshDesktopProductApi['file
 const imageProtocolBack = (value: DesktopFileDrag): import('../src/ipc.ts').DshDesktopProductApi['fileDrag'] => value
 void imageProtocol
 void imageProtocolBack
+
+it('notifies native account subscribers when the workspace opens and releases the listener', async () => {
+  vi.stubGlobal('location', new URL('dsh-app://app/'))
+  vi.stubGlobal('process', { ...process, isMainFrame: true, argv: ['electron', '--dsh-jingwork-account'] })
+  await import('../src/preload-app.ts')
+  const api = electron.contextBridge.exposeInMainWorld.mock.calls.find(([name]) => name === 'dshJingwork')?.[1] as {
+    subscribe(listener: () => void): () => void
+  }
+  const listener = vi.fn()
+  const dispose = api.subscribe(listener)
+  const handler = electron.ipcRenderer.on.mock.calls.filter(([channel]) => channel === DESKTOP_IPC.enterWorkspace).at(-1)![1] as () => void
+  handler()
+  expect(listener).toHaveBeenCalledOnce()
+  dispose()
+  expect(electron.ipcRenderer.off).toHaveBeenCalledWith(DESKTOP_IPC.enterWorkspace, handler)
+})

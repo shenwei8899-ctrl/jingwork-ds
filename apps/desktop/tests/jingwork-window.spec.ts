@@ -81,3 +81,22 @@ it('retries the same device code after a transport failure', async () => {
   expect(current.begin).toHaveBeenCalledOnce()
   expect(current.complete.mock.calls[0]![0]).toBe(current.complete.mock.calls[1]![0])
 })
+
+it.each(['darwin', 'win32', 'linux'] as const)('uses integrated login window chrome on %s', async (platform) => {
+  vi.stubGlobal('process', { ...process, platform })
+  try {
+    const current = auth()
+    current.complete.mockResolvedValue(undefined)
+    openJingworkWelcome(resolveDesktopLocale('zh'), current.client, vi.fn(async () => {}))
+    await vi.waitFor(() => { expect(current.complete).toHaveBeenCalledOnce() })
+    if (platform === 'darwin') {
+      expect(state.options).toMatchObject({ titleBarStyle: 'hiddenInset', trafficLightPosition: { x: 16, y: 18 } })
+    } else if (platform === 'win32') {
+      expect(state.options).toMatchObject({ titleBarStyle: 'hidden', titleBarOverlay: { color: '#00000000', height: 42 } })
+    } else {
+      expect(state.options).not.toHaveProperty('titleBarStyle')
+    }
+  } finally {
+    vi.unstubAllGlobals()
+  }
+})

@@ -52,19 +52,30 @@ export function apply(ctx: Context): void {
   ctx.effect(() => ctx.locale.register('settings.account', { en, zh, ja, es, fr, de, ru, pt }), 'account: dictionaries')
   const t = ctx.locale.bind('settings.account')
   const jingwork = (globalThis as typeof globalThis & {
-    dshJingwork?: { name: () => Promise<string | null>; signOut: () => Promise<void> }
+    dshJingwork?: { name: () => Promise<string | null>; subscribe: (listener: () => void) => () => void; signOut: () => Promise<void> }
   }).dshJingwork
   if (jingwork !== undefined) {
     let name: string | null = null
     const listeners = new Set<() => void>()
     ctx.effect(() => {
       let disposed = false
-      void jingwork.name().then((value) => {
-        if (disposed) return
-        name = value
-        for (const listener of listeners) listener()
-      }).catch((error: unknown) => { console.error('Jingwork account presentation failed', error) })
-      return () => { disposed = true }
+      let revision = 0
+      const refresh = (): void => {
+        const current = ++revision
+        void jingwork.name().then((value) => {
+          if (disposed || current !== revision) return
+          name = value ?? t('profileUnavailable')
+          for (const listener of listeners) listener()
+        }).catch((error: unknown) => {
+          if (disposed || current !== revision) return
+          console.error('Jingwork account presentation failed', error)
+          name = t('profileUnavailable')
+          for (const listener of listeners) listener()
+        })
+      }
+      const unsubscribe = jingwork.subscribe(refresh)
+      refresh()
+      return () => { disposed = true; unsubscribe() }
     }, 'account: native Jingwork identity')
     ctx.slots.inject('settings.launcher', () => ctx.slots.register({
       name: 'settings.launcher', locale: 'settings.account',

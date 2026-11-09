@@ -34,6 +34,8 @@ description: "在本地或 Windows／macOS Actions 中生成 Desktop 安装包�
 
 将 `DSH_DESKTOP_PACKAGE_CACHE_DIR` 设为绝对构建缓存目录以跨 checkout 复用；详见[缓存配置与生命周期](#desktop-runtime-preparation)。
 
+运行 `pnpm exec node apps/desktop/scripts/package-installers.mjs` 可为当前机器生成未签名安装包。Apple 芯片 Mac 顺序构建两种 Mac 架构，Intel Mac 构建 x64，Windows 构建本机架构。可用 `mac-arm64`、`mac-x64`、`win-x64` 或 `win-arm64` 指定目标；`--dry-run` 打印命令，`--build-version VERSION` 指定构建版本，`--signed` 使用已有签名配置（Windows ARM64 仅支持未签名包）。产物位于 `apps/desktop/.desktop-build/targets/<target>/unsigned-artifacts/`，签名包则位于 `artifacts/`。手动触发的 `Desktop installers` Actions 流程在对应架构的托管机器上构建全部四种目标，分别上传 DMG/EXE 安装包。该流程要求明确填写构建版本，并选择已提交该工作流的源码分支。单个目标失败时保留诊断日志，其他任务继续运行。
+
 <a id="release-versions"></a>
 
 ## 发布版本

@@ -337,7 +337,11 @@ export const InputBar = memo(function InputBar({
     // before the launcher opens it: activating the button from the keyboard
     // leaves focus on the button, and restoring it afterwards would re-track an
     // empty draft and close the menu again.
-    if (editor !== null) focusDraftEditor(editor, revealSelection)
+    if (!commandMenuOpen && editor !== null) {
+      focusDraftEditor(editor, revealSelection)
+      // Commit selection tracking before opening the launcher menu.
+      editor.update(() => {}, { discrete: true })
+    }
     toggleCommandMenu?.(keyboard.caretSpan())
   }
 
@@ -444,9 +448,6 @@ export const InputBar = memo(function InputBar({
         onPointerDown={workspaceTrigger ? (e) => { e.stopPropagation() } : undefined}
         onMouseDown={onCardMouseDown}
       >
-        {sessionId !== undefined && (
-          <div className={css.overlayAnchor} data-composer-overlay>{renderSlot('conversation.input.overlay', {})}</div>
-        )}
         {accessory !== undefined && <div className={css.accessory}>{accessory}</div>}
         {renderSlot('conversation.input.attachments', {
           attachments,
@@ -482,6 +483,9 @@ export const InputBar = memo(function InputBar({
           showPlaceholder={draft === '' && attachments.length === 0 && !claimActive}
         />
         <div ref={rowRef} className={css.row}>
+          {sessionId !== undefined && (
+            <div className={css.overlayAnchor} data-composer-overlay>{renderSlot('conversation.input.overlay', {})}</div>
+          )}
           <div className={css.tools} hidden={activity}>
             <Tooltip label={t('input.commands')} side="top" delayMs={500}>
               <button
