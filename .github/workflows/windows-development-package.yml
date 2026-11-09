@@ -66,8 +66,21 @@ jobs:
         run: |
           $env:DSH_DESKTOP_TARGET_PLATFORM = 'win32'
           $env:DSH_DESKTOP_TARGET_ARCH = '${{ matrix.arch }}'
-          pnpm run package:desktop:win:${{ matrix.arch }}:unsigned -- --build-version 0.2.2-alpha.2
-          exit $LASTEXITCODE
+          for ($attempt = 1; $attempt -le 3; $attempt++) {
+            pnpm run package:desktop:win:${{ matrix.arch }}:unsigned -- --build-version 0.2.2-alpha.2
+            $packageExit = $LASTEXITCODE
+            if ($packageExit -eq 0) { exit 0 }
+            $record = Get-ChildItem 'apps/desktop/.desktop-build/packaging-runs' -Directory |
+              Sort-Object Name -Descending | Select-Object -First 1
+            if ($null -eq $record) { exit $packageExit }
+            $logs = @((Join-Path $record.FullName 'stdout.log'), (Join-Path $record.FullName 'stderr.log'))
+            $diagnostic = (Get-Content -LiteralPath $logs -Raw -ErrorAction SilentlyContinue) -join "`n"
+            if ($attempt -eq 3 -or $diagnostic -notmatch 'Response code (502|503|504)|ECONNRESET|ETIMEDOUT|EAI_AGAIN') {
+              exit $packageExit
+            }
+            Write-Host "Transient dependency download failure; retrying with prepared resources (attempt $($attempt + 1)/3)."
+            Start-Sleep -Seconds 10
+          }
       - name: Record installer checksum
         run: |
           $installer = "apps/desktop/.desktop-build/targets/${{ matrix.target }}/unsigned-artifacts/deepseek-harness-0.2.2-alpha.2-${{ matrix.target }}-unsigned.exe"
