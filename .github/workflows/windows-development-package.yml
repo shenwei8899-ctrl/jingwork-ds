@@ -38,6 +38,17 @@ jobs:
       - uses: actions/setup-node@v7.0.0
         with:
           node-version: '24'
+      - name: Restore prepared target resources
+        uses: actions/cache@v6.1.0
+        with:
+          key: desktop-preparation-v1-${{ runner.os }}-${{ matrix.target }}-${{ github.sha }}
+          restore-keys: desktop-preparation-v1-${{ runner.os }}-${{ matrix.target }}-
+          path: |
+            apps/desktop/.desktop-build/targets/${{ matrix.target }}/runtime
+            apps/desktop/.desktop-build/targets/${{ matrix.target }}/electron
+            apps/desktop/.desktop-build/targets/${{ matrix.target }}/dsh
+            apps/desktop/.desktop-build/targets/${{ matrix.target }}/runtime-cache.json
+            apps/desktop/.desktop-build/targets/${{ matrix.target }}/dsh-cache.json
       - name: Install locked dependencies
         run: pnpm install --frozen-lockfile
       - name: Check requested product version

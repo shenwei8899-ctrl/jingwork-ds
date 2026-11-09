@@ -2,6 +2,7 @@ import { writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { setImmediate } from 'node:timers/promises'
 import { afterEach, expect, it, vi } from 'vitest'
+import { reusePreparation, type PreparationCacheOptions } from '../scripts/preparation-cache.ts'
 import { packageTarget, parseDesktopPackageInvocation } from '../scripts/package-target.ts'
 import { withMacOSNotarizationProxy } from '../scripts/macos-notarization-proxy.ts'
 import { packageMacOSArtifacts } from '../scripts/package-macos.ts'
@@ -10,6 +11,12 @@ import { prepareWindowsSignatureCacheDirectory } from '../scripts/windows-signat
 
 vi.mock('../scripts/macos-notarization-proxy.ts', () => ({
   withMacOSNotarizationProxy: vi.fn(async (_proxy: string | undefined, action: () => Promise<void>) => action()),
+}))
+vi.mock('../scripts/preparation-cache.ts', () => ({
+  reusePreparation: vi.fn(async (_options: PreparationCacheOptions, operation: () => Promise<void>) => {
+    await operation()
+    return false
+  }),
 }))
 vi.mock('../scripts/notarize-macos.mjs', () => ({ notarizeMacOS: vi.fn(async () => {}) }))
 vi.mock('../scripts/package-macos.ts', () => ({ packageMacOSArtifacts: vi.fn(async () => {}) }))
@@ -26,6 +33,7 @@ vi.mock('../scripts/windows-signature-cache-directory.mjs', () => ({
 vi.mock('node:fs', async importOriginal => ({
   ...await importOriginal<typeof import('node:fs')>(),
   rmSync: vi.fn(), mkdirSync: vi.fn(), writeFileSync: vi.fn(), renameSync: vi.fn(),
+  openSync: vi.fn(() => 100), closeSync: vi.fn(),
 }))
 
 afterEach(() => { vi.unstubAllEnvs(); vi.clearAllMocks() })
@@ -421,4 +429,14 @@ it.each([undefined, '7'])('applies file-owned compression only to the final nota
   expect(zip?.[3].env.ELECTRON_BUILDER_COMPRESSION_LEVEL).toBe(level ?? '3')
   expect(dmg?.[3].env.ELECTRON_BUILDER_COMPRESSION_LEVEL).toBe('9')
   expect(writeFileSync).toHaveBeenCalledOnce()
+})
+
+it('reuses unsigned preparation while retaining the final packaged runtime smoke', async () => {
+  const { run, stages } = supervisor()
+  vi.mocked(reusePreparation).mockResolvedValueOnce(true).mockResolvedValueOnce(true)
+  await packageTarget(parseDesktopPackageInvocation(['mac-arm64', '--unsigned'], 'darwin', 'arm64'), environment, run)
+  expect(stages).not.toContain('run prepare:runtime')
+  expect(stages).not.toContain('run prepare:dsh')
+  expect(stages).toContain('run prepare:packages')
+  expect(stages.at(-1)).toBe('exec tsx scripts/smoke-packaged-runtime.ts --unsigned')
 })

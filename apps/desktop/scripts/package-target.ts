@@ -1,7 +1,8 @@
 /** Build one release target with matching Electron and dsh architecture. */
 
 import { spawn } from 'node:child_process'
-import { mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs'
+import { reusePreparation } from './preparation-cache.ts'
+import { closeSync, mkdirSync, openSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs'
 import { parseArgs } from 'node:util'
 import { join, resolve } from 'node:path'
 import {
@@ -24,7 +25,7 @@ import { macOSDownloadEnvironment, resolveMacOSPackageSettings } from './macos-p
 import { resolveWindowsPackageSettings } from './windows-package-settings.mjs'
 import { packagingErrorDetails, packagingStep } from './packaging-step.mjs'
 import { notarizeMacOS } from './notarize-macos.mjs'
-import { resolveMacOSNotarizationEnvironment } from './desktop-release-environment.mjs'
+import { resolveMacOSNotarizationEnvironment, resolveNpmRegistry } from './desktop-release-environment.mjs'
 import { DESKTOP_BUILD_VERSION_ENV, resolveDesktopBuildVersion, validateDesktopBuildVersion } from './desktop-build-version.mjs'
 import { suggestDesktopBuildVersion } from './desktop-build-version-discovery.ts'
 import { desktopBuildCommitEnvironment, readDesktopBuildCommit, resolveDesktopBuildCommit } from './desktop-build-commit.mjs'
@@ -431,7 +432,7 @@ async function main(): Promise<void> {
  * @param run Persistent stage supervisor; required for signed Windows packaging and enabled for all release commands.
  * @returns Resolves after preparation or complete packaging; any failed stage prevents a release record.
  */
-export async function packageTarget(
+async function preparePackageTarget(
   invocation: DesktopPackageInvocation,
   environment: NodeJS.ProcessEnv,
   run: ReturnType<typeof createPackagingRun> | undefined,
@@ -528,8 +529,29 @@ export async function packageTarget(
       buildPaths.packedLandlock,
     ], buildEnv, REPOSITORY_ROOT)
   }
-  const prepareRuntime = () => executePreparation(
-    ['run', 'prepare:runtime', ...(signPrimaryRuntime ? ['--defer-primary-runtime-smoke'] : [])], downloadEnv)
+  const cachedPreparation = async (
+    stage: string, inputs: readonly string[], outputs: readonly string[], operation: () => Promise<void>,
+  ): Promise<void> => {
+    if (!invocation.unsigned) return operation()
+    const identity = JSON.stringify([1, target.name, process.version, targetEnv.DSH_DESKTOP_PRODUCT, resolveNpmRegistry(targetEnv)])
+    const reused = await reusePreparation({
+      record: join(buildPaths.root, `${stage}-cache.json`), identity,
+      inputs: [join(APP_ROOT, 'scripts'), join(APP_ROOT, 'package.json'),
+        join(REPOSITORY_ROOT, 'pnpm-lock.yaml'), ...inputs], outputs,
+    }, operation)
+    console.log(`desktop package: ${stage} cache ${reused ? 'hit' : 'rebuilt'}`)
+  }
+  const prepareRuntime = () => cachedPreparation('runtime', [
+    join(REPOSITORY_ROOT, 'scripts/primary-runtime'),
+    join(REPOSITORY_ROOT, 'scripts/npm-platform.ts'),
+    join(APP_ROOT, 'cli'),
+    join(APP_ROOT, 'node_modules/pnpm'),
+    join(REPOSITORY_ROOT, 'packages/skill/tool-workspace-dependencies/src'),
+    join(REPOSITORY_ROOT, 'packages/skill/skill-office/assets'),
+    join(APP_ROOT, 'lib/command-manager-entry.js'),
+    join(APP_ROOT, 'node_modules/electron/package.json'),
+  ], [buildPaths.runtime, buildPaths.electron], () => executePreparation(
+    ['run', 'prepare:runtime', ...(signPrimaryRuntime ? ['--defer-primary-runtime-smoke'] : [])], downloadEnv))
   if (target.platform === 'win32') {
     const results = await Promise.allSettled([pack(), prepareRuntime()])
     for (const result of results) if (result.status === 'rejected') throw result.reason
@@ -539,7 +561,16 @@ export async function packageTarget(
   }
   if (signPrimaryRuntime) await execute(['run', 'sign:primary-runtime'], electronBuilderEnv)
   await execute(['run', 'prepare:packages'], targetEnv)
-  await execute(['run', 'prepare:dsh', ...(signPrimaryRuntime ? ['--defer-runtime-smoke'] : [])], downloadEnv)
+  await cachedPreparation('dsh', [
+    buildPaths.packageSet,
+    join(buildPaths.runtime, 'versions.json'),
+    join(buildPaths.root, 'runtime-cache.json'),
+    ...['project-manager', 'runtime-tree', 'core-package-set', 'release', 'node-environment', 'host-protocol', 'paths']
+      .map(name => join(APP_ROOT, 'src', `${name}.ts`)),
+    join(REPOSITORY_ROOT, 'patches'),
+    join(REPOSITORY_ROOT, 'scripts/libreoffice-packages.mjs'),
+  ], [buildPaths.dsh], () => execute(
+    ['run', 'prepare:dsh', ...(signPrimaryRuntime ? ['--defer-runtime-smoke'] : [])], downloadEnv))
   if (signPrimaryRuntime) await execute(['run', 'sign:primary-runtime', '--dsh'], electronBuilderEnv)
   if (invocation.prepareOnly) return
   const buildMacArtifact = (artifact: DesktopPrepackagedArtifact) => execute(
@@ -582,6 +613,27 @@ export async function packageTarget(
     writeReleaseRecord(target, electronBuilderEnv, buildPaths.artifacts)
   }
   if (journal) recordPackagingEvent(journal, { type: 'artifacts', directory: artifactsRoot })
+}
+
+/**
+ * Build one target with exclusive ownership of its mutable output directories.
+ * @param invocation - Validated packaging request.
+ * @param environment - File-owned release configuration.
+ * @param run - Optional packaging stage supervisor.
+ * @returns Resolves after preparation and requested artifacts finish.
+ * @throws Error when another build owns the target, or any build stage fails.
+ */
+export async function packageTarget(
+  invocation: DesktopPackageInvocation,
+  environment: NodeJS.ProcessEnv,
+  run: ReturnType<typeof createPackagingRun> | undefined,
+): Promise<void> {
+  const paths = desktopTargetBuildPaths(invocation.target.name, environment)
+  mkdirSync(paths.root, { recursive: true })
+  const lock = join(paths.root, 'package.lock')
+  const descriptor = openSync(lock, 'wx')
+  try { await preparePackageTarget(invocation, environment, run) }
+  finally { closeSync(descriptor); rmSync(lock) }
 }
 
 if (process.argv[1] !== undefined && import.meta.filename === resolve(process.argv[1])) await main()
