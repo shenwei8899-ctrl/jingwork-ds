@@ -75,7 +75,7 @@ jobs:
             if ($null -eq $record) { exit $packageExit }
             $logs = @((Join-Path $record.FullName 'stdout.log'), (Join-Path $record.FullName 'stderr.log'))
             $diagnostic = (Get-Content -LiteralPath $logs -Raw -ErrorAction SilentlyContinue) -join "`n"
-            if ($attempt -eq 3 -or $diagnostic -notmatch 'Response code (502|503|504)|ECONNRESET|ETIMEDOUT|EAI_AGAIN') {
+            if ($attempt -eq 3 -or $diagnostic -notmatch '(Response code|primary runtime download:) (502|503|504)|ECONNRESET|ETIMEDOUT|EAI_AGAIN') {
               exit $packageExit
             }
             Write-Host "Transient dependency download failure; retrying with prepared resources (attempt $($attempt + 1)/3)."
