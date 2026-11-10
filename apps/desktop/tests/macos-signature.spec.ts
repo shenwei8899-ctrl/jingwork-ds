@@ -197,6 +197,20 @@ describe('desktop macOS release signature', () => {
     await expect(validateConfiguration(config, { isEnabled: false })).resolves.toBeUndefined()
   })
 
+  it.each(['x64', 'arm64'])('includes JingWork identity and login configuration in unsigned Windows %s', async (arch) => {
+    const { createElectronBuilderConfig } = await import('../scripts/electron-builder-config.mjs')
+    const { localWindowsPackageEnvironment } = await import('../scripts/desktop-package-environment.mjs')
+    const config = createElectronBuilderConfig(localWindowsPackageEnvironment({}), 'win32', arch)
+    expect(config.productName).toBe('JingWork')
+    expect(config.extraMetadata).toMatchObject({ dshDesktopAppId: 'com.jingwork.desktop', dshDesktopProduct: 'jingwork' })
+    expect(config.protocols).toEqual([{ name: 'JingWork', schemes: ['jingwork'] }])
+    expect(portablePath(config.win.icon)).toMatch(/icon-jingwork\.png$/u)
+    const login = config.extraResources.find(resource => resource.to === 'jingwork-login.json')
+    if (login === undefined) throw new Error('Windows JingWork package must include its login deployment')
+    expect(JSON.parse(readFileSync(login.from, 'utf8'))).toEqual({ url: 'https://jingwork.openswarm.run' })
+    await expect(validateConfiguration(config, { isEnabled: false })).resolves.toBeUndefined()
+  })
+
   it('rejects an unknown product identifier', async () => {
     const { createElectronBuilderConfig } = await import('../scripts/electron-builder-config.mjs')
     expect(() => createElectronBuilderConfig({ ...RELEASE_ENVIRONMENT, DSH_DESKTOP_PRODUCT: 'other' }, 'darwin', 'arm64'))
@@ -205,14 +219,14 @@ describe('desktop macOS release signature', () => {
 
   it.each([
     { platform: 'darwin', unsigned: '0', appId: 'com.jingwork.desktop' },
-    { platform: 'win32', unsigned: '1', appId: 'com.jingwork.desktop' },
+    { platform: 'linux', unsigned: '1', appId: 'com.jingwork.desktop' },
     { platform: 'darwin', unsigned: '1', appId: 'com.deepseek.harness' },
-  ] as const)('rejects JingWork configuration outside its unsigned macOS identity %j', async ({ platform, unsigned, appId }) => {
+  ] as const)('rejects JingWork configuration outside its unsigned desktop identity %j', async ({ platform, unsigned, appId }) => {
     const { createElectronBuilderConfig } = await import('../scripts/electron-builder-config.mjs')
     expect(() => createElectronBuilderConfig({
       DSH_DESKTOP_APP_ID: appId, DSH_DESKTOP_PRODUCT: 'jingwork', DSH_DESKTOP_UNSIGNED: unsigned,
       DSH_DESKTOP_TARGET_PLATFORM: platform,
-    }, platform, 'arm64')).toThrow('JingWork requires unsigned macOS packaging with app ID com.jingwork.desktop')
+    }, platform, 'arm64')).toThrow('JingWork requires unsigned macOS or Windows packaging with app ID com.jingwork.desktop')
   })
 
   it('omits mandatory-update policy from local macOS builds even when release settings are supplied', async () => {

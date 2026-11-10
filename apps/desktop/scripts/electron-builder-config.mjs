@@ -63,8 +63,8 @@ export function createElectronBuilderConfig(
     throw new Error('desktop package: DSH_DESKTOP_PRODUCT must be jingwork when supplied')
   }
   const jingwork = env.DSH_DESKTOP_PRODUCT === 'jingwork'
-  if (jingwork && (!unsigned || resolvedPlatform !== 'darwin' || appId !== 'com.jingwork.desktop')) {
-    throw new Error('desktop package: JingWork requires unsigned macOS packaging with app ID com.jingwork.desktop')
+  if (jingwork && (!unsigned || !['darwin', 'win32'].includes(resolvedPlatform) || appId !== 'com.jingwork.desktop')) {
+    throw new Error('desktop package: JingWork requires unsigned macOS or Windows packaging with app ID com.jingwork.desktop')
   }
   const skipNotarization = env.DSH_DESKTOP_MACOS_SKIP_NOTARIZATION === '1'
   if (env.DSH_DESKTOP_MACOS_SKIP_NOTARIZATION !== undefined && !['0', '1'].includes(env.DSH_DESKTOP_MACOS_SKIP_NOTARIZATION)) {
@@ -252,7 +252,7 @@ export function createElectronBuilderConfig(
       )
     },
     win: {
-      icon: fileURLToPath(new URL('../resources/icon-windows.png', import.meta.url)),
+      icon: fileURLToPath(new URL(jingwork ? '../resources/icon-jingwork.png' : '../resources/icon-windows.png', import.meta.url)),
       forceCodeSigning: !unsigned,
       signtoolOptions: {
         sign: windowsSigner,

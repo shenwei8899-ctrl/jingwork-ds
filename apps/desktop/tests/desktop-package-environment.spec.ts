@@ -121,9 +121,11 @@ describe('Desktop local packaging configuration', () => {
     expect(parent.DSH_DESKTOP_APP_ID).toBe('com.example.release')
   })
 
-  it('excludes an inherited product marker from ordinary Windows and file-owned release settings', async () => {
+  it('selects JingWork for unsigned Windows while excluding inherited product markers from file-owned release settings', async () => {
     const parent = { DSH_DESKTOP_PRODUCT: 'jingwork' }
-    expect(localWindowsPackageEnvironment(parent)).toEqual({ DSH_DESKTOP_APP_ID: 'com.deepseek.harness', DSH_DESKTOP_UNSIGNED: '1' })
+    expect(localWindowsPackageEnvironment(parent)).toEqual({
+      DSH_DESKTOP_APP_ID: 'com.jingwork.desktop', DSH_DESKTOP_PRODUCT: 'jingwork', DSH_DESKTOP_UNSIGNED: '1',
+    })
     await withDirectory(async (directory) => {
       await writeFile(join(directory, '.env.macos'), '')
       expect(loadDesktopPackageEnvironment('darwin', parent, directory)).toEqual({})

@@ -38,12 +38,13 @@ export function localMacOSPackageEnvironment(environment = process.env) {
 /**
  * Select isolated Windows development defaults without reading dotenv files or inheriting release settings.
  * @param {NodeJS.ProcessEnv} environment Parent environment, retained for build tools and networking.
- * @returns {NodeJS.ProcessEnv} Unsigned build environment with the standard application identifier and no update policy.
+ * @returns {NodeJS.ProcessEnv} Unsigned JingWork build environment with its own application identity and no update policy.
  */
 export function localWindowsPackageEnvironment(environment = process.env) {
   return {
     ...Object.fromEntries(Object.entries(environment).filter(([name]) => !AMBIENT_RELEASE_SETTING.test(name))),
-    DSH_DESKTOP_APP_ID: 'com.deepseek.harness',
+    DSH_DESKTOP_APP_ID: 'com.jingwork.desktop',
+    DSH_DESKTOP_PRODUCT: 'jingwork',
     DSH_DESKTOP_UNSIGNED: '1',
   }
 }

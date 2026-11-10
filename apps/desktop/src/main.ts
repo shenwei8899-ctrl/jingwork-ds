@@ -377,7 +377,7 @@ function createWindow(preload: string, show = false, primary = false, jingwork =
 }
 
 async function main(product: DesktopProduct): Promise<void> {
-  const commandName = product === 'jingwork' ? 'jingwork' : 'dsh'
+  const commandName = product === 'jingwork' && process.platform === 'darwin' ? 'jingwork' : 'dsh'
   const desktopSettings = readDesktopSettings(app.getPath('userData'))
   const jingworkConfig = readJingworkLoginConfig(app.getPath('userData'),
     app.isPackaged && product === 'jingwork' ? join(process.resourcesPath, 'jingwork-login.json') : undefined)

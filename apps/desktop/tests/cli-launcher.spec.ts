@@ -24,7 +24,7 @@ function fixture(product: 'harness' | 'jingwork' = 'harness') {
   const resources = join(application, ...platform === 'darwin' ? ['Contents', 'Resources'] : ['resources'])
   const cli = join(resources, 'runtime', 'cli')
   prepareDesktopCli(cli, platform, product)
-  const electron = join(application, ...platform === 'darwin' ? ['Contents', 'MacOS', product === 'jingwork' ? 'JingWork' : 'DeepSeek Harness'] : ['DeepSeek Harness.exe'])
+  const electron = join(application, ...platform === 'darwin' ? ['Contents', 'MacOS', product === 'jingwork' ? 'JingWork' : 'DeepSeek Harness'] : [product === 'jingwork' ? 'JingWork.exe' : 'DeepSeek Harness.exe'])
   mkdirSync(dirname(electron), { recursive: true })
   if (platform === 'win32') copyFileSync(process.execPath, electron)
   else symlinkSync(process.execPath, electron)
@@ -93,6 +93,15 @@ it.skipIf(process.platform === 'win32')('runs the JingWork executable with priva
   const link = join(f.root, 'jingwork')
   symlinkSync(relative(f.root, f.command), link)
   const run = f.start(['--version'], link)
+  run.child.stdin.end()
+  expect(await run.closed, run.stderr()).toBe(23)
+  expect(JSON.parse(run.stdout())).toMatchObject({ args: ['--version'], cwd: f.root, nodeMode: '1',
+    home: join(homedir(), '.jingwork'), agents: join(homedir(), '.jingwork', 'agents') })
+})
+
+it('runs the product launcher with JingWork private data directories', async () => {
+  const f = fixture('jingwork')
+  const run = f.start(['--version'])
   run.child.stdin.end()
   expect(await run.closed, run.stderr()).toBe(23)
   expect(JSON.parse(run.stdout())).toMatchObject({ args: ['--version'], cwd: f.root, nodeMode: '1',

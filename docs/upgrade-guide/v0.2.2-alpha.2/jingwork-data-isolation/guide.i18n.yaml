@@ -3,14 +3,14 @@
 # After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write docs/upgrade-guide/v0.2.2-alpha.2/jingwork-data-isolation/guide.md
 /:
-  en: 08c838088d966325
-  zh: 40fe7828e4a8a57a
-/jingwork-macos-data-and-command-isolation:
-  en: 48e33988ce025906
-  zh: 769af1bb08db757c
-/jingwork-macos-data-and-command-isolation/change:
-  en: 1d0b78b7238581d5
-  zh: a127672af29ccbe2
-/jingwork-macos-data-and-command-isolation/migration:
-  en: 650b7d0de92e7ea1
-  zh: 5c1807b6f0c943cc
+  en: 1af5bb1262b21bae
+  zh: e0b619360da97aed
+/jingwork-desktop-data-and-command-isolation:
+  en: 348553ea3fb2b237
+  zh: 0ee2680019b461f5
+/jingwork-desktop-data-and-command-isolation/change:
+  en: b430e552de0954ba
+  zh: a6ab105692d8f657
+/jingwork-desktop-data-and-command-isolation/migration:
+  en: aeeee388e4dbd603
+  zh: 8f5b8178dfb5922d
