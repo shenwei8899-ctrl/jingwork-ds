@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url'
 import { readInstallerLocales } from '../scripts/installer-locales.mjs'
 import { tmpdir } from 'node:os'
 import { readFileSync } from 'node:fs'
@@ -86,6 +87,28 @@ describe('installer preparation preserves application dependencies', () => {
     } finally {
       vi.unstubAllEnvs()
       vi.restoreAllMocks()
+    }
+  })
+
+  it.each([undefined, 'jingwork'])('selects installer artwork for product %s', async (product) => {
+    execute.mockClear()
+    const { createElectronBuilderConfig } = await import('../scripts/electron-builder-config.mjs')
+    const config = createElectronBuilderConfig({
+      DSH_DESKTOP_APP_ID: product === 'jingwork' ? 'com.jingwork.desktop' : 'com.example.installer',
+      DSH_DESKTOP_PRODUCT: product,
+      DSH_DESKTOP_UNSIGNED: '1',
+      DSH_DESKTOP_MANDATORY_UPDATE_TEST_ORIGIN: 'https://policy.example.com',
+      DSH_DESKTOP_MANDATORY_UPDATE_CONFIG: JSON.stringify({ allowedAuthOrigins: ['https://login.example.com'] }),
+    }, 'win32', 'x64')
+    await config.beforeBuild()
+    const assetDirectory = new URL(product === 'jingwork' ? '../installer/assets/jingwork/' : '../installer/assets/', import.meta.url)
+    expect(execute).toHaveBeenCalledWith('powershell.exe', expect.arrayContaining([
+      '-AssetDirectory', fileURLToPath(assetDirectory),
+    ]), expect.any(Object))
+    for (const name of ['brand', 'brand-2x', 'brand-dark', 'brand-dark-2x', 'uninstaller-sidebar']) {
+      expect(readFileSync(new URL(`${name}.png`, assetDirectory)).subarray(0, 8)).toEqual(
+        Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
+      )
     }
   })
 
