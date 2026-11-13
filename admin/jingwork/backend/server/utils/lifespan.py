@@ -55,6 +55,10 @@ async def _startup(app: FastAPI) -> None:
     app.state.startup_complete = False
     app.state.startup_components = {}
 
+    from yuxi.services.iam_service import get_iam_config
+
+    await _initialize_startup_component(app, name="iam_configuration", required=True, operation=get_iam_config)
+
     await _initialize_startup_component(
         app,
         name="security_secrets",

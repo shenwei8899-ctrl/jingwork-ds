@@ -37,6 +37,7 @@ from yuxi.services.identity_admin_service import (
 )
 from yuxi.services.operation_log_service import log_operation
 from yuxi.services.user_identity_service import generate_unique_uid, is_valid_phone_number, validate_username
+from yuxi.services.iam_service import bind_iam_device_grant, get_iam_config, iam_failure
 from yuxi.storage.minio import upload_image_to_minio
 from yuxi.storage.minio.client import normalize_public_minio_url
 from yuxi.storage.postgres.models_business import User
@@ -84,12 +85,23 @@ class RegisterAccountResponse(BaseModel):
     uid: str
 
 
-@auth.post("/register", status_code=201, response_model=RegisterAccountResponse)
+def require_local_auth() -> None:
+    """IAM 部署仅接受统一身份平台管理账号和认证。"""
+    if get_iam_config().enabled:
+        raise iam_failure(403, "iam_login_required", "请使用企业统一登录，账号由统一身份平台管理")
+
+
+@auth.post(
+    "/register", status_code=201, response_model=RegisterAccountResponse, dependencies=[Depends(require_local_auth)]
+)
 async def register_account_route(
     body: RegisterAccount, request: Request, db: AsyncSession = Depends(get_db)
 ) -> dict[str, str]:
     """创建默认部门下的普通 Jing Work 账号，不授予管理权限。"""
     from yuxi.services.registration_service import RegistrationError, register_account
+
+    if get_iam_config().enabled:
+        raise iam_failure(403, "iam_registration_managed", "企业账号由统一身份平台管理")
 
     try:
         return await register_account(db, uid=body.uid, password=body.password, client_ip=extract_client_ip(request))
@@ -242,7 +254,7 @@ def _raise_cli_auth_error(exc: CLIAuthError) -> None:
 # =============================================================================
 
 
-@auth.post("/token", response_model=Token)
+@auth.post("/token", response_model=Token, dependencies=[Depends(require_local_auth)])
 async def login_for_access_token(
     request: Request,
     form_data: OAuth2PasswordRequestForm = Depends(),
@@ -365,7 +377,8 @@ async def create_cli_session(data: CLIAuthSessionCreate, db: AsyncSession = Depe
     return CLIAuthSessionCreateResponse(
         device_code=device_code,
         user_code=session.user_code,
-        verification_uri="/auth/cli/authorize",
+        verification_uri=(get_iam_config().app_url.rstrip("/") if get_iam_config().enabled else "")
+        + "/auth/cli/authorize",
         expires_in=CLI_AUTH_SESSION_TTL_SECONDS,
         interval=CLI_AUTH_POLL_INTERVAL_SECONDS,
     )
@@ -387,10 +400,19 @@ async def get_cli_session(
 @auth.post("/cli/sessions/{user_code}/approve", response_model=CLIAuthApproveResponse)
 async def approve_cli_session(
     user_code: str,
+    request: Request,
     current_user: User = Depends(get_required_user),
     db: AsyncSession = Depends(get_db),
 ):
     try:
+        if get_iam_config().enabled:
+            session = await get_cli_auth_session_for_user(db, user_code, for_update=True)
+            session_id = request.cookies.get("jingwork_iam_session", "")
+            if not getattr(request.state, "iam_identity", None) or not session_id:
+                raise iam_failure(401, "iam_session_required", "请先完成企业统一登录")
+            if session.status != "pending":
+                raise CLIAuthError("invalid_state", "设备授权已处理，请重新发起", status_code=409)
+            await bind_iam_device_grant(session.device_code_hash, session_id)
         session = await approve_cli_auth_session(db, user_code, current_user)
     except CLIAuthError as exc:
         _raise_cli_auth_error(exc)
@@ -408,13 +430,17 @@ async def exchange_cli_session_token(data: CLIAuthTokenRequest, db: AsyncSession
 # 路由：校验是否需要初始化管理员
 @auth.get("/check-first-run")
 async def check_first_run():
+    if get_iam_config().enabled:
+        return {"first_run": False}
     is_first_run = await UserRepository().is_first_run()
     return {"first_run": is_first_run}
 
 
 # 路由：初始化管理员账户
-@auth.post("/initialize", response_model=Token)
+@auth.post("/initialize", response_model=Token, dependencies=[Depends(require_local_auth)])
 async def initialize_admin(admin_data: InitializeAdmin, db: AsyncSession = Depends(get_db)):
+    if get_iam_config().enabled:
+        raise iam_failure(403, "iam_initialization_managed", "企业账号由统一身份平台管理")
     # 验证用户ID格式（只支持字母数字和下划线）
     if not re.match(r"^[a-zA-Z0-9_]+$", admin_data.uid):
         raise HTTPException(
@@ -469,9 +495,15 @@ async def initialize_admin(admin_data: InitializeAdmin, db: AsyncSession = Depen
 
 
 @auth.get("/me", response_model=UserResponse)
-async def read_users_me(current_user: User = Depends(get_required_user), db: AsyncSession = Depends(get_db)):
+async def read_users_me(
+    request: Request,
+    current_user: User = Depends(get_required_user),
+    db: AsyncSession = Depends(get_db),
+):
     """获取当前登录用户的个人信息"""
     user_dict = current_user.to_dict()
+    if getattr(request.state, "iam_identity", None):
+        user_dict["username"] = request.state.iam_identity.emp_name or request.state.iam_identity.emp_id
 
     if current_user.department_id:
         user_dict["department_name"] = await DepartmentRepository(db).get_name_by_id(current_user.department_id)
@@ -543,7 +575,7 @@ async def update_profile(
 # =============================================================================
 
 
-@auth.post("/users", response_model=UserResponse)
+@auth.post("/users", response_model=UserResponse, dependencies=[Depends(require_local_auth)])
 async def create_user(
     user_data: UserCreate,
     request: Request,
@@ -749,7 +781,7 @@ async def read_user(
 
 
 # 路由：更新用户信息（管理员权限）
-@auth.put("/users/{user_id}", response_model=UserResponse)
+@auth.put("/users/{user_id}", response_model=UserResponse, dependencies=[Depends(require_local_auth)])
 async def update_user(
     user_id: int,
     user_data: UserUpdate,
@@ -839,7 +871,7 @@ async def update_user(
 
 
 # 路由：删除用户（管理员权限）
-@auth.delete("/users/{user_id}", response_model=dict)
+@auth.delete("/users/{user_id}", response_model=dict, dependencies=[Depends(require_local_auth)])
 async def delete_user(
     user_id: int,
     request: Request,
@@ -978,7 +1010,7 @@ async def upload_user_avatar(
 
 
 # 路由：模拟用户登录（超级管理员专用）
-@auth.post("/impersonate/{user_id}", response_model=Token)
+@auth.post("/impersonate/{user_id}", response_model=Token, dependencies=[Depends(require_local_auth)])
 async def impersonate_user(
     user_id: int,
     request: Request,
@@ -1039,22 +1071,24 @@ async def impersonate_user(
 @auth.get("/oidc/config", response_model=OIDCConfigResponse)
 async def get_oidc_config():
     """获取 OIDC 配置（供前端使用）"""
+    if get_iam_config().enabled:
+        return {"enabled": False}
     return await get_oidc_config_handler()
 
 
-@auth.get("/oidc/login-url")
+@auth.get("/oidc/login-url", dependencies=[Depends(require_local_auth)])
 async def get_oidc_login_url(redirect_path: str = "/"):
     """获取 OIDC 登录 URL"""
     return await oidc_login_url_handler(redirect_path)
 
 
-@auth.get("/oidc/callback", response_class=RedirectResponse)
+@auth.get("/oidc/callback", response_class=RedirectResponse, dependencies=[Depends(require_local_auth)])
 async def oidc_callback(request: Request, code: str, state: str, db: AsyncSession = Depends(get_db)):
     """处理 OIDC 回调 - 重定向到前端 Vue 路由"""
     return await oidc_callback_handler(code, state, db, request)
 
 
-@auth.post("/oidc/exchange-code", response_model=OIDCLoginResponse)
+@auth.post("/oidc/exchange-code", response_model=OIDCLoginResponse, dependencies=[Depends(require_local_auth)])
 async def oidc_exchange_code(code: str = Body(..., embed=True)):
     """使用一次性 code 交换 OIDC 登录数据"""
     return await oidc_exchange_code_handler(code)

@@ -57,7 +57,7 @@
           </a-menu-item>
           <a-menu-item key="logout" @click="logout">
             <template #icon><LogOut :size="16" /></template>
-            <span class="menu-text">退出登录</span>
+            <span class="menu-text">{{ userStore.token === 'iam_cookie' ? '退出全部平台会话' : '退出登录' }}</span>
           </a-menu-item>
         </a-menu>
       </template>
@@ -118,11 +118,14 @@ const userRoleText = computed(() => {
 })
 
 // 退出登录
-const logout = () => {
-  userStore.logout()
-  message.success('已退出登录')
-  // 跳转到首页
-  router.push('/login')
+const logout = async () => {
+  try {
+    await userStore.logoutSession()
+    message.success('已退出登录')
+    router.push('/login')
+  } catch {
+    message.error('退出登录未完成，请稍后重试')
+  }
 }
 
 // 前往登录页

@@ -14,7 +14,10 @@ import {
 } from '@lucide/vue'
 import { dashboardApi } from '@/apis/dashboard_api'
 import { companyApi } from '@/apis/company_api'
+import { iamApi } from '@/apis/iam_api'
+import { useUserStore } from '@/stores/user'
 const router = useRouter()
+const userStore = useUserStore()
 const loading = ref(false)
 const error = ref('')
 const data = ref(null)
@@ -24,9 +27,9 @@ const go = (page) => router.push({ path: '/enterprise', query: { page } })
 const value = (number) => (number == null ? '—' : Number(number).toLocaleString('zh-CN'))
 const steps = [
   {
-    title: '导入成员',
-    description: '管理企业通讯录，添加成员并设置所属部门',
-    action: '添加成员',
+    title: '组织与成员',
+    description: '查看企业人员与组织，确认账号和访问权限',
+    action: '管理成员',
     page: 'organization',
     icon: Users
   },
@@ -82,7 +85,11 @@ const suites = computed(() => [
 async function load() {
   loading.value = true
   error.value = ''
-  const results = await Promise.allSettled([companyApi.get(), dashboardApi.getAllStats()])
+  const companyRequest = userStore.token === 'iam_cookie'
+    ? iamApi.tenant().then((tenant) => ({ name: tenant.tenant_name_abb || tenant.tenant_name }))
+    : companyApi.get()
+  const statisticsRequest = userStore.isSuperAdmin ? dashboardApi.getAllStats() : Promise.resolve(null)
+  const results = await Promise.allSettled([companyRequest, statisticsRequest])
   company.value = results[0].status === 'fulfilled' ? results[0].value : null
   data.value = results[1].status === 'fulfilled' ? results[1].value : null
   error.value = results
@@ -104,6 +111,9 @@ onMounted(load)
       </div>
     </header>
     <a-alert v-if="error" type="error" :message="error" show-icon style="margin-bottom: 16px" />
+    <a-alert v-if="!userStore.isSuperAdmin" type="info" show-icon
+      message="系统级统计由平台管理员查看。企业人员和组织可在“组织与成员”中管理。"
+      style="margin-bottom: 16px" />
     <a-spin :spinning="loading">
       <section class="panel onboarding">
         <h2>快速上手</h2>

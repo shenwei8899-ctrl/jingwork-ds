@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
+const iamDenied = computed(() => route.query.iam_denied === '1')
 const requiredRole = computed(() => route.query.role === 'superadmin' ? '超级管理员' : '管理员')
 </script>
 
@@ -11,11 +12,11 @@ const requiredRole = computed(() => route.query.role === 'superadmin' ? '超级�
     <a-result
       status="403"
       title="当前账号没有此页面的访问权限"
-      :sub-title="`此页面需要${requiredRole}权限。请联系企业管理员确认账号角色。`"
+      :sub-title="iamDenied ? '当前账号尚未获准使用此系统，请联系企业管理员开通权限。' : `此页面需要${requiredRole}权限。请联系企业管理员确认账号角色。`"
     >
       <template #extra>
-        <p>模型供应商、API Key 和可用模型由管理员在「AI 资源管理 → 模型管理」中配置；普通成员使用获授权的模型。</p>
-        <router-link to="/agent"><a-button type="primary">返回对话</a-button></router-link>
+        <p v-if="!iamDenied">模型供应商、API Key 和可用模型由管理员在「AI 资源管理 → 模型管理」中配置；普通成员使用获授权的模型。</p>
+        <router-link v-if="!iamDenied" to="/agent"><a-button type="primary">返回对话</a-button></router-link>
         <router-link to="/"><a-button>返回官网</a-button></router-link>
       </template>
     </a-result>

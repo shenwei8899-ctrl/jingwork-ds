@@ -31,6 +31,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { useAgentStore } from '@/stores/agent'
 import { authApi } from '@/apis/auth_api'
+import { userTokenKey } from '@/utils/appPath'
 import { message } from 'ant-design-vue'
 import { clearAutoStartAttempt } from '@/utils/oidcAutoStart'
 
@@ -80,7 +81,7 @@ const handleCallback = async () => {
     userStore.departmentName = tokenData.department_name || ''
 
     // 保存 token 到 localStorage
-    localStorage.setItem('user_token', tokenData.access_token)
+    localStorage.setItem(userTokenKey, tokenData.access_token)
 
     // 显示成功消息
     message.success('登录成功')

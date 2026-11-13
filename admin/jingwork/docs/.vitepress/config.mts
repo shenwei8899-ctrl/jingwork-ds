@@ -88,6 +88,7 @@ export default defineConfig({
         items: [
           { text: '配置系统详解', link: '/advanced/configuration' },
           { text: '生产部署', link: '/advanced/deployment' },
+          { text: '企业 IAM 接入', link: '/advanced/iam-integration' },
           { text: 'Agent 并发容量', link: '/advanced/agent-concurrency-capacity' },
           { text: '沙盒配置与运维', link: '/advanced/sandbox-operations' },
           { text: '文档解析与 OCR', link: '/advanced/document-processing' },

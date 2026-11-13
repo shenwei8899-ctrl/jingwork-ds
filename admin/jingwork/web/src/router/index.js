@@ -8,6 +8,12 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
+      path: '/auth/iam/callback',
+      name: 'IAMCallback',
+      component: () => import('@/views/IAMCallbackView.vue'),
+      meta: { requiresAuth: false }
+    },
+    {
       path: '/download',
       name: 'Download',
       component: () => import('@/views/DownloadView.vue'),
@@ -47,12 +53,12 @@ const router = createRouter({
       path: '/forbidden',
       name: 'Forbidden',
       component: () => import('@/views/ForbiddenView.vue'),
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: false }
     },
     {
       path: '/auth/oidc/callback', // oidc登录回调页面
       name: 'OIDCCallback',
-      component: () => import('@/views/OIDCCallbackView.vue'),
+      redirect: (to) => ({ path: '/login', query: { redirect: to.query.redirect } }),
       meta: { public: true }
     },
     {
@@ -154,6 +160,7 @@ router.beforeEach(async (to) => {
   const requiresSuperAdmin = to.matched.some((record) => record.meta.requiresSuperAdmin)
 
   const userStore = useUserStore()
+  if (to.name === 'IAMCallback' || to.name === 'Forbidden') return true
 
   // 如果有 token 但用户信息未加载，先获取用户信息
   if (userStore.token && !userStore.userId) {
@@ -162,7 +169,9 @@ router.beforeEach(async (to) => {
     } catch (error) {
       // 如果获取用户信息失败（如 token 过期），清除 token
       console.error('获取用户信息失败:', error)
-      userStore.logout()
+      if (error.status === 403) return { path: '/forbidden', query: { iam_denied: '1' } }
+      if (error.status === 401 || error.status === 423) userStore.logout()
+      else return { path: '/login', query: { iam_error: '1', redirect: to.fullPath } }
     }
   }
 

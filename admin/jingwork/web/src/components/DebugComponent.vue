@@ -670,6 +670,7 @@
 import { ref, reactive, computed, onMounted, onActivated, onUnmounted, nextTick, watch } from 'vue'
 import { useConfigStore } from '@/stores/config'
 import { useUserStore } from '@/stores/user'
+import { userTokenKey } from '@/utils/appPath'
 import { useDatabaseStore } from '@/stores/database'
 import { useAgentStore } from '@/stores/agent'
 import { useInfoStore } from '@/stores/info'
@@ -1133,7 +1134,7 @@ const switchToUser = async (user) => {
       state.switchingUserId = user.id
       try {
         const data = await authApi.impersonateUser(user.id)
-        localStorage.setItem('user_token', data.access_token)
+        localStorage.setItem(userTokenKey, data.access_token)
         message.success(`已切换为用户: ${user.username}`)
         showModal.value = false
         window.location.reload()
@@ -1147,7 +1148,7 @@ const switchToUser = async (user) => {
 }
 
 // ==================== LOCALSTORAGE TAB LOGIC ====================
-const systemKeyPrefixes = ['user_token', 'yuxi_', 'theme', 'vueuse', 'loglevel']
+const systemKeyPrefixes = [userTokenKey, 'yuxi_', 'theme', 'vueuse', 'loglevel']
 
 const formatBytes = (bytes) => {
   if (bytes === 0) return '0 B'

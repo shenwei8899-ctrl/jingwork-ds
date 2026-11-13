@@ -8,6 +8,7 @@ from datetime import timedelta
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from yuxi.services.iam_service import bind_iam_device_key, get_iam_config
 from yuxi.repositories.api_key_repository import (
     APIKeyDepartmentConflict,
     APIKeyIdempotencyConflict,
@@ -140,6 +141,9 @@ async def _build_cli_exchange_result(db: AsyncSession, session: CLIAuthSession) 
     if key_hash != api_key.key_hash:
         raise CLIAuthError("secret_replay_unavailable", "历史授权密钥无法安全重放", status_code=409)
 
+    if get_iam_config().enabled:
+        await bind_iam_device_key(session.device_code_hash, full_key)
+
     user_data = user.to_dict()
     user_data["department_name"] = department_name
     return {
@@ -180,7 +184,9 @@ async def exchange_cli_auth_token(db: AsyncSession, device_code: str) -> dict:
             name=session.key_name,
             user_id=session.approved_user_id,
             department_id=None,
-            expires_at=None,
+            expires_at=(utc_now_naive() + timedelta(seconds=get_iam_config().session_ttl_seconds))
+            if get_iam_config().enabled
+            else None,
             created_by=str(session.approved_user_id),
         )
     except APIKeySubjectUnavailable as exc:

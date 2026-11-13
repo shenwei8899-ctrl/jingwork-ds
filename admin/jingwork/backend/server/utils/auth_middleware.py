@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from yuxi.storage.postgres.manager import pg_manager
 from yuxi.storage.postgres.models_business import APIKey, User
 from yuxi.utils.datetime_utils import utc_now_naive
+from yuxi.services.iam_service import get_iam_config, iam_failure, resolve_iam_user, validate_iam_api_user
 
 from yuxi.utils.auth_utils import AuthUtils
 
@@ -20,7 +21,7 @@ async def get_db():
         yield db
 
 
-async def _verify_api_key(key: str, db: AsyncSession) -> tuple[User | None, APIKey | None]:
+async def verify_api_key(key: str, db: AsyncSession) -> tuple[User | None, APIKey | None]:
     """验证 API Key 并返回关联用户和 APIKey 对象"""
     key_hash = hashlib.sha256(key.encode()).hexdigest()
 
@@ -53,6 +54,15 @@ async def get_current_user(
     authorization: str | None = Header(None),
     db: AsyncSession = Depends(get_db),
 ):
+    config = get_iam_config()
+    if request is not None:
+        tenant_header = request.headers.get("x-tenant-id")
+        if config.enabled and tenant_header and tenant_header != config.tenant_id:
+            raise iam_failure(403, "iam_tenant_denied", "请求企业与当前实例不一致")
+        if authorization in (None, "Bearer iam_cookie"):
+            iam_user = await resolve_iam_user(request, db)
+            if iam_user is not None:
+                return iam_user
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="无效的凭证",
@@ -72,13 +82,18 @@ async def get_current_user(
     # 根据 token 前缀判断认证方式
     if token.startswith("yxkey_"):
         # API Key 认证
-        user, api_key_obj = await _verify_api_key(token, db)
+        user, api_key_obj = await verify_api_key(token, db)
+        if user is not None:
+            user = await validate_iam_api_user(user, db, config, token) if config.enabled else user
         if user is not None and api_key_obj is not None:
             api_key_obj.last_used_at = utc_now_naive()
             await db.commit()
         if request is not None and user is not None:
             request.state.runtime_user = {"id": user.id, "uid": str(user.uid), "username": user.username}
         return user
+
+    if config.enabled:
+        raise iam_failure(401, "iam_login_required", "请使用企业统一登录")
 
     # JWT Token 认证
     try:

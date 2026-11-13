@@ -3,10 +3,12 @@ import { ref, computed } from 'vue'
 import { authApi } from '@/apis/auth_api'
 import { useAgentStore } from './agent'
 import { useProjectsStore } from './projects'
+import { userTokenKey } from '@/utils/appPath'
+import { iamApi } from '@/apis/iam_api'
 
 export const useUserStore = defineStore('user', () => {
   // 状态
-  const token = ref(localStorage.getItem('user_token') || sessionStorage.getItem('user_token') || '')
+  const token = ref(localStorage.getItem(userTokenKey) || sessionStorage.getItem(userTokenKey) || '')
   const userId = ref(null)
   const username = ref('')
   const uid = ref('')
@@ -33,10 +35,10 @@ export const useUserStore = defineStore('user', () => {
     userRole.value = data.role
     departmentId.value = data.department_id || null
     departmentName.value = data.department_name || ''
-    localStorage.removeItem('user_token')
-    sessionStorage.removeItem('user_token')
+    localStorage.removeItem(userTokenKey)
+    sessionStorage.removeItem(userTokenKey)
     const storage = remember ? localStorage : sessionStorage
-    storage.setItem('user_token', data.access_token)
+    storage.setItem(userTokenKey, data.access_token)
   }
 
   async function login(credentials, { remember = true } = {}) {
@@ -68,8 +70,24 @@ export const useUserStore = defineStore('user', () => {
     useProjectsStore().reset()
 
     // 只清除 token
-    localStorage.removeItem('user_token')
-    sessionStorage.removeItem('user_token')
+    localStorage.removeItem(userTokenKey)
+    sessionStorage.removeItem(userTokenKey)
+  }
+
+  async function completeIAMLogin() {
+    const data = await iamApi.session()
+    applySession(data)
+  }
+
+  async function logoutSession() {
+    if (token.value === 'iam_cookie') {
+      try {
+        await iamApi.logout()
+      } catch (error) {
+        if (error.status !== 401) throw error
+      }
+    }
+    logout()
   }
 
   async function initialize(admin) {
@@ -238,6 +256,8 @@ export const useUserStore = defineStore('user', () => {
     // 方法
     login,
     logout,
+    logoutSession,
+    completeIAMLogin,
     initialize,
     checkFirstRun,
     getAuthHeaders,

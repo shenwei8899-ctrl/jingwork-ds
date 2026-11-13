@@ -1,7 +1,7 @@
 <script setup>
 import EnterpriseSystemLogView from '@/views/EnterpriseSystemLogView.vue'
 import EnterpriseToolManageView from '@/views/EnterpriseToolManageView.vue'
-import { computed, provide, ref } from 'vue'
+import { computed, onMounted, provide, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
   ChevronDown,
@@ -17,6 +17,8 @@ import EnterpriseNetworkView from '@/views/EnterpriseNetworkView.vue'
 import DashboardView from '@/views/DashboardView.vue'
 import EnterpriseExpertManageView from '@/views/EnterpriseExpertManageView.vue'
 import EnterpriseOrganizationView from '@/views/EnterpriseOrganizationView.vue'
+import IAMDirectoryView from '@/views/IAMDirectoryView.vue'
+import { iamApi } from '@/apis/iam_api'
 import EnterpriseAgentManageView from '@/views/EnterpriseAgentManageView.vue'
 import EnterpriseConversationLogView from '@/views/EnterpriseConversationLogView.vue'
 import EnterpriseAuditLogView from '@/views/EnterpriseAuditLogView.vue'
@@ -34,6 +36,15 @@ import { enterpriseNavigation } from '@/layouts/enterpriseNavigation'
 import { useUserStore } from '@/stores/user'
 
 const userStore = useUserStore()
+const iamEnabled = ref(null)
+const iamConfigError = ref('')
+onMounted(async () => {
+  try {
+    iamEnabled.value = (await iamApi.config()).enabled
+  } catch {
+    iamConfigError.value = '企业身份配置加载失败，请刷新后重试。'
+  }
+})
 const route = useRoute()
 const router = useRouter()
 const isKnowledgeDetailPage = computed(() =>
@@ -187,7 +198,12 @@ function select(key) {
         <a-result v-else status="403" title="仅超级管理员可查看数据看板" />
       </template>
       <EnterpriseExpertManageView v-if="selected === 'experts'" />
-      <EnterpriseOrganizationView v-if="selected === 'organization'" />
+      <template v-if="selected === 'organization'">
+        <a-alert v-if="iamConfigError" type="error" :message="iamConfigError" />
+        <a-spin v-else-if="iamEnabled === null" tip="正在加载企业身份配置…" />
+        <IAMDirectoryView v-else-if="iamEnabled" />
+        <EnterpriseOrganizationView v-else />
+      </template>
       <EnterpriseAgentManageView v-if="selected === 'agents'" />
       <ScheduledAgentsView v-if="selected === 'automation'" />
       <EnterpriseModelManageView v-if="selected === 'models'" />
