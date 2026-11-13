@@ -5,7 +5,7 @@ import { connectDesktopWelcome } from '../src/welcome-backend.ts'
 type Rpc = { rpcId: string; method: string; payload: { args: unknown } }
 
 it('updates only the enterprise route and saves the new-session default', async () => {
-  const send = vi.fn<Parameters<typeof connectDesktopWelcome>[1]>(async (_input, init) => {
+  const send = vi.fn(async (_input: string, init?: RequestInit) => {
     if (init?.method !== 'POST') return new Response('index')
     const request = JSON.parse(init.body as string) as Rpc
     const value = request.method === 'settings/describe' ? { namespaces: [
@@ -14,7 +14,7 @@ it('updates only the enterprise route and saves the new-session default', async 
     ] } : undefined
     return Response.json({ type: 'server-response', rpcId: request.rpcId, result: { ok: true, value } })
   })
-  const backend = await connectDesktopWelcome('http://127.0.0.1:19387/?token=fixture', send)
+  const backend = await connectDesktopWelcome('http://127.0.0.1:19387/?token=fixture', 'fixture-cookie', send)
   expect(await backend.syncModels({ models: [{ id: 'company:chat', name: 'Chat', provider: 'company', input: ['text', 'image'] }], defaultModel: 'company:chat' }, { baseURL: 'http://127.0.0.1:1234/v1', token: 'private-process-token' })).toBe('company:chat')
   const calls = send.mock.calls.filter(([, init]) => init?.method === 'POST').map(([, init]) => JSON.parse(init?.body as string) as Rpc)
   expect(calls.find(call => call.method === 'credentials/set')?.payload.args).toEqual({ ref: 'JINGWORK_ENTERPRISE_MODEL_TOKEN', value: 'private-process-token' })

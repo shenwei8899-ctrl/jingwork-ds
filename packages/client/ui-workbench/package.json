@@ -115,6 +115,7 @@
     "lib/typert.host.d.ts",
     "lib/typert.remote-client.js",
     "lib/typert.remote-client.d.ts",
+    "lib/typert.remote-client.d.ts.map",
     "lib/custom-connector.js",
     "lib/mcp-knowledge.js"
   ],
@@ -123,7 +124,7 @@
     "imapflow": "^2.10.0",
     "mailparser": "^3.14.1",
     "nodemailer": "^10.3.1",
-    "zod": "4.4.3",
+    "zod": "4.6.6",
     "@deepseek-ai/dsh-typert-protocol": "workspace:*",
     "@modelcontextprotocol/client": "2.2.0"
   }

@@ -27,8 +27,7 @@ Web GUI 的 goal 界面同时显示持久 goal 状态及当前的进程本地激
 
 点击输入框中的 **Super Agent** 启动一个持久化聊天任务。任务卡片替代该任务的普通目标条，并在完成或停止后保留可展开的进度。暂停、继续和停止使用 [Super Agent 命令插件](../../goal/super-agent/README.zh.md)。该模式对一次提交生效，后续消息在同一聊天中继续。
 
-与 `ui-conversation` 及 goal 领域包一起挂载本插件；只要会话存在目标，条带就会作为 composer 上下文堆栈的第二张卡片出现（位于 Todo 之后、Queue 之前）。Todo 与 Goal 使用相同的面板 elevation，使其位于 composer 层级之上。已 armed 的 active goal 提供暂停动作；active-but-disarmed、paused 或 blocked 的 goal 提供恢复；编辑在 ui-primitives 的 `InlineEditor` 中重写目标文本，多行目标编辑后仍保留换行；清除移除目标，并在投影追上之前抑制条带。
-
+与 `ui-conversation` 及 goal 领域包一起挂载本插件；只要会话存在目标，条带就会作为 composer 上下文堆栈的第二张卡片出现（位于 Todo 之后、Queue 之前）。Todo 与 Goal 使用相同的面板 elevation，使其位于 composer 层级之上。条带的动作按编辑、清除、暂停或恢复的顺序排列，与 Queue 行的编辑和移除位置一致。已 armed 的 active goal 提供暂停动作，激活状态未知时暂停按钮显示为禁用；active-but-disarmed、paused 或 blocked 的 goal 提供恢复；编辑在 ui-primitives 的 `InlineEditor` 中重写目标文本，多行目标编辑后仍保留换行；清除移除目标，并在投影追上之前抑制条带。
 ### 指令输入气泡
 
 每条持久的 `/goal` 运行都投影为一个右对齐的用户样式气泡，标签为 `Command input`（或 `指令输入`），渲染在通用命令结果行之前；开头的 `/goal` token 经共享的 `conversation.user.text` Factory 与 Goal 自有的 `command` renderer，使用 `facts.commands` 中的实际执行 token 范围， 以等宽代码字体渲染为指令引用 chip，目标文本保持正文字体。它不含时间戳、复制或分支操作，重新加载时会依据运行记录重建。

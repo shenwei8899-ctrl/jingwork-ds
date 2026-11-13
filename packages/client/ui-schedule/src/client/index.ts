@@ -55,6 +55,7 @@ import { ScheduleTaskTabTitle } from './ScheduleTaskTabTitle.tsx'
 import { SessionScheduleHover } from './SessionScheduleHover.tsx'
 import { SessionScheduleMark } from './SessionScheduleMark.tsx'
 import { TaskTabBindings } from './task-tab-bindings.ts'
+import { createEditorStore } from './editor-store.ts'
 import { TaskManagerPage, type TaskManagerInjected } from './TaskManagerPage.tsx'
 import { TaskManagerFactory } from './TaskManagerFactory.tsx'
 import type { TaskDetailInjected } from './TaskDetail.tsx'
@@ -78,6 +79,7 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
     'schedule.manager': {
       scope: 'root'
       inject: TaskManagerInjected
+      store: ReturnType<typeof createEditorStore>
       locale: 'schedule.manager'
     }
   }
@@ -214,6 +216,7 @@ export function apply(ctx: ClientContext): void {
       name: 'sidebar.right.pane.tab',
       key: SCHEDULE_TASK_ID,
       locale: MANAGER_NS,
+      store: createEditorStore(),
       inject: (): ScheduleTaskTabInjected => ({ ...detail, taskBindings }),
     }, ScheduleTaskTab))
     yield ctx.slots.inject('sidebar.right.pane.tab.title', () => ctx.slots.register({
@@ -242,13 +245,18 @@ export function apply(ctx: ClientContext): void {
       name: 'schedule.manager',
       scope: 'root',
       locale: MANAGER_NS,
+      store: createEditorStore(),
       inject: () => managerFace,
     }, TaskManagerFactory)
     yield ctx.slots.inject('main', () => ctx.slots.register({
       name: 'main',
       key: PANEL_ID,
       locale: MANAGER_NS,
-      inject: () => managerFace,
+      store: createEditorStore(),
+      inject: (): TaskManagerInjected => ({
+        ...managerFace,
+        onNewTask: () => { ctx.uiWorkspace.startSession(undefined, { prompt: t('host.createPrompt'), whenDraftExists: 'append' }) },
+      }),
     }, TaskManagerPage))
     yield ctx.slots.inject('sidebar.panellist', () => ctx.slots.register({
       name: 'sidebar.panellist',

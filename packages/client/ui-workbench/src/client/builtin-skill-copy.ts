@@ -22,11 +22,19 @@ export const BUILTIN_SKILL_COPY: Readonly<Record<string, { nameKey: WorkbenchKey
     },
     'dsh-client-ui-ux': { nameKey: 'builtinDshClientUiUxName', descriptionKey: 'builtinDshClientUiUxDescription' },
     'dsh-code-review': { nameKey: 'builtinDshCodeReviewName', descriptionKey: 'builtinDshCodeReviewDescription' },
+    'dsh-cua-macos-signing': {
+      nameKey: 'builtinDshCuaMacosSigningName',
+      descriptionKey: 'builtinDshCuaMacosSigningDescription',
+    },
     'dsh-create-upgrade-guide': {
       nameKey: 'builtinDshCreateUpgradeGuideName',
       descriptionKey: 'builtinDshCreateUpgradeGuideDescription',
     },
     'dsh-doc': { nameKey: 'builtinDshDocName', descriptionKey: 'builtinDshDocDescription' },
+    'dsh-doc-writing': {
+      nameKey: 'builtinDshDocWritingName',
+      descriptionKey: 'builtinDshDocWritingDescription',
+    },
     'dsh-error-handling': {
       nameKey: 'builtinDshErrorHandlingName',
       descriptionKey: 'builtinDshErrorHandlingDescription',

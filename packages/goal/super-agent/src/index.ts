@@ -46,7 +46,7 @@ export async function apply(ctx: Context): Promise<void> {
     for (const child of descendants.toReversed()) {
       if (child.kind === 'diagnostic') { failures.push(`${child.id}: ${child.reason}`); continue }
       try {
-        ctx.subagents.interrupt(child.id, { kind: 'user', parentSessionId: child.parentId })
+        ctx.subagents.interrupt(child.id, { kind: 'ancestor', agent })
       } catch (error) {
         failures.push(`${child.id}: ${error instanceof Error ? error.message : String(error)}`)
       }

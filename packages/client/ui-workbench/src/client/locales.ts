@@ -154,10 +154,14 @@ export const zh = {
   builtinDshClientUiUxDescription: '设计与审查客户端界面，检查组件复用、视觉规范、提示反馈、弹层和加载状态。',
   builtinDshCodeReviewName: '项目代码审查',
   builtinDshCodeReviewDescription: '按项目架构、编码约定、防御性设计和质量要求审查代码与合并请求。',
+  builtinDshCuaMacosSigningName: 'macOS 计算机操作签名',
+  builtinDshCuaMacosSigningDescription: '为从源码运行或切换工作树的 macOS 开发者配置可复用的计算机操作签名身份。',
   builtinDshCreateUpgradeGuideName: '升级指南编写',
   builtinDshCreateUpgradeGuideDescription: '为命令、配置、接口或持久化数据的兼容性变更编写和更新升级说明。',
   builtinDshDocName: '项目文档维护',
   builtinDshDocDescription: '编写、整理和审查项目文档，维护内容层次、中英文对应关系与文档验证。',
+  builtinDshDocWritingName: '文档写作与维护',
+  builtinDshDocWritingDescription: '创建、重组、审查和整理项目文档，并检查文档结构、链接与中英文内容。',
   builtinDshErrorHandlingName: '错误处理设计',
   builtinDshErrorHandlingDescription:
     '设计和审查失败报告、恢复、重试及后台任务，让错误可见并提供明确的处理方式。',
@@ -532,12 +536,16 @@ export const en: Record<WorkbenchKey, string> = {
   builtinDshCodeReviewName: 'Project code review',
   builtinDshCodeReviewDescription:
     'Review code and pull requests against project architecture, conventions and quality requirements.',
+  builtinDshCuaMacosSigningName: 'macOS Computer Use signing',
+  builtinDshCuaMacosSigningDescription: 'Configure a reusable Computer Use signing identity for macOS developers running from source or switching worktrees.',
   builtinDshCreateUpgradeGuideName: 'Upgrade guides',
   builtinDshCreateUpgradeGuideDescription:
     'Document compatibility changes to commands, configuration, APIs and persisted data.',
   builtinDshDocName: 'Project documentation',
   builtinDshDocDescription:
     'Write and organize project documentation, maintain bilingual alignment and validate references.',
+  builtinDshDocWritingName: 'Documentation writing and maintenance',
+  builtinDshDocWritingDescription: 'Create, reorganize, review and maintain project documentation, including structure, links and bilingual content.',
   builtinDshErrorHandlingName: 'Error handling',
   builtinDshErrorHandlingDescription:
     'Design actionable failure reports, recovery, retries and background task handling.',
