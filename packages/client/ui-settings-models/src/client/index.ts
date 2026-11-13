@@ -1,3 +1,4 @@
+import { EnterpriseModels, type EnterpriseModelsInjected, type EnterpriseModelBridge } from './EnterpriseModels.tsx'
 /**
  * Models settings and product-onboarding plugin, browser half. It registers
  * the Models page plus the ordered preview-notice and official-DeepSeek
@@ -92,8 +93,11 @@ export function apply(ctx: ClientContext): void {
   // Registration-time text (the nav label thunk) and the inject faces share
   // one bound translate; copy freshness rides the locale revision.
   const t = ctx.locale.bind(NS) as ModelsSectionInjected['t']
+  const enterprise = (globalThis as typeof globalThis & { dshJingwork?: Partial<EnterpriseModelBridge> }).dshJingwork
+  const enterpriseModels = enterprise?.models !== undefined && enterprise.setModel !== undefined
   const injected = (): ModelsSectionInjected => ({
     controller,
+    enterpriseModels,
     hooks: { snapshot: controller.store },
     operations,
     schema,
@@ -146,6 +150,14 @@ export function apply(ctx: ClientContext): void {
       'settings.models.footer': { kind: 'list', scope: 'root' },
     },
   }, ModelsSection))
+  if (enterpriseModels && enterprise.models !== undefined && enterprise.setModel !== undefined) {
+    const load = enterprise.models
+    const select = enterprise.setModel
+    ctx.slots.inject('settings.models.footer', () => ctx.slots.register({
+      name: 'settings.models.footer', id: 'enterprise-models',
+      inject: (): EnterpriseModelsInjected => ({ load, select, t }),
+    }, EnterpriseModels))
+  }
   const native = globalThis as typeof globalThis & {
     dshJingwork?: object
     dshDesktop?: { product?: 'harness' | 'jingwork' }

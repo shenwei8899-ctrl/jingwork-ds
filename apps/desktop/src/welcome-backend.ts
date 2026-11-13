@@ -5,7 +5,7 @@ import { conversationLogSource, type ConversationLogSource } from './conversatio
 import { randomUUID } from 'node:crypto'
 import { setTimeout as delay } from 'node:timers/promises'
 import { load as loadYaml } from 'js-yaml'
-import type { JingworkRole } from './jingwork-auth.ts'
+import type { JingworkRole, JingworkModelCatalog } from './jingwork-auth.ts'
 import { desktopAccountBackend, type DesktopAccountBackend } from './account-backend.ts'
 
 /** Metadata needed before the native entry or workspace becomes visible. */
@@ -29,6 +29,16 @@ export interface DesktopWelcomeBackend {
    * @returns Ready Harness preset id.
    */
   prepareEnterprise(role: JingworkRole, timeoutMs: number): Promise<string>
+  /** Register enterprise models through the existing adapter settings and private credentials.
+   * @param catalog Account-authorized public directory.
+   * @param connection Current process's private model relay.
+   * @returns The saved enterprise default, or null when the default uses a personal provider.
+   */
+  syncModels(catalog: JingworkModelCatalog, connection: { baseURL: string; token: string }): Promise<string | null>
+  /** Save a previously synchronized enterprise model as the default for new sessions.
+   * @param model Server-owned model identifier.
+   */
+  setEnterpriseModel(model: string): Promise<void>
   /** @param event - desktop-owned fields. @returns after local Host intake. */
   report(event: ProductEvent): Promise<void>
   /** @returns Configured-key presence and the shared language preference, without credential values. */
@@ -172,6 +182,45 @@ export async function connectDesktopWelcome(
         await delay(100, undefined, { signal })
       }
       throw new Error('Harness enterprise preset activation timed out')
+    },
+    async syncModels(catalog, connection) {
+      const settings = await invoke({ namespace: 'settings', method: 'describe', args: {} })
+      if (!record(settings) || !Array.isArray(settings.namespaces)) throw new Error('Model settings are unavailable')
+      const namespace: unknown = settings.namespaces.find((item: unknown) => record(item) && item.ns === 'llm-pi-ai')
+      const defaults: unknown = settings.namespaces.find((item: unknown) => record(item) && item.ns === 'agent-default-model')
+      if (!record(namespace) || typeof namespace.revision !== 'number' || !record(namespace.value)
+        || !record(namespace.value.providers)) throw new Error('Enterprise model adapter is unavailable')
+      const route = 'jingwork-enterprise'
+      if (catalog.models.length === 0) {
+        if (namespace.value.providers[route] !== undefined) {
+          await invoke({ namespace: 'settings', method: 'mutate', args: {
+            ns: 'llm-pi-ai', ops: [{ op: 'unset', path: ['providers', route] }], expectedRevision: namespace.revision,
+          } })
+        }
+      } else {
+        await invoke({ namespace: 'credentials', method: 'set', args: { ref: 'JINGWORK_ENTERPRISE_MODEL_TOKEN', value: connection.token } })
+        const profile = {
+          displayName: 'JingWork', api: 'openai-completions', baseURL: connection.baseURL,
+          apiKeyEnv: 'JINGWORK_ENTERPRISE_MODEL_TOKEN',
+          models: catalog.models.map(model => ({ id: model.id, name: model.name, input: model.input ?? ['text'] })),
+        }
+        if (JSON.stringify(namespace.value.providers[route]) !== JSON.stringify(profile)) {
+          await invoke({ namespace: 'settings', method: 'mutate', args: {
+            ns: 'llm-pi-ai', ops: [{ op: 'set', path: ['providers', route], value: profile }], expectedRevision: namespace.revision,
+          } })
+        }
+      }
+      return record(defaults) && record(defaults.value) && defaults.value.provider === route
+        && typeof defaults.value.model === 'string' ? defaults.value.model : null
+    },
+    async setEnterpriseModel(model) {
+      await invoke({ namespace: 'settings', method: 'mutate', args: {
+        ns: 'agent-default-model', ops: [
+          { op: 'set', path: ['provider'], value: 'jingwork-enterprise' },
+          { op: 'set', path: ['model'], value: model },
+          { op: 'unset', path: ['reasoningEffort'] },
+        ],
+      } })
     },
     async analyticsEnabled() {
       const enabled = await invoke({ namespace: 'productAnalytics', method: 'enabled', args: {} }, AbortSignal.timeout(1000))

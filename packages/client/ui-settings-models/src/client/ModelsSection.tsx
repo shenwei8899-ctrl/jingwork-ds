@@ -41,6 +41,8 @@ import styles from './ModelsSection.module.css'
 export interface ModelsSectionInjected {
   /** The page store (loaded on mount, refreshed on pushed invalidations). */
   controller: ModelsSettingsStore
+  /** Whether enterprise models are supplied by the native account. */
+  enterpriseModels?: boolean
   hooks: {
     /** Page snapshot bound by the UI renderer as useSnapshot. */
     snapshot: ModelsSettingsStore['store']
@@ -236,12 +238,15 @@ export function providerCopy(template: string, target: ProviderIdentity): string
  * @returns the section, or null while the shell has not injected yet.
  */
 export function ModelsSection(props: ModelsSectionProps): ReactNode {
-  const { controller, useSnapshot, operations, schema, t, renderSlot } = props
+  const { controller, useSnapshot, operations, schema, t, renderSlot, enterpriseModels } = props
   if (
     controller === undefined || useSnapshot === undefined || operations === undefined
     || schema === undefined || t === undefined
   ) return null
-  return <Loaded injected={{ controller, useSnapshot, operations, schema, t }} renderSlot={renderSlot} />
+  return <Loaded
+    injected={{ controller, useSnapshot, operations, schema, t, ...(enterpriseModels === undefined ? {} : { enterpriseModels }) }}
+    renderSlot={renderSlot}
+  />
 }
 
 function Loaded({ injected, renderSlot }: { injected: ModelsSectionFace; renderSlot: ModelsRenderSlot }): ReactNode {
@@ -346,7 +351,9 @@ function Loaded({ injected, renderSlot }: { injected: ModelsSectionFace; renderS
     return (
       <div className={styles['section']}>
         <h2 className={styles['title']}>{t('title')}</h2>
-        <p className={styles['intro']}>{t('intro')}</p>
+        <p className={styles['intro']}>
+          {t(injected.enterpriseModels ? 'enterpriseIntro' : 'intro')}
+        </p>
       </div>
     )
   }
@@ -413,7 +420,9 @@ function Loaded({ injected, renderSlot }: { injected: ModelsSectionFace; renderS
   return (
     <div className={styles['section']}>
       <h2 className={styles['title']}>{t('title')}</h2>
-      <p className={styles['intro']}>{t('intro')}</p>
+      <p className={styles['intro']}>
+        {t(injected.enterpriseModels ? 'enterpriseIntro' : 'intro')}
+      </p>
       {!state.writable && state.status === 'ready' ? <p className={styles['notice']}>{t('readOnly')}</p> : null}
       {savedIdentity === undefined
         ? null

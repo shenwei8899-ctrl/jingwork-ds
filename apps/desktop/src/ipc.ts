@@ -8,6 +8,8 @@ import type { DesktopFileDrag } from '@deepseek-ai/dsh-util-file-drag'
 
 /** IPC channel names kept private to the desktop application bundle. */
 export const DESKTOP_IPC = {
+  jingworkModels: 'dsh-desktop:jingwork-models',
+  jingworkSetModel: 'dsh-desktop:jingwork-set-model',
   jingworkKnowledgeBases: 'dsh-desktop:jingwork-knowledge-bases',
   jingworkAgents: 'dsh-desktop:jingwork-agents',
   jingworkOpenAgent: 'dsh-desktop:jingwork-open-agent',

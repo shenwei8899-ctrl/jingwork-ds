@@ -17,6 +17,12 @@ export interface JingworkLoginConfig {
   /** Scan and retry interval for desktop conversation log delivery. */
   readonly conversationLogIntervalMs?: number
 }
+/** Public enterprise model directory; upstream credentials remain server-owned. */
+export interface JingworkModelCatalog {
+  models: { id: string; name: string; provider: string; input?: ('text' | 'image')[] }[]
+  defaultModel: string | null
+}
+
 /** Role fields synchronized to a Harness workbench preset; execution remains Harness-owned. */
 export interface JingworkRole {
   slug: string
@@ -46,18 +52,19 @@ export interface JingworkLoginAttempt {
 function record(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
-/** Validate an origin before sending credentials or loading a remote login document.
+/** Validate an application URL before sending credentials or loading a remote login document.
  * @param value Deployment URL.
- * @returns A canonical HTTP loopback or HTTPS origin.
+ * @returns A canonical HTTP loopback or HTTPS application URL with an optional path prefix.
  */
 export function jingworkOrigin(value: string): string {
   const url = new URL(value)
   const local = ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)
   if ((url.protocol !== 'https:' && !(url.protocol === 'http:' && local))
-    || url.username || url.password || url.search || url.hash || url.pathname !== '/') {
+    || url.username || url.password || url.search || url.hash
+    || !/^\/(?:[a-zA-Z0-9_-]+\/?)*$/.test(url.pathname)) {
     throw new Error('Jingwork requires an HTTPS origin or a loopback HTTP origin')
   }
-  return url.origin
+  return url.origin + url.pathname.replace(/\/$/, '')
 }
 
 /** A terminal device authorization response requires a fresh server-issued attempt. */
@@ -134,8 +141,11 @@ export class JingworkDesktopAuth {
     }
     if (!record(value) || value.origin !== this.origin || typeof value.secret !== 'string') return false
     const response = await this.request('/api/auth/me', { headers: { Authorization: `Bearer ${value.secret}` } })
-    if (response.status === 401 || response.status === 403 || response.status === 423) {
+    if (response.status === 401 || response.status === 423) {
       await rm(this.path, { force: true })
+      this.secret = undefined
+      this.uid = undefined
+      this.accountName = undefined
       return false
     }
     if (!response.ok) throw new Error('Jingwork account validation failed')
@@ -156,8 +166,7 @@ export class JingworkDesktopAuth {
   async begin(signal: AbortSignal): Promise<JingworkLoginAttempt> {
     const response = await this.request('/api/auth/cli/sessions', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      // The deployed authorization page recognizes this protocol label for automatic approval.
-      body: JSON.stringify({ key_name: 'DeepSeek Harness' }), signal,
+      body: JSON.stringify({ key_name: 'JingWork' }), signal,
     })
     if (!response.ok) throw new Error('Jingwork login is unavailable')
     const value = await this.json(response)
@@ -167,14 +176,15 @@ export class JingworkDesktopAuth {
       || typeof value.interval !== 'number' || !Number.isSafeInteger(value.interval) || value.interval < 1 || value.interval > 3600) {
       throw new Error('Jingwork returned an invalid login session')
     }
-    const verification = new URL(value.verification_uri, this.origin)
-    if (verification.origin !== this.origin || verification.pathname !== '/auth/cli/authorize'
+    const verification = new URL(value.verification_uri, this.origin + '/')
+    if (verification.origin !== new URL(this.origin).origin
+      || verification.pathname !== new URL(this.origin).pathname.replace(/\/$/, '') + '/auth/cli/authorize'
       || verification.username || verification.password || verification.hash) {
       throw new Error('Jingwork returned an invalid login address')
     }
     verification.search = new URLSearchParams({ user_code: value.user_code }).toString()
-    const login = new URL('/login', this.origin)
-    login.search = new URLSearchParams({ redirect: verification.pathname + verification.search }).toString()
+    const login = new URL(this.origin + '/login')
+    login.search = new URLSearchParams({ redirect: '/auth/cli/authorize' + verification.search }).toString()
     return { url: login.href, deviceCode: value.device_code, expiresAt: Date.now() + value.expires_in * 1000,
       intervalMs: value.interval * 1000 }
   }
@@ -266,12 +276,65 @@ export class JingworkDesktopAuth {
     }
   }
 
-  /** Forget this device's local login before returning to the login window. */
+  /** Revoke the IAM login before removing this device's encrypted credential.
+   * @throws When platform sign-out cannot be confirmed; the local credential remains available for retry.
+   */
   async signOut(): Promise<void> {
+    if (this.secret !== undefined) {
+      const response = await this.request('/api/auth/iam/logout', {
+        method: 'POST', headers: { Authorization: `Bearer ${this.secret}` },
+      })
+      if (!response.ok && response.status !== 401) throw new Error('Jingwork platform sign-out failed')
+    }
     await rm(this.path, { force: true })
     this.accountName = undefined
     this.uid = undefined
     this.secret = undefined
+  }
+
+  /** Read the current account's permitted model directory.
+   * @returns Public model names and the administrator's suggested default.
+   */
+  async models(): Promise<JingworkModelCatalog> {
+    const value = await this.knowledgeRequest('/api/system/model-providers/desktop-catalog')
+    if (!record(value) || !Array.isArray(value.models)
+      || (value.default_model !== null && typeof value.default_model !== 'string')) {
+      throw new Error('Invalid enterprise model directory')
+    }
+    const models = value.models.map((item: unknown) => {
+      if (!record(item) || typeof item.id !== 'string' || !item.id || item.id.length > 512
+        || typeof item.name !== 'string' || typeof item.provider !== 'string') {
+        throw new Error('Invalid enterprise model')
+      }
+      if (item.input !== undefined && (!Array.isArray(item.input)
+        || !item.input.every((value: unknown) => value === 'text' || value === 'image'))) {
+        throw new Error('Invalid enterprise model input capabilities')
+      }
+      const input: ('text' | 'image')[] = Array.isArray(item.input)
+        ? item.input.map((value: 'text' | 'image') => value) : ['text']
+      return { id: item.id, name: item.name, provider: item.provider, input }
+    })
+    return { models, defaultModel: value.default_model }
+  }
+
+  /** Forward one model request using the current device's IAM-bound credential.
+   * @param body OpenAI-compatible request bytes.
+   * @param signal Calling Host request lifetime.
+   * @returns The upstream response stream; the caller owns cancellation and consumption.
+   */
+  async completeModel(body: string, signal: AbortSignal): Promise<Response> {
+    const secret = this.secret
+    if (secret === undefined) throw new Error('Enterprise sign-in is required')
+    const response = await this.send(this.origin + '/api/model-credits/v1/chat/completions', {
+      method: 'POST', headers: { Authorization: `Bearer ${secret}`, 'Content-Type': 'application/json' },
+      body, redirect: 'error', credentials: 'omit', cache: 'no-store',
+      signal: AbortSignal.any([signal, AbortSignal.timeout(300000)]),
+    })
+    if (this.secret !== secret) {
+      await response.body?.cancel()
+      throw new Error('Enterprise account changed')
+    }
+    return response
   }
 
   /** Read agents visible to the current Jingwork account.

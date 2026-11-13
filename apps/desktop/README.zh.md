@@ -35,7 +35,7 @@ Electron 在 `userData/desktop/locale-cache` 缓存最近确认的界面语言�
 
 桌面埋点遵循[产品采集策略](../../packages/client/product-analytics/README.zh.md)及其动态应用配置，不包含 Web 使用情况。安装更新会等待该操作的本地埋点接收请求结束，再锁定 API 准入并停止 Host。接收请求的时限为一秒，失败不会阻止安装，也不等待收集端完成发送。
 
-桌面应用是完整 dsh Web 应用外的一层 Electron 壳。Electron RunAsNode 子进程启动共享 profile runner，Electron 立即从 `dsh-app://app/` 加载打包内的 Web 入口。共享加载页等待 Host 启动注入，然后在同一文档中启动客户端。Electron 将应用 HTTP 请求转发给已认证的 Web Host，转发时丢弃描述 Node fetch 连接而非资源本身的响应头（`transfer-encoding`、`connection`、`keep-alive`），并把插件 bundle 响应标记为 `no-store`，因为其每次启动都变化的 revision 只会在 Chromium 磁盘缓存中累积；WebSocket 流连接到该 Host，仅为归属的应用窗口附加凭据。原生引导与账户请求通过 Node fetch 携带所拥有 Host 的 Cookie，账户流也复用此 Cookie。Jingwork 登录窗口在 macOS 与 Windows 上将原生窗口按钮叠放于页面，带桌面标记的登录页提供顶部拖动区域。Node IPC 承载启动注入、就绪与关闭。Desktop 默认监听系统分配的端口，因此不会与 Web 的 `3080` 或系统保留端口冲突；可通过 `webserver.config.port` patch 覆盖。
+桌面应用是完整 dsh Web 应用外的一层 Electron 壳。Electron RunAsNode 子进程启动共享 profile runner，Electron 立即从 `dsh-app://app/` 加载打包内的 Web 入口。共享加载页等待 Host 启动注入，然后在同一文档中启动客户端。Electron 将应用 HTTP 请求转发给已认证的 Web Host，转发时丢弃描述 Node fetch 连接而非资源本身的响应头（`transfer-encoding`、`connection`、`keep-alive`），并把插件 bundle 响应标记为 `no-store`，因为其每次启动都变化的 revision 只会在 Chromium 磁盘缓存中累积；WebSocket 流连接到该 Host，仅为归属的应用窗口附加凭据。原生引导与账户请求通过 Node fetch 携带所拥有 Host 的 Cookie，账户流也复用此 Cookie。Jingwork 原生欢迎页使用白色背景、居中的品牌 Logo 与标题，以及圆角登录按钮。窗口顶部支持拖动，键盘焦点清晰可见。企业 IAM 登录和设备确认在系统浏览器中完成。Node IPC 承载启动注入、就绪与关闭。Desktop 默认监听系统分配的端口，因此不会与 Web 的 `3080` 或系统保留端口冲突；可通过 `webserver.config.port` patch 覆盖。
 
 Desktop 绑定 `127.0.0.1`，即 Electron 为就绪 URL 与 WebSocket 凭据过滤器拨号的地址。WebSocket 流按 Host 监听器使用 `ws:` 或 `wss:`；附加凭据要求 authority 与 scheme 均匹配。
 
@@ -310,13 +310,15 @@ Electron 主进程在启动时读取一次 `app.getPath('userData')/desktop/sett
 
 已有文件不会被覆盖；缺少 `updates` 对象或该字段时均按 `false` 处理。将字段设为 `true` 后完全退出并重启应用，即可允许测试鉴权弹窗。改回 `false` 并重启即可再次禁止。创建、读取或校验失败时使用默认值 `false`，不阻止启动。Desktop 尝试在 Electron 控制台记录包含文件路径的警告；日志不可用也不阻止启动。修正文件并重启后才会应用显式设置。未知字段会保留。安装更新保留此用户数据文件；Windows 卸载按[卸载规则](#windows-uninstall-rules)删除它。
 
-JingWork 安装包包含 `resources/jingwork-login.json`，其中的公共部署源地址为 `https://jingwork.openswarm.run`。全新的 JingWork 安装会在原生登录窗口中打开该部署现有的登录与注册页面。服务端负责注册、登录和设备授权。原生 JingWork 账号桥接在授权后打开工作区，并挂载 JingWork 账号菜单。JingWork 首次使用引导在空白对话中打开，带用户进入模型设置，关闭设置后返回引导。完成或明确跳过后，结果保存于此安装的 Host 设置中。账号菜单提供模型设置和使用引导的直达入口。通用的 DeepSeek 额度、用途和过程流程由 Harness 账号使用。
+JingWork 安装包包含 `resources/jingwork-login.json`，指向企业平台 `/work` 应用。桌面端在启动工作区前通过系统浏览器完成 IAM 登录与设备确认，并通过服务端统一回调恢复授权。首次使用引导、模型配置和账号菜单在各账号的 Host 中提供。
 
-如需选择其他 Jingwork 部署，创建 `app.getPath('userData')/desktop/jingwork.json`，内容为 `{ "url": "http://127.0.0.1:45173", "requestTimeoutMs": 15000 }` 后重启 Desktop。URL 为部署的 HTTPS 源地址，也支持 HTTP 回环地址。此安装专属文件优先于安装包默认配置。JingWork 要求覆盖文件或安装包配置可读且有效。无效的覆盖文件、缺失或无效的所选安装包配置都会拒绝启动。Harness 安装可通过同一安装专属文件启用 Jingwork 登录。可选的请求超时默认值为 15,000 毫秒。
+如需选择其他 Jingwork 部署，创建 `app.getPath('userData')/desktop/jingwork.json`，内容为 `{ "url": "http://127.0.0.1:45173", "requestTimeoutMs": 15000 }` 后重启 Desktop。URL 为部署的 HTTPS 应用地址，可包含 `/work` 路径前缀，也支持 HTTP 回环地址。此安装专属文件优先于安装包默认配置。JingWork 要求覆盖文件或安装包配置可读且有效。无效的覆盖文件、缺失或无效的所选安装包配置都会拒绝启动。Harness 安装可通过同一安装专属文件启用 Jingwork 登录。可选的请求超时默认值为 15,000 毫秒。
 
-账号登录后，服务端页面自动授权名为 `DeepSeek Harness` 的待处理设备请求，并显示进度提示，直到桌面端打开工作区。该设备名是已部署授权协议使用的匹配值。授权失败时，错误保留在登录窗口中。Electron 使用私有设备码换取 Jingwork 凭据，通过操作系统加密保存，并在后续启动时调用 `/api/auth/me` 校验。模型供应商 API Key 独立配置。
+用户在浏览器中确认设备授权后，Electron 使用私有设备码换取设备凭据，并通过操作系统加密保存。服务端将凭据绑定到 IAM 会话，逐请求自省，并在退出时执行全平台吊销。桌面端在启动与每 30 秒调用 `/api/auth/me` 校验登录；明确失效后停止后台并重新打开登录。身份服务暂不可用时保留凭据供重试。
 
-桌面端登录后，将已提交的用户消息文本和 AI 回复文本同步到 Jingwork 的 `/api/system/conversation-logs/sync` 接口。首次登录的账号接收尚未分配归属的本地会话，包括历史消息；已记录的会话归属在切换账号后保持固定。后台通过原生凭据确定用户。设备和来源事件标识在重试及重启后保持稳定，只有后台确认批次后才推进本地确认进度。后台对话日志页面随后可按用户、智能体和会话筛选消息副本。附件、思考过程、系统上下文、工具结果和子智能体会话不参与同步。
+桌面端在启动、模型设置页刷新及已登录工作区运行期间每 30 秒读取企业模型目录。每次同步成功后，以服务端当前目录及文本、图片输入能力替换本地保存的企业模型列表。JingWork 模型通过私有本地转发调用，转发使用每进程随机令牌，原生代码为网关请求附加绑定 IAM 会话的设备凭据。供应商密钥保存在服务端。用户可将服务端模型设为新会话默认模型，或通过已有会话输入框的模型选择器切换。
+
+桌面端登录后，将已提交的用户消息文本和 AI 回复文本同步到 Jingwork 的 `/api/system/conversation-logs/sync` 接口。工作区在 `userData/accounts/<部署与用户标识的 SHA-256>/harness` 内按账号保存会话、设置、凭据及技能。切换账号通过完整重启重新选择目录；旧共享目录需核对归属后迁移。后台通过原生凭据确定用户。设备和来源事件标识在重试及重启后保持稳定，只有后台确认批次后才推进本地确认进度。后台对话日志页面随后可按用户、智能体和会话筛选消息副本。附件、思考过程、系统上下文、工具结果和子智能体会话不参与同步。
 
 桌面端还会将工作台保存、删除及导入结果、会话启动请求、企业智能体打开、知识目录读取、已结束的插件变更、进入工作区及退出登录事件写入操作日志。系统日志包含致命恢复、渲染错误、工作台写入失败和插件操作失败的分类，以及最多十条近期操作名称。账号归属由原生凭据确定。私有待发送队列将未确认记录按账号保存，重启后使用稳定关联标识重试；后台在既有日志表中处理并发重试去重。这两条通道不包含聊天正文、操作参数、凭据或原始诊断堆栈。队列最多保存 1,000 条记录，存储、容量及发送失败会报告到 Electron 控制台。退出登录后，待发送记录等待同一账号再次登录。两条通道共用对话日志的重试间隔和请求超时。
 

@@ -1,4 +1,5 @@
 /** Remote login windows expose no native preload and retain the device attempt across transport recovery. */
+import { fileURLToPath } from 'node:url'
 import { expect, it, vi } from 'vitest'
 import { JingworkDesktopAuth } from '../src/jingwork-auth.ts'
 import { resolveDesktopLocale } from '../src/locale.ts'
@@ -8,10 +9,11 @@ const state = vi.hoisted(() => ({
   closed: undefined as (() => void) | undefined,
   navigate: undefined as ((event: { preventDefault(): void }, target: string) => void) | undefined,
   load: vi.fn(async (_url: string) => {}), show: vi.fn(), close: vi.fn(),
-  userAgent: vi.fn(),
+  userAgent: vi.fn(), browser: vi.fn(async (_url: string) => {}),
   dialog: vi.fn(async () => ({ response: 1 })),
 }))
 vi.mock('electron', () => ({
+  app: { isPackaged: false, getAppPath: () => fileURLToPath(new URL('..', import.meta.url)) },
   BrowserWindow: class {
     constructor(options: Electron.BrowserWindowConstructorOptions) { state.options = options }
     once(_event: string, listener: () => void) { state.closed = listener }
@@ -28,6 +30,7 @@ vi.mock('electron', () => ({
     isDestroyed() { return false }
   },
   dialog: { showMessageBox: state.dialog },
+  shell: { openExternal: state.browser },
 }))
 const { openJingworkWelcome } = await import('../src/jingwork-window.ts')
 const cipher = { encrypt: (value: string) => Buffer.from(value), decrypt: (value: Uint8Array) => Buffer.from(value).toString() }
@@ -39,7 +42,7 @@ function auth() {
   const complete = vi.spyOn(client, 'complete')
   return { client, begin, complete, attempt }
 }
-it('shows Jingwork in a sandboxed partition, then enters only after native authorization', async () => {
+it('opens system-browser sign-in and enters only after native authorization', async () => {
   const current = auth()
   const granted = Promise.withResolvers<undefined>()
   current.complete.mockReturnValue(granted.promise)
@@ -48,8 +51,15 @@ it('shows Jingwork in a sandboxed partition, then enters only after native autho
   await vi.waitFor(() => { expect(current.complete).toHaveBeenCalledOnce() })
   expect(state.options?.webPreferences).toEqual({ nodeIntegration: false, contextIsolation: true,
     sandbox: true, webSecurity: true, partition: 'persist:jingwork-login' })
-  expect(state.userAgent).toHaveBeenLastCalledWith('Electron JingworkDesktop/1')
-  expect(state.load).toHaveBeenLastCalledWith(current.attempt.url)
+  expect(state.browser).toHaveBeenLastCalledWith(current.attempt.url)
+  expect(state.load.mock.calls.at(-1)?.[0]).toMatch(/^data:text\/html/)
+  expect(decodeURIComponent(state.load.mock.calls.at(-1)![0])).not.toContain(current.attempt.deviceCode)
+  const page = decodeURIComponent(state.load.mock.calls.at(-1)![0])
+  expect(page).toContain('data:image/png;base64,')
+  expect(page).toContain('蓝鲸，你的工作好搭子')
+  expect(page).toContain('企业统一登录')
+  expect(page).toContain('-webkit-app-region: drag')
+  expect(page.replace(/src="data:image\/png;base64,[^"]+"/, 'src="[bundled-logo]"')).toMatchSnapshot()
   expect(enter).not.toHaveBeenCalled()
   const event = { preventDefault: vi.fn() }
   state.navigate!(event, 'https://foreign.example/')

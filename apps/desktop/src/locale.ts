@@ -2,6 +2,9 @@
 
 export const en = {
   jingworkLoginTitle: 'Sign in to Jingwork',
+  jingworkWelcomeTitle: 'JingWork, your work companion',
+  jingworkLoginBrowserHint: 'Complete enterprise sign-in in your browser, then return to Jingwork.',
+  jingworkLoginBrowser: 'Open browser',
   jingworkLoginFailed: 'Could not complete Jingwork sign-in. Check the backend connection and retry.',
   jingworkLoginRetry: 'Retry',
   cliCommandMenu: 'Manage {command} command…',
@@ -185,6 +188,9 @@ export type DesktopMessages = { readonly [Key in keyof typeof en]: string }
 
 export const zh = {
   jingworkLoginTitle: '登录 Jingwork',
+  jingworkWelcomeTitle: '蓝鲸，你的工作好搭子',
+  jingworkLoginBrowserHint: '在浏览器中完成认证后，将自动进入工作空间',
+  jingworkLoginBrowser: '企业统一登录',
   jingworkLoginFailed: '未能完成 Jingwork 登录，请检查后台连接后重试',
   jingworkLoginRetry: '重试',
   cliCommandMenu: '管理 {command} 命令…',
@@ -366,6 +372,9 @@ export const zh = {
 /** Japanese copy, checked against the English keys. */
 export const ja = {
   jingworkLoginTitle: 'Jingwork にログイン',
+  jingworkWelcomeTitle: 'JingWork、あなたの仕事のパートナー',
+  jingworkLoginBrowserHint: 'ブラウザーで企業ログインを完了してから Jingwork に戻ってください。',
+  jingworkLoginBrowser: 'ブラウザーを開く',
   jingworkLoginFailed: 'Jingwork にログインできませんでした。接続を確認して再試行してください。',
   jingworkLoginRetry: '再試行',
   cliCommandMenu: '{command} コマンドを管理…',
@@ -547,6 +556,9 @@ export const ja = {
 /** Spanish dictionary, checked against the English keys. */
 export const es = {
   jingworkLoginTitle: 'Iniciar sesión en Jingwork',
+  jingworkWelcomeTitle: 'JingWork, tu compañero de trabajo',
+  jingworkLoginBrowserHint: 'Completa el inicio de sesión empresarial en el navegador y vuelve a Jingwork.',
+  jingworkLoginBrowser: 'Abrir navegador',
   jingworkLoginFailed: 'No se pudo iniciar sesión en Jingwork. Comprueba la conexión y vuelve a intentarlo.',
   jingworkLoginRetry: 'Reintentar',
   cliCommandMenu: 'Administrar el comando {command}…',
@@ -728,6 +740,9 @@ export const es = {
 /** French dictionary, checked against the English keys. */
 export const fr = {
   jingworkLoginTitle: 'Connexion à Jingwork',
+  jingworkWelcomeTitle: 'JingWork, votre partenaire de travail',
+  jingworkLoginBrowserHint: 'Connectez-vous à votre entreprise dans le navigateur, puis revenez à Jingwork.',
+  jingworkLoginBrowser: 'Ouvrir le navigateur',
   jingworkLoginFailed: 'La connexion à Jingwork a échoué. Vérifiez la connexion puis réessayez.',
   jingworkLoginRetry: 'Réessayer',
   cliCommandMenu: 'Gérer la commande {command}…',
@@ -909,6 +924,9 @@ export const fr = {
 /** German dictionary, checked against the English keys. */
 export const de = {
   jingworkLoginTitle: 'Bei Jingwork anmelden',
+  jingworkWelcomeTitle: 'JingWork, Ihr Partner bei der Arbeit',
+  jingworkLoginBrowserHint: 'Melden Sie sich im Browser bei Ihrem Unternehmen an und kehren Sie zu Jingwork zurück.',
+  jingworkLoginBrowser: 'Browser öffnen',
   jingworkLoginFailed: 'Die Anmeldung bei Jingwork ist fehlgeschlagen. Prüfen Sie die Verbindung und versuchen Sie es erneut.',
   jingworkLoginRetry: 'Erneut versuchen',
   cliCommandMenu: '{command}-Befehl verwalten…',
@@ -1090,6 +1108,9 @@ export const de = {
 /** Russian dictionary, checked against the English keys. */
 export const ru = {
   jingworkLoginTitle: 'Вход в Jingwork',
+  jingworkWelcomeTitle: 'JingWork — ваш помощник в работе',
+  jingworkLoginBrowserHint: 'Выполните корпоративный вход в браузере и вернитесь в Jingwork.',
+  jingworkLoginBrowser: 'Открыть браузер',
   jingworkLoginFailed: 'Не удалось войти в Jingwork. Проверьте подключение и повторите попытку.',
   jingworkLoginRetry: 'Повторить',
   cliCommandMenu: 'Управление командой {command}…',
@@ -1271,6 +1292,9 @@ export const ru = {
 /** Portuguese dictionary, checked against the English keys. */
 export const pt = {
   jingworkLoginTitle: 'Entrar no Jingwork',
+  jingworkWelcomeTitle: 'JingWork, o seu parceiro de trabalho',
+  jingworkLoginBrowserHint: 'Conclua o início de sessão empresarial no navegador e volte ao Jingwork.',
+  jingworkLoginBrowser: 'Abrir navegador',
   jingworkLoginFailed: 'Não foi possível entrar no Jingwork. Verifique a ligação e tente novamente.',
   jingworkLoginRetry: 'Tentar novamente',
   cliCommandMenu: 'Gerenciar comando {command}…',

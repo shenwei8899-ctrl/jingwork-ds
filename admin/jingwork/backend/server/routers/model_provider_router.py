@@ -26,6 +26,19 @@ from yuxi.utils import logger
 model_providers = APIRouter(prefix="/system/model-providers", tags=["model-providers"])
 
 
+@model_providers.get("/desktop-catalog")
+async def desktop_catalog(
+    response: Response,
+    current_user: User = Depends(get_required_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """读取当前企业账号可选模型的公开目录。"""
+    from yuxi.services.desktop_model_service import desktop_model_catalog
+
+    response.headers["Cache-Control"] = "no-store"
+    return await desktop_model_catalog(db, str(current_user.uid))
+
+
 @model_providers.get("/desktop-model", summary="获取当前账号所选模型的桌面连接配置")
 async def desktop_model_connection(
     spec: str,

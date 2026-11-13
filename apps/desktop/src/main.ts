@@ -3,6 +3,7 @@ import type { ProductEventMap, ProductEvent } from '@deepseek-ai/dsh-client-prod
 import { WINDOWS_TITLEBAR_HEIGHT } from './windows-layout.ts'
 /** Electron shell: desktop project ownership, custom protocol, windows, and lifecycle. */
 
+import { createHash } from 'node:crypto'
 import { access, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -24,6 +25,7 @@ import {
   type IpcMainInvokeEvent,
   type MenuItemConstructorOptions,
 } from 'electron'
+import { startJingworkModels } from './jingwork-models.ts'
 import { resolveDesktopPaths } from './paths.ts'
 import { DesktopProjectManager } from './project-manager.ts'
 import { DesktopHostFatalError, DesktopHostProcess, DesktopHostUncleanExitError } from './host-process.ts'
@@ -105,12 +107,13 @@ function quitWithoutConfirmation(): void {
   skipQuitConfirmation = true
   app.quit()
 }
+let recoveryPaths: ReturnType<typeof resolveDesktopPaths> | undefined
 const recovery = new DesktopFatalRecovery({
   messages: () => currentDesktopLocale().messages,
   show: options => dialog.showMessageBox(options),
   stop: () => { shuttingDown = true; return stopForRecovery() },
   disablePlugins: async () => {
-    const manager = new DesktopProjectManager(resolveDesktopPaths(), runtimeResources())
+    const manager = new DesktopProjectManager(recoveryPaths ?? resolveDesktopPaths(), runtimeResources())
     const backupPath = await manager.disableAllPlugins()
     console.info('Desktop profile recovery completed:', { profilePatchBackup: backupPath ?? null, homePatch: 'unchanged' })
   },
@@ -397,7 +400,35 @@ async function main(product: DesktopProduct): Promise<void> {
   const journalDirectory = process.env.DSH_DESKTOP_UPDATE_JOURNAL_DIR
   const updateJournal = journalDirectory === undefined ? undefined : new DesktopUpdateJournal(journalDirectory, app.getVersion())
   const resources = runtimeResources()
-  const paths = resolveDesktopPaths()
+  let initialJingworkLogin: BrowserWindow | undefined
+  if (jingworkAuth !== undefined && !await jingworkAuth.restore()) {
+    await new Promise<void>((resolve) => {
+      const login = openJingworkWelcome(currentDesktopLocale(), jingworkAuth, () => {
+        resolve()
+        login.hide()
+        return Promise.resolve()
+      })
+      initialJingworkLogin = login
+      login.once('closed', resolve)
+    })
+    if (jingworkAuth.accountId === undefined) {
+      app.quit()
+      return
+    }
+  }
+  let accountHome: string | undefined
+  if (jingworkAuth !== undefined) {
+    const uid = jingworkAuth.accountId
+    if (uid === undefined) throw new Error('Enterprise sign-in is required before selecting account data')
+    accountHome = join(app.getPath('userData'), 'accounts',
+      createHash('sha256').update(jingworkAuth.origin + '/' + uid).digest('hex'), 'harness')
+  }
+  if (accountHome !== undefined) {
+    process.env.DSH_HOME = accountHome
+    process.env.DSH_AGENTS_HOME = join(accountHome, 'agents')
+  }
+  const paths = resolveDesktopPaths(accountHome)
+  recoveryPaths = paths
   const development = !app.isPackaged
   if (jingworkAuth !== undefined && jingworkConfig !== undefined) {
     try {
@@ -424,6 +455,8 @@ async function main(product: DesktopProduct): Promise<void> {
     ? undefined
     : await startJingworkKnowledge(jingworkAuth, jingworkConfig.requestTimeoutMs)
   app.on('will-quit', () => { void knowledgeRelay?.dispose() })
+  const modelRelay = jingworkAuth === undefined ? undefined : await startJingworkModels(jingworkAuth)
+  app.on('will-quit', () => { void modelRelay?.dispose() })
   let hostEnvironment: NodeJS.ProcessEnv = process.env
   const prepareHostEnvironment = async (): Promise<void> => { hostEnvironment = await loginShell }
   let quitting = false
@@ -556,7 +589,8 @@ async function main(product: DesktopProduct): Promise<void> {
   const backend = new DesktopBackendController((onFailure) => {
     const hostInspectPort = developmentHostInspectPort(development)
     const host = new DesktopHostProcess(resources.node, resources.dsh, activeProject,
-      hostInspectPort, { ...hostEnvironment, ...knowledgeRelay?.environment, DSH_CLIENT_VERSION: desktopClientVersion() }, onFailure,
+      hostInspectPort, { ...hostEnvironment, ...(accountHome === undefined ? {} : { DSH_HOME: accountHome, DSH_AGENTS_HOME: join(accountHome, 'agents') }),
+        ...knowledgeRelay?.environment, DSH_CLIENT_VERSION: desktopClientVersion() }, onFailure,
       primaryRuntime,
       resources, (next) => { platformView.setSession(next) }, (record) => {
         operationJournal ??= new OperationJournal(join(app.getPath('userData'), 'plugin-operations'), {
@@ -591,6 +625,10 @@ async function main(product: DesktopProduct): Promise<void> {
                 ? `Jingwork conversation log sync paused (${reason ?? 'unknown'}). Local chat is retained. Check connection, sign-in and local storage.`
                 : 'Jingwork conversation log sync resumed.')
             })
+        }
+        if (jingworkAuth !== undefined && modelRelay !== undefined) {
+          try { await welcomeBackend.syncModels(await jingworkAuth.models(), modelRelay) }
+          catch (_error) { console.warn('Enterprise model synchronization failed. Refresh models in Settings to retry.') }
         }
         analyticsEnabled = await welcomeBackend.analyticsEnabled().catch(() => false)
         if (!reportedLaunch) { reportedLaunch = true; void track('desktop_app_launch', {}) }
@@ -871,6 +909,24 @@ async function main(product: DesktopProduct): Promise<void> {
     jingworkClientLogs?.operation(operation, outcome)
     if (outcome === 'failed') jingworkClientLogs?.runtime('workbench', 'operation_failed')
   })
+  ipcMain.handle(DESKTOP_IPC.jingworkModels, async (event) => {
+    assertMainApplication(event)
+    if (jingworkAuth === undefined || modelRelay === undefined || welcomeBackend === undefined) {
+      throw new Error('Enterprise models are unavailable')
+    }
+    const catalog = await jingworkAuth.models()
+    const selectedModel = await welcomeBackend.syncModels(catalog, modelRelay)
+    return { ...catalog, selectedModel }
+  })
+  ipcMain.handle(DESKTOP_IPC.jingworkSetModel, async (event, model: unknown) => {
+    assertMainApplication(event)
+    if (jingworkAuth === undefined || modelRelay === undefined || welcomeBackend === undefined
+      || typeof model !== 'string') throw new Error('Invalid enterprise model')
+    const catalog = await jingworkAuth.models()
+    if (!catalog.models.some(item => item.id === model)) throw new Error('Enterprise model is no longer available')
+    await welcomeBackend.syncModels(catalog, modelRelay)
+    await welcomeBackend.setEnterpriseModel(model)
+  })
   ipcMain.handle(DESKTOP_IPC.jingworkAccount, (event) => {
     assertMainApplication(event)
     return jingworkAuth?.name ?? null
@@ -883,7 +939,10 @@ async function main(product: DesktopProduct): Promise<void> {
     await jingworkAuth.signOut()
     enteredWorkspace = false
     mainWindow?.hide()
-    await showWelcome()
+    await stopConversationSync?.()
+    await backend.close()
+    app.relaunch()
+    quitWithoutConfirmation()
   })
 
   ipcMain.handle(DESKTOP_IPC.boot, async (event) => {
@@ -1356,7 +1415,11 @@ async function main(product: DesktopProduct): Promise<void> {
     }
     openingWelcome ??= (async () => {
       welcomeWindow = jingworkAuth !== undefined
-        ? openJingworkWelcome(locale, jingworkAuth, () => enterWorkspace())
+        ? openJingworkWelcome(locale, jingworkAuth, () => {
+          app.relaunch()
+          quitWithoutConfirmation()
+          return Promise.resolve()
+        })
         : await openWelcomeWindow(locale, {
           analytics: track,
           analyticsEnabled: () => Promise.resolve(analyticsEnabled),
@@ -1547,8 +1610,32 @@ async function main(product: DesktopProduct): Promise<void> {
       if (app.isPackaged && state.error === 'authentication-required' && !isQuitting()) queuePolicyAuthentication()
     }).catch((error: unknown) => { console.error(error) })
   }
+  let checkingJingworkSession = false
+  const accountTimer = jingworkAuth === undefined ? undefined : setInterval(() => {
+    if (!enteredWorkspace || quitting || checkingJingworkSession) return
+    checkingJingworkSession = true
+    void jingworkAuth.restore().then(async (active) => {
+      if (quitting || !enteredWorkspace) return
+      if (active) {
+        if (modelRelay !== undefined && welcomeBackend !== undefined) {
+          await welcomeBackend.syncModels(await jingworkAuth.models(), modelRelay)
+        }
+        return
+      }
+      enteredWorkspace = false
+      mainWindow?.hide()
+      await stopConversationSync?.()
+      await backend.close()
+      app.relaunch()
+      quitWithoutConfirmation()
+    }).catch(() => {
+      console.warn('Enterprise sign-in or model synchronization failed. Refresh models in Settings to retry.')
+    }).finally(() => { checkingJingworkSession = false })
+  }, 30000)
+  app.once('will-quit', () => { clearInterval(accountTimer) })
   automaticCheck()
   await reconcileBackend().catch(() => undefined)
+  initialJingworkLogin?.close()
   // Window lifecycle callbacks run while backend startup is pending.
   if (isQuitting()) return
   const window = currentMainWindow()

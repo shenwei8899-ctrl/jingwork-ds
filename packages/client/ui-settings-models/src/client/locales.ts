@@ -3,6 +3,14 @@ import { jingworkSetupEn, jingworkSetupZh } from './jingwork-setup-copy.ts'
 
 /** English strings (the key-set source of truth for this pair). */
 export const en = {
+  enterpriseTitle: 'Enterprise models',
+  enterpriseRefresh: 'Refresh',
+  enterpriseIntro: 'Choose an enterprise model configured by your administrator.',
+  enterpriseFailed: 'Could not update enterprise models. Check sign-in and retry.',
+  enterpriseEmpty: 'No enterprise models are available. Contact your administrator.',
+  enterpriseUse: 'Set as default for new conversations',
+  enterpriseSelected: 'Current default',
+  enterpriseConversationHint: 'Switch the current conversation in its model selector.',
   ...jingworkSetupEn,
   nav: 'Models',
   deepSeekAccount: 'DeepSeek Account',
@@ -148,6 +156,14 @@ export type ModelsKey = keyof typeof en
 
 /** Chinese strings (same keys as {@link en}). */
 export const zh: { [Key in keyof typeof en]: string } = {
+  enterpriseTitle: '服务端模型',
+  enterpriseRefresh: '刷新列表',
+  enterpriseIntro: '使用管理员配置的企业模型，无需填写 API 密钥',
+  enterpriseFailed: '企业模型操作未完成，请检查登录状态后重试',
+  enterpriseEmpty: '暂无可用企业模型，请联系管理员配置',
+  enterpriseUse: '设为新会话默认',
+  enterpriseSelected: '已设为默认',
+  enterpriseConversationHint: '当前会话可在输入框的模型选择器中切换',
   ...jingworkSetupZh,
   nav: '模型',
   deepSeekAccount: 'DeepSeek 账号',
@@ -290,6 +306,14 @@ export const zh: { [Key in keyof typeof en]: string } = {
 
 /** Japanese copy, checked against the English keys. */
 export const ja = {
+  enterpriseTitle: '企業モデル',
+  enterpriseRefresh: '更新',
+  enterpriseIntro: '管理者が設定した企業モデルを選択します。',
+  enterpriseFailed: '更新できませんでした。ログインを確認して再試行してください。',
+  enterpriseEmpty: '利用可能な企業モデルがありません。管理者にお問い合わせください。',
+  enterpriseUse: '新しい会話の既定に設定',
+  enterpriseSelected: '現在の既定',
+  enterpriseConversationHint: '現在の会話はモデル選択欄で切り替えます。',
   ...jingworkSetupEn,
   'nav': 'モデル',
   'deepSeekAccount': 'DeepSeekアカウント',
@@ -432,6 +456,14 @@ export const ja = {
 
 /** Spanish dictionary, checked against the English keys. */
 export const es = {
+  enterpriseTitle: 'Modelos de empresa',
+  enterpriseRefresh: 'Actualizar',
+  enterpriseIntro: 'Elige un modelo configurado por el administrador.',
+  enterpriseFailed: 'No se pudo actualizar. Comprueba el inicio de sesión y reinténtalo.',
+  enterpriseEmpty: 'No hay modelos disponibles. Contacta al administrador.',
+  enterpriseUse: 'Usar por defecto en conversaciones nuevas',
+  enterpriseSelected: 'Predeterminado actual',
+  enterpriseConversationHint: 'Cambia la conversación actual en su selector de modelo.',
   ...jingworkSetupEn,
   nav: 'Modelos',
   deepSeekAccount: 'Cuenta DeepSeek',
@@ -574,6 +606,14 @@ export const es = {
 
 /** French dictionary, checked against the English keys. */
 export const fr = {
+  enterpriseTitle: 'Modèles entreprise',
+  enterpriseRefresh: 'Actualiser',
+  enterpriseIntro: 'Choisissez un modèle configuré par votre administrateur.',
+  enterpriseFailed: 'Échec de la mise à jour. Vérifiez votre connexion et réessayez.',
+  enterpriseEmpty: 'Aucun modèle disponible. Contactez votre administrateur.',
+  enterpriseUse: 'Définir pour les nouvelles conversations',
+  enterpriseSelected: 'Modèle par défaut',
+  enterpriseConversationHint: 'Changez le modèle actuel dans le sélecteur de la conversation.',
   ...jingworkSetupEn,
   nav: 'Modèles',
   deepSeekAccount: 'Compte DeepSeek',
@@ -716,6 +756,14 @@ export const fr = {
 
 /** German dictionary, checked against the English keys. */
 export const de = {
+  enterpriseTitle: 'Unternehmensmodelle',
+  enterpriseRefresh: 'Aktualisieren',
+  enterpriseIntro: 'Wählen Sie ein vom Administrator konfiguriertes Modell.',
+  enterpriseFailed: 'Aktualisierung fehlgeschlagen. Prüfen Sie Ihre Anmeldung.',
+  enterpriseEmpty: 'Keine Modelle verfügbar. Wenden Sie sich an den Administrator.',
+  enterpriseUse: 'Für neue Gespräche verwenden',
+  enterpriseSelected: 'Aktueller Standard',
+  enterpriseConversationHint: 'Das aktuelle Gespräch ändern Sie in dessen Modellauswahl.',
   ...jingworkSetupEn,
   nav: 'Modelle',
   deepSeekAccount: 'DeepSeek-Konto',
@@ -858,6 +906,14 @@ export const de = {
 
 /** Russian dictionary, checked against the English keys. */
 export const ru = {
+  enterpriseTitle: 'Корпоративные модели',
+  enterpriseRefresh: 'Обновить',
+  enterpriseIntro: 'Выберите модель, настроенную администратором.',
+  enterpriseFailed: 'Не удалось обновить. Проверьте вход и повторите попытку.',
+  enterpriseEmpty: 'Нет доступных моделей. Обратитесь к администратору.',
+  enterpriseUse: 'Для новых диалогов',
+  enterpriseSelected: 'Текущая модель по умолчанию',
+  enterpriseConversationHint: 'Модель текущего диалога меняется в его списке моделей.',
   ...jingworkSetupEn,
   nav: 'Модели',
   deepSeekAccount: 'DeepSeek Аккаунт',
@@ -1000,6 +1056,14 @@ export const ru = {
 
 /** Portuguese dictionary, checked against the English keys. */
 export const pt = {
+  enterpriseTitle: 'Modelos empresariais',
+  enterpriseRefresh: 'Atualizar',
+  enterpriseIntro: 'Escolha um modelo configurado pelo administrador.',
+  enterpriseFailed: 'Não foi possível atualizar. Verifique o início de sessão.',
+  enterpriseEmpty: 'Sem modelos disponíveis. Contacte o administrador.',
+  enterpriseUse: 'Usar em novas conversas',
+  enterpriseSelected: 'Predefinição atual',
+  enterpriseConversationHint: 'Altere a conversa atual no respetivo seletor de modelos.',
   ...jingworkSetupEn,
   nav: 'Modelos',
   deepSeekAccount: 'DeepSeek Conta',

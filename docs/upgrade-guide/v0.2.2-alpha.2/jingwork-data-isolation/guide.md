@@ -16,6 +16,8 @@ The macOS terminal command is `jingwork`, and the application open link is `jing
 
 Unsigned Windows packages select JingWork with `com.jingwork.desktop`, Electron data under `%APPDATA%/JingWork`, and application data under `%USERPROFILE%/.jingwork`. Its `dsh.cmd` terminal command starts `JingWork.exe` with the private data directories. The first launch opens the JingWork sign-in and setup flow.
 
+Enterprise IAM sign-in uses the shared application `/sso/callback`. After sign-in, desktop sessions, settings, credentials and skills live under `userData/accounts/<SHA-256 of deployment and user ID>/harness`. Sign-out revokes platform sessions and restarts Desktop. Switching accounts selects its own directory. Verify account ownership before migrating shared historical directories.
+
 ## Migration
 
 1. If the older JingWork installed `/usr/local/bin/dsh`, use that application's command-management dialog to remove its `dsh` registration before replacing the application.
@@ -23,3 +25,5 @@ Unsigned Windows packages select JingWork with `com.jingwork.desktop`, Electron 
 3. Start JingWork, sign in, configure the required provider credentials, and install the required plugins and skills. The new workspace starts with an empty local history.
 4. If you use the Desktop terminal command, open the rebuilt JingWork's command-management dialog to register `jingwork`. Open a new terminal and run `jingwork --version`. Manage Harness's `dsh` registration separately from Harness.
 5. Open DeepSeek Harness and JingWork together. Confirm that both windows remain available and that new JingWork conversations appear only in JingWork. See the [installation ownership reference](../../../../apps/desktop/README.md#installation-ownership) for the directory locations and project-file sharing scope.
+
+6. Set `url` in `userData/desktop/jingwork.json` to the enterprise HTTPS application URL, including its assigned subsystem prefix. Sign in through IAM and confirm device authorization. Verify that two accounts retain separate session lists and settings. Existing independent device API keys require fresh authorization.

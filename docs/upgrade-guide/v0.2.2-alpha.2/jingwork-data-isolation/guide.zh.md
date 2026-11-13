@@ -16,6 +16,8 @@ macOS 终端命令为 `jingwork`，应用打开链接为 `jingwork://open`。
 
 Windows 未签名包选择应用 ID 为 `com.jingwork.desktop` 的 JingWork，将 Electron 数据存储在 `%APPDATA%/JingWork`，将应用数据存储在 `%USERPROFILE%/.jingwork`。其 `dsh.cmd` 终端命令以独立数据目录启动 `JingWork.exe`。首次启动打开 JingWork 登录与设置引导。
 
+企业 IAM 登录使用统一的应用 `/sso/callback`。登录后，桌面工作区的会话、设置、凭据和技能位于 `userData/accounts/<部署与用户标识的 SHA-256>/harness`。退出会全平台吊销并重启客户端；切换账号重新选择其数据目录。历史共享目录需要核对账号归属后再迁移。
+
 ## 迁移
 
 1. 如果旧版 JingWork 安装了 `/usr/local/bin/dsh`，请在替换应用前，通过旧版应用的命令管理对话框移除其 `dsh` 注册。
@@ -23,3 +25,5 @@ Windows 未签名包选择应用 ID 为 `com.jingwork.desktop` 的 JingWork，�
 3. 启动 JingWork，登录账号、配置所需提供方凭据，并安装所需插件与技能。新的工作区从空白本地历史开始。
 4. 如果使用 Desktop 终端命令，请打开重建后的 JingWork 命令管理对话框注册 `jingwork`。打开新终端并运行 `jingwork --version`。Harness 的 `dsh` 注册通过 Harness 单独管理。
 5. 同时打开 DeepSeek Harness 和 JingWork。确认两个窗口都保持可用，且新建的 JingWork 会话仅出现在 JingWork 中。目录位置与项目文件共享范围见[安装归属参考](../../../../apps/desktop/README.zh.md#installation-ownership)。
+
+6. 将 `userData/desktop/jingwork.json` 的 `url` 设置为企业 HTTPS 应用地址，包含已分配的子系统路径前缀。重新登录 IAM 并确认设备授权，检查两个账号的会话列表和设置分别保存。旧独立设备 API Key 需要重新授权。

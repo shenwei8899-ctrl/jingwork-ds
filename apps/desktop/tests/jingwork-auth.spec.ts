@@ -31,7 +31,7 @@ async function persist(context: Awaited<ReturnType<typeof fixture>>) {
   return join(directory, file)
 }
 
-it.each(['https://example.com/path', 'https://user:secret@example.com', 'http://example.com', 'file:///tmp/a',
+it.each(['https://example.com/unsafe%2fpath', 'https://user:secret@example.com', 'http://example.com', 'file:///tmp/a',
   'https://example.com/?secret=value'])('rejects an unsafe login deployment %s', (value) => {
   expect(() => jingworkOrigin(value)).toThrow()
 })
@@ -48,7 +48,7 @@ it('opens the original login page with only the public verification code in its 
   expect(url.searchParams.get('redirect')).toBe('/auth/cli/authorize?user_code=ABCD-EFGH')
   expect(attempt.url).not.toContain(issued.device_code)
   expect(send.mock.calls[0]![1]).toMatchObject({ redirect: 'error', credentials: 'omit' })
-  expect(send.mock.calls[0]![1]?.body).toBe(JSON.stringify({ key_name: 'DeepSeek Harness' }))
+  expect(send.mock.calls[0]![1]?.body).toBe(JSON.stringify({ key_name: 'JingWork' }))
 })
 it.each(['https://other.example/auth/cli/authorize', '/other-path'])('refuses a foreign verification address %s', async (path) => {
   const { auth, send, signal } = await fixture()
@@ -144,7 +144,7 @@ it('reports a required missing or unreadable packaged deployment', async () => {
     .toThrow('packaged authentication configuration cannot be read')
   expect(() => readJingworkLoginConfig(directory, directory)).toThrow('packaged authentication configuration cannot be read')
 })
-it.each(['{', '{}', '{"url":"http://remote.example"}', '{"url":"https://example.com/path"}',
+it.each(['{', '{}', '{"url":"http://remote.example"}', '{"url":"https://example.com/unsafe%2fpath"}',
   '{"url":"https://example.com","requestTimeoutMs":0}'])('refuses invalid packaged account configuration %s', async (raw) => {
   const { directory } = await fixture()
   const defaults = join(directory, 'packaged-login.json')
@@ -163,7 +163,7 @@ it('reports invalid or unreadable user configuration without using a packaged de
   await mkdir(override)
   expect(() => readJingworkLoginConfig(directory, defaults)).toThrow('authentication configuration cannot be read')
 })
-it.each(['{', '{}', '{"url":"http://remote.example"}', '{"url":"https://example.com/path"}',
+it.each(['{', '{}', '{"url":"http://remote.example"}', '{"url":"https://example.com/unsafe%2fpath"}',
   '{"url":"https://example.com","requestTimeoutMs":0}'])('refuses invalid account configuration %s', async (raw) => {
   const { directory } = await fixture()
   await mkdir(join(directory, 'desktop'))
@@ -175,6 +175,7 @@ it('forgets the native account and cached credential on local sign-out', async (
   const context = await fixture()
   await persist(context)
   expect(context.auth.name).toBe(granted.user.uid)
+  context.send.mockResolvedValueOnce(Response.json({ ok: true }))
   await context.auth.signOut()
   expect(context.auth.name).toBeUndefined()
   expect(await context.auth.restore()).toBe(false)
@@ -197,6 +198,7 @@ it('reports backend permission failures and malformed catalogs', async () => {
   await expect(context.auth.agents()).rejects.toThrow('unavailable')
   context.send.mockResolvedValueOnce(Response.json({ agents: [{ id: 1, name: 'Missing slug' }] }))
   await expect(context.auth.agents()).rejects.toThrow('invalid agent')
+  context.send.mockResolvedValueOnce(Response.json({ ok: true }))
   await context.auth.signOut()
   await expect(context.auth.agents()).rejects.toThrow('login is required')
 })
@@ -239,6 +241,7 @@ it('lists authorized knowledge bases and keeps retrieval credentials native', as
       body: JSON.stringify({ query: 'return policy' }), redirect: 'error' }),
   ])
   expect(new Headers(context.send.mock.calls.at(-1)![1]?.headers).get('Authorization')).toBe(`Bearer ${granted.secret}`)
+  context.send.mockResolvedValueOnce(Response.json({ ok: true }))
   await context.auth.signOut()
   await expect(context.auth.knowledgeBases()).rejects.toThrow('login is required')
   await expect(context.auth.retrieveKnowledge('product-kb', 'query')).rejects.toThrow('login is required')
@@ -263,6 +266,7 @@ it('authenticates the private retrieval relay and rechecks account access after 
   expect((await fetch(new URL('/other', relay.environment.DSH_KNOWLEDGE_URL), { headers })).status).toBe(400)
   context.send.mockResolvedValueOnce(Response.json({ chunks: [{ text: 'Policy' }] }))
   expect(await (await fetch(endpoint, { headers })).json()).toEqual({ chunks: [{ text: 'Policy' }] })
+  context.send.mockResolvedValueOnce(Response.json({ ok: true }))
   await context.auth.signOut()
   expect((await fetch(endpoint, { headers })).status).toBe(502)
 })
@@ -306,6 +310,7 @@ it('delivers conversation logs with native credentials and validates durable ack
   const calls = context.send.mock.calls.length
   await expect(context.auth.syncConversationLogs('another-user', batch, context.signal)).rejects.toThrow('account changed')
   expect(context.send.mock.calls).toHaveLength(calls)
+  context.send.mockResolvedValueOnce(Response.json({ ok: true }))
   await context.auth.signOut()
   await expect(context.auth.syncConversationLogs(granted.user.uid, batch, context.signal)).rejects.toThrow('account changed')
 })
@@ -328,4 +333,54 @@ it('uploads account-bound operation and runtime logs and requires a persisted re
   await expect(context.auth.sendClientLog(granted.user.uid, { kind: 'operation', event: {
     operation: 'launch', outcome: 'success', correlation_id: 'bad-receipt',
   } }, context.signal)).rejects.toThrow('acknowledgement')
+})
+
+it('supports the enterprise gateway prefix for login and API requests', async () => {
+  const context = await fixture()
+  const send = vi.fn<typeof fetch>().mockResolvedValueOnce(Response.json({ ...issued,
+    verification_uri: 'https://example.com/work/auth/cli/authorize' }))
+  const auth = new JingworkDesktopAuth({ url: 'https://example.com/work/', requestTimeoutMs: 1000 },
+    context.directory, cipher, send)
+  const attempt = await auth.begin(context.signal)
+  expect(send.mock.calls[0]![0]).toBe('https://example.com/work/api/auth/cli/sessions')
+  expect(new URL(attempt.url).pathname).toBe('/work/login')
+  expect(new URL(attempt.url).searchParams.get('redirect')).toBe('/auth/cli/authorize?user_code=ABCD-EFGH')
+})
+
+it('retains credentials when platform logout cannot be confirmed', async () => {
+  const context = await fixture()
+  const path = await persist(context)
+  context.send.mockResolvedValueOnce(new Response(null, { status: 503 }))
+  await expect(context.auth.signOut()).rejects.toThrow('platform sign-out failed')
+  expect(await readFile(path)).toBeDefined()
+  expect(context.auth.accountId).toBe(granted.user.uid)
+  context.send.mockResolvedValueOnce(Response.json({ ok: true }))
+  await context.auth.signOut()
+  expect(context.send.mock.calls.at(-1)![0]).toBe(origin + '/api/auth/iam/logout')
+  await expect(readFile(path)).rejects.toMatchObject({ code: 'ENOENT' })
+})
+
+
+it('keeps the IAM device session when this subsystem denies access', async () => {
+  const context = await fixture()
+  const path = await persist(context)
+  context.send.mockResolvedValueOnce(new Response(null, { status: 403 }))
+  await expect(context.auth.restore()).rejects.toThrow('validation failed')
+  expect(context.auth.accountId).toBe(granted.user.uid)
+  expect(await readFile(path)).toBeDefined()
+  expect(context.send.mock.calls.at(-1)![0]).toBe(origin + '/api/auth/me')
+})
+
+it('preserves server image capabilities and defaults older catalogs to text', async () => {
+  const context = await fixture()
+  await persist(context)
+  context.send.mockResolvedValueOnce(Response.json({ models: [
+    { id: 'company:vision', name: 'Vision', provider: 'company', input: ['text', 'image'] },
+    { id: 'company:legacy', name: 'Legacy', provider: 'company' },
+  ], default_model: 'company:vision' }))
+  expect((await context.auth.models()).models.map(model => model.input)).toEqual([['text', 'image'], ['text']])
+  context.send.mockResolvedValueOnce(Response.json({ models: [
+    { id: 'company:invalid', name: 'Invalid', provider: 'company', input: ['unsupported'] },
+  ], default_model: null }))
+  await expect(context.auth.models()).rejects.toThrow('Invalid enterprise model input capabilities')
 })

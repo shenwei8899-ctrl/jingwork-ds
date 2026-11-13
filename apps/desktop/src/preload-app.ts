@@ -88,6 +88,12 @@ if (location.protocol === `${SCHEME}:` && location.hostname === 'app') {
       knowledgeBases: () => ipcRenderer.invoke(DESKTOP_IPC.jingworkKnowledgeBases) as Promise<
         { id: string; name: string; description: string }[]
       >,
+      models: () => ipcRenderer.invoke(DESKTOP_IPC.jingworkModels) as Promise<{
+        models: { id: string; name: string; provider: string }[]
+        defaultModel: string | null
+        selectedModel: string | null
+      }>,
+      setModel: (model: string) => ipcRenderer.invoke(DESKTOP_IPC.jingworkSetModel, model) as Promise<void>,
       agents: () => ipcRenderer.invoke(DESKTOP_IPC.jingworkAgents) as Promise<
         { id: string; name: string; description: string }[]
       >,

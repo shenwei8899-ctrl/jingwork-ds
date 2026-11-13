@@ -29,6 +29,8 @@ Users configure write-only API keys, edit provider model lists, and add custom p
 
 Saving credentials or a custom provider preserves the selected model. The user can select an available model from the composer.
 
+JingWork desktop adds a server-model card through `settings.models.footer`. Refresh reads the current enterprise account’s authorized catalog. Selecting a model saves the default for new conversations. Existing conversations use the composer model selector. The native loopback relay calls the enterprise gateway with the device credential, while upstream provider keys stay on the server.
+
 DeepSeek Account appears first and DeepSeek second in the provider list; third-party providers retain their directory order.
 
 Open the Models page from the Settings navigation to see every configured provider as a row. A whole-section provider whose key is not configured anywhere renders as its open setup card instead, but only in the first-run posture and only until the user closes that card. Each card kind owns its own open state, so closing one never discards a draft in another.

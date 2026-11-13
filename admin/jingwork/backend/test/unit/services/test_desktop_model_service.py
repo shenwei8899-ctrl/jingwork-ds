@@ -110,3 +110,32 @@ def test_http_route_requires_login_and_disables_caching(setup):
         assert response.headers["cache-control"] == "no-store"
         assert response.json()["api_key"] == "company-key"
         assert client.get(url.replace("company:local/model", "other:secret")).status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_catalog_uses_enabled_chat_models_and_preserves_image_capabilities(setup, monkeypatch):
+    setup.provider_id = "company"
+    setup.enabled_models = [
+        {"id": "local/model", "display_name": "Company", "extra": {"input_modalities": ["text", "image"]}},
+        {"id": "embedding", "type": "embedding"},
+    ]
+    disabled = SimpleNamespace(provider_id="disabled", is_enabled=False, enabled_models=[{"id": "chat"}])
+    monkeypatch.setattr(service, "get_all_model_providers", AsyncMock(return_value=[setup, disabled]))
+    assert await service.desktop_model_catalog(None, "member") == {
+        "models": [{"id": "company:local/model", "name": "Company", "provider": "company", "input": ["text", "image"]}],
+        "default_model": "company:local/model",
+    }
+    setup.is_enabled = False
+    assert await service.desktop_model_catalog(None, "member") == {"models": [], "default_model": None}
+
+
+@pytest.mark.asyncio
+async def test_unmanaged_catalog_defaults_to_text_and_filters_non_chat_models(setup, monkeypatch):
+    setup.provider_id = "other"
+    setup.enabled_models = [{"id": "chat", "display_name": "Other"}, {"id": "rerank", "type": "rerank"}]
+    monkeypatch.setattr(service, "effective_policy", AsyncMock(return_value={"managed": False, "default_model": "missing"}))
+    monkeypatch.setattr(service, "get_all_model_providers", AsyncMock(return_value=[setup]))
+    assert await service.desktop_model_catalog(None, "member") == {
+        "models": [{"id": "other:chat", "name": "Other", "provider": "other", "input": ["text"]}],
+        "default_model": None,
+    }

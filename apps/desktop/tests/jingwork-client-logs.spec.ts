@@ -18,6 +18,7 @@ it('retries identical operation identities and uploads classified runtime errors
   const done = Promise.withResolvers<undefined>()
   const send = vi.fn<typeof fetch>(async (url, init) => {
     if (typeof url !== 'string') throw new Error('Expected URL')
+    if (url.endsWith('/api/auth/iam/logout')) return Response.json({ ok: true })
     if (url.endsWith('/sessions')) return Response.json({ device_code: 'private', user_code: 'ABCD',
       verification_uri: 'http://127.0.0.1:45173/auth/cli/authorize', expires_in: 300, interval: 1 })
     if (url.endsWith('/token')) return Response.json({ secret: 'yxkey_private', user: { id: 1, uid: 'owner', username: 'Owner' } })
@@ -57,6 +58,7 @@ it('retains offline records across restart without sending them as a different a
   let uid = 'first-owner'
   const send = vi.fn<typeof fetch>(async (url) => {
     if (typeof url !== 'string') throw new Error('Expected URL')
+    if (url.endsWith('/api/auth/iam/logout')) return Response.json({ ok: true })
     if (url.endsWith('/sessions')) return Response.json({ device_code: 'private', user_code: 'ABCD',
       verification_uri: 'http://127.0.0.1:45173/auth/cli/authorize', expires_in: 300, interval: 1 })
     if (url.endsWith('/token')) return Response.json({ secret: 'yxkey_private', user: { id: 1, uid, username: 'Owner' } })

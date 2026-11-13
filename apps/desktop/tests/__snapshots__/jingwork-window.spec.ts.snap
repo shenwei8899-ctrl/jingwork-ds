@@ -1,0 +1,40 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`opens system-browser sign-in and enters only after native authorization 1`] = `
+"data:text/html;charset=utf-8,<!doctype html><html><head><meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; style-src 'unsafe-inline'">
+          <title>登录 Jingwork</title>
+          <style>
+          * { box-sizing: border-box; }
+          html, body { margin: 0; min-height: 100%; }
+          body { background: #fff; color: #171719; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+          .titlebar { position: fixed; inset: 0 0 auto; height: 56px; -webkit-app-region: drag; }
+          main { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 80px 32px; }
+          .welcome { width: 100%; max-width: 640px; text-align: center; transform: translateY(-24px); }
+          .logo { display: block; width: 144px; height: 144px; object-fit: contain; margin: 0 auto 32px; }
+          h1 { margin: 0; font-size: 32px; line-height: 1.4; font-weight: 500; letter-spacing: -.8px; text-wrap: balance; }
+          .login { display: inline-flex; align-items: center; justify-content: center; min-width: 224px;
+            min-height: 48px; margin-top: 36px; padding: 12px 28px; border-radius: 999px; background: #19191b;
+            color: #fff; font-size: 15px; font-weight: 500; line-height: 24px; text-decoration: none;
+            -webkit-app-region: no-drag; transition: background .15s, transform .15s; }
+          .login:hover { background: #353538; }
+          .login:active { transform: translateY(1px); }
+          .login:focus-visible { outline: 3px solid #6258ff; outline-offset: 4px; }
+          .hint { max-width: 400px; margin: 20px auto 0; color: #77777f; font-size: 13px; line-height: 1.7; text-wrap: balance; }
+          @media (max-width: 640px), (max-height: 640px) {
+            main { padding: 72px 24px 40px; }
+            .welcome { transform: none; }
+            .logo { width: 112px; height: 112px; margin-bottom: 24px; }
+            h1 { font-size: 27px; }
+            .login { margin-top: 28px; }
+          }
+          @media (prefers-reduced-motion: reduce) { .login { transition: none; } }
+          </style></head><body><div class="titlebar" aria-hidden="true"></div><main>
+          <section class="welcome" aria-labelledby="welcome-title">
+            <img class="logo" src="[bundled-logo]" alt="JingWork">
+            <h1 id="welcome-title">蓝鲸，你的工作好搭子</h1>
+            <a class="login" href="http://127.0.0.1:45173/login">企业统一登录</a>
+            <p class="hint">在浏览器中完成认证后，将自动进入工作空间</p>
+          </section></main></body></html>"
+`;

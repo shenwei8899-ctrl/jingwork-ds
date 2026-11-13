@@ -2,7 +2,7 @@
 
 from fastapi import HTTPException
 
-from yuxi.models.providers.service import get_model_provider_by_id, resolve_api_key
+from yuxi.models.providers.service import get_all_model_providers, get_model_provider_by_id, resolve_api_key
 from yuxi.services.model_credit_service import effective_policy
 
 
@@ -38,4 +38,28 @@ async def desktop_model_config(db, uid: str, spec: str) -> dict:
         "api_key": resolve_api_key(provider) or "",
         "headers": provider.headers_json or {},
         "extra_body": model.get("request_body_overrides") or {},
+    }
+
+
+async def desktop_model_catalog(db, uid: str) -> dict:
+    """按当前账号策略返回聊天模型目录，凭据仅用于服务端调用。"""
+    policy = await effective_policy(uid, db)
+    allowed = set(policy.get("allowed_models") or [policy["default_model"]]) if policy["managed"] else None
+    models = [
+        {
+            "id": f"{provider.provider_id}:{model['id']}",
+            "name": model.get("display_name", model["id"]),
+            "provider": provider.provider_id,
+            "input": ["text", "image"] if "image" in ((model.get("extra") or {}).get("input_modalities") or []) else ["text"],
+        }
+        for provider in await get_all_model_providers(db)
+        if provider.is_enabled
+        for model in provider.enabled_models or []
+        if model.get("type", "chat") == "chat"
+        and (allowed is None or f"{provider.provider_id}:{model['id']}" in allowed)
+    ]
+    available = {item["id"] for item in models}
+    return {
+        "models": models,
+        "default_model": policy["default_model"] if policy["default_model"] in available else None,
     }

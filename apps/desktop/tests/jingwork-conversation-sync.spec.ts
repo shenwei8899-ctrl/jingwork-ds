@@ -23,6 +23,7 @@ it('backfills history, retries an uncertain batch, persists receipts and isolate
   const acknowledged = Promise.withResolvers<undefined>()
   const send = vi.fn<typeof fetch>(async (url, init) => {
     if (typeof url !== 'string') throw new Error('Expected URL string')
+    if (url.endsWith('/api/auth/iam/logout')) return Response.json({ ok: true })
     if (url.endsWith('/api/auth/cli/sessions')) return Response.json(issued)
     if (url.endsWith('/token')) return Response.json(granted)
     if (typeof init?.body !== 'string') throw new Error('Expected JSON body')
