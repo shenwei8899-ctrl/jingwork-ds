@@ -3,6 +3,8 @@ import { onboardingZh, onboardingEn, onboardingJa, onboardingEs, onboardingFr, o
 
 /** English account dictionary. */
 export const en = {
+  enterpriseSignOut: 'Sign out of enterprise SSO',
+  enterpriseSignOutFailed: 'Could not sign out of enterprise SSO. Check your connection and retry.',
   modelSettings: 'Model settings', usageGuide: 'Getting started',
   modelSignInRequired: 'Model unavailable. Please sign in and try again.',
   sessionExpired: 'You have signed out of your account, please log in again.',
@@ -40,6 +42,8 @@ export const en = {
 export type AccountKey = keyof typeof en
 /** Chinese account settings copy. */
 export const zh: Record<AccountKey, string> = {
+  enterpriseSignOut: '退出企业统一登录',
+  enterpriseSignOutFailed: '企业统一登录退出未完成，请检查网络后重试',
   modelSettings: '模型设置', usageGuide: '使用指南',
   modelSignInRequired: '当前模型暂不可用，请登录后再试',
   sessionExpired: '登录信息已失效，请重新登录',
@@ -76,6 +80,8 @@ export const zh: Record<AccountKey, string> = {
 
 /** Japanese copy, checked against the English keys. */
 export const ja = {
+  enterpriseSignOut: '企業 SSO からログアウト',
+  enterpriseSignOutFailed: '企業 SSO からログアウトできませんでした。接続を確認して再試行してください。',
   modelSettings: 'モデル設定', usageGuide: '使い方ガイド',
   ...onboardingJa,
   'modelSignInRequired': 'モデルを利用できません。ログインしてから再試行してください。',
@@ -137,6 +143,8 @@ export const ja = {
 
 /** Spanish dictionary, checked against the English keys. */
 export const es = {
+  enterpriseSignOut: 'Cerrar sesión de SSO empresarial',
+  enterpriseSignOutFailed: 'No se pudo cerrar la sesión empresarial. Comprueba la conexión y reinténtalo.',
   modelSettings: 'Configuración de modelos', usageGuide: 'Guía de inicio',
   modelSignInRequired: 'Modelo no disponible. Por favor inicia sesión y vuelve a intentarlo.',
   sessionExpired: 'Has cerrado sesión en tu cuenta, inicia sesión nuevamente.',
@@ -173,6 +181,8 @@ export const es = {
 
 /** French dictionary, checked against the English keys. */
 export const fr = {
+  enterpriseSignOut: 'Déconnexion du SSO entreprise',
+  enterpriseSignOutFailed: 'La déconnexion a échoué. Vérifiez la connexion et réessayez.',
   modelSettings: 'Paramètres des modèles', usageGuide: 'Guide de démarrage',
   modelSignInRequired: 'Modèle indisponible. Veuillez vous connecter et réessayer.',
   sessionExpired: 'Vous vous êtes déconnecté de votre compte, veuillez vous reconnecter.',
@@ -209,6 +219,8 @@ export const fr = {
 
 /** German dictionary, checked against the English keys. */
 export const de = {
+  enterpriseSignOut: 'Von Unternehmens-SSO abmelden',
+  enterpriseSignOutFailed: 'Die Abmeldung ist fehlgeschlagen. Prüfen Sie die Verbindung und versuchen Sie es erneut.',
   modelSettings: 'Modelleinstellungen', usageGuide: 'Erste Schritte',
   modelSignInRequired: 'Modell nicht verfügbar. Bitte melden Sie sich an und versuchen Sie es erneut.',
   sessionExpired: 'Sie haben sich von Ihrem Konto abgemeldet. Bitte melden Sie sich erneut an.',
@@ -245,6 +257,8 @@ export const de = {
 
 /** Russian dictionary, checked against the English keys. */
 export const ru = {
+  enterpriseSignOut: 'Выйти из корпоративного SSO',
+  enterpriseSignOutFailed: 'Не удалось выйти. Проверьте соединение и повторите попытку.',
   modelSettings: 'Настройки моделей', usageGuide: 'Руководство по началу работы',
   modelSignInRequired: 'Модель недоступна. Пожалуйста, войдите в систему и повторите попытку.',
   sessionExpired: 'Вы вышли из своей учетной записи, пожалуйста, войдите снова.',
@@ -281,6 +295,8 @@ export const ru = {
 
 /** Portuguese dictionary, checked against the English keys. */
 export const pt = {
+  enterpriseSignOut: 'Sair do SSO empresarial',
+  enterpriseSignOutFailed: 'Não foi possível terminar a sessão. Verifique a ligação e tente novamente.',
   modelSettings: 'Configurações de modelos', usageGuide: 'Primeiros passos',
   modelSignInRequired: 'Modelo indisponível. Faça login e tente novamente.',
   sessionExpired: 'Você saiu da sua conta, faça login novamente.',

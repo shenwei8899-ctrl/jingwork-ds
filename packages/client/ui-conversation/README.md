@@ -13,6 +13,8 @@ Desktop product events use the optional [product analytics service](../product-a
 
 `ui-conversation` owns target-neutral Conversation assembly and the shared browser shell. It consumes Session Controller `SessionEventLikeEntry` feeds, exposes React-free registries and per-Session bindings through `ctx.uiConversation`, and contributes the `useConversation`, `useInput`, and `inputActions` standard props through `ctx.uiSession`. It also owns the per-session durable image URL cache: `ctx.uiConversation.imageUrl(sessionId, attachment)` resolves one Gateway-authorized browser URL per attachment and revokes it with the Session binding, so every Conversation target shares one `session.attachment` read. Concrete targets such as Chat are separate packages that register their own Definitions, snapshot builders, Views, and renderers.
 
+The empty-conversation heading displays a localized “Intranet edition” badge.
+
 ## Table of Contents
 
 - [Conversation assembly](#conversation-assembly)

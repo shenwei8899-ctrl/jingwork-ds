@@ -7,11 +7,11 @@ import type { HostObservable, InjectFace, PropsLocale, PropsRuntime } from '@dee
 import { LogoutIcon } from './LogoutIcon.tsx'
 import css from './AccountMenu.module.css'
 
-/** Public native account presentation and local sign-out operation. */
+/** Public native account presentation and enterprise sign-out operation. */
 export interface JingworkAccountMenuInjected {
   /** Native account name, without credentials. */
   hooks: { identity: HostObservable<string | null> }
-  /** Remove the local account session and return to native login. */
+  /** Revoke enterprise platform sessions and restart native sign-in. */
   signOut: () => Promise<void>
   /** Whether the installed product registers the JingWork getting-started guide. */
   guideAvailable: boolean
@@ -30,7 +30,7 @@ export function JingworkAccountMenu({
   const [failed, setFailed] = useState(false)
   const trigger = useRef<HTMLButtonElement>(null)
   return <div className={css.root}>
-    {failed && <Toast text={t('failed')} onDone={() => { setFailed(false) }} />}
+    {failed && <Toast text={t('enterpriseSignOutFailed')} onDone={() => { setFailed(false) }} />}
     <Menu open={open} side="top" portal autoFocus className={css.anchor}
       anchor={<button ref={trigger} type="button" className={css.trigger} data-collapsed={!wide}
         aria-label={t('menu')} aria-haspopup="menu" aria-expanded={open} onClick={() => { setOpen(value => !value) }}>
@@ -42,7 +42,7 @@ export function JingworkAccountMenu({
           ...(settingsShortcut === undefined ? {} : { shortcut: settingsShortcut }) },
         { id: 'models', label: t('modelSettings'), icon: <IconDataOutlineMedium size={16} /> },
         ...(guideAvailable ? [{ id: 'guide', label: t('usageGuide'), icon: <IconQuestionOutlineMedium size={16} /> }] : []),
-        { id: 'signout', label: t('signOut'), icon: <LogoutIcon />, disabled: busy },
+        { id: 'signout', label: t('enterpriseSignOut'), icon: <LogoutIcon />, disabled: busy },
       ]}
       onClose={() => { setOpen(false) }} onSelect={(id) => {
         setOpen(false)

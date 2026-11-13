@@ -767,8 +767,22 @@ it('shows Jingwork identity and sign-out without offering another account login'
     useIdentity={selector => selector('jingwork-user')} signOut={signOut} wide settingsOpen={false} guideAvailable
     openSection={() => {}} openOnboarding={() => {}} openSettings={() => {}} t={key => zh[key as AccountKey]} />)
   fireEvent.click(screen.getByRole('button', { name: zh.menu }))
-  expect(document.body.textContent).toMatchInlineSnapshot('"jingwork-user设置模型设置使用指南退出登录"')
+  expect(document.body.textContent).toMatchInlineSnapshot('"jingwork-user设置模型设置使用指南退出企业统一登录"')
   expect(screen.queryByText(zh.signIn)).toBeNull()
-  fireEvent.click(screen.getByRole('menuitem', { name: zh.signOut }))
+  fireEvent.click(screen.getByRole('menuitem', { name: zh.enterpriseSignOut }))
   await vi.waitFor(() => { expect(signOut).toHaveBeenCalledOnce() })
+})
+
+it('keeps the enterprise identity and provides retry feedback when SSO sign-out fails', async () => {
+  const { JingworkAccountMenu } = await import('../src/client/JingworkAccountMenu.tsx')
+  const signOut = vi.fn(async () => { throw new Error('unavailable') })
+  render(<JingworkAccountMenu {...({} as GlobalStandardProps)}
+    useIdentity={selector => selector('企业员工')} signOut={signOut} wide settingsOpen={false} guideAvailable
+    openSection={() => {}} openOnboarding={() => {}} openSettings={() => {}} t={key => zh[key as AccountKey]} />)
+  fireEvent.click(screen.getByRole('button', { name: zh.menu }))
+  fireEvent.click(screen.getByRole('menuitem', { name: zh.enterpriseSignOut }))
+  await vi.waitFor(() => { expect(screen.getByText(zh.enterpriseSignOutFailed)).toBeTruthy() })
+  expect(screen.getByText('企业员工')).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: zh.menu }))
+  expect(screen.getByRole('menuitem', { name: zh.enterpriseSignOut }).getAttribute('aria-disabled')).not.toBe('true')
 })
