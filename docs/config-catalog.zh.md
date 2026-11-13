@@ -735,11 +735,16 @@ export interface Config {
 
 - `inject`: `settings` · `agentPresets` · `skills`
 - `refs`: `Volatile` (`@deepseek-ai/cordis`)
-- `source`: [`packages/client/ui-workbench/src/index.ts:15`](../packages/client/ui-workbench/src/index.ts)
+- `source`: [`packages/client/ui-workbench/src/index.ts:17`](../packages/client/ui-workbench/src/index.ts)
 
 ```ts config-catalog
 /** Workbench configuration is edited through the shared Settings revision fence. */
 export interface Config {
+  /** Options for probing custom MCP connectors. */
+  connectorTest: {
+    /** Time limit for custom MCP connection tests. */
+    timeoutMs: number
+  }
   /** Deployment limits for backend knowledge queries. */
   knowledgeRetrieval: KnowledgeRetrievalPolicy
   /** Individual expert definitions and capability assignments. */
@@ -748,7 +753,7 @@ export interface Config {
   teams: Volatile<WorkbenchData['teams']>
   /** Custom invocable Markdown skills. */
   skills: Volatile<WorkbenchData['skills']>
-  /** MCP server settings; credentials remain in the Host environment. */
+  /** MCP server settings; secret values stay in the Host credential store. */
   connectors: Volatile<WorkbenchData['connectors']>
 }
 
@@ -790,6 +795,15 @@ export type Expert = {
   knowledge?: string
   /** Backend knowledge base identifiers selected for retrieval. */
   knowledgeBases?: string[]
+  /** Custom MCP knowledge bases selected for read-only retrieval. */
+  customKnowledgeBases?: {
+    /** Assigned custom MCP connector key. */
+    connector: string
+    /** Knowledge base key returned by its connector. */
+    id: string
+    /** Name shown in the expert's knowledge selection. */
+    name: string
+  }[]
   /** Optional uploaded raster avatar, stored as a validated data URL. */
   avatar?: string
   /** Optional card accent in hexadecimal RGB notation. */
@@ -841,7 +855,7 @@ export type WorkbenchSkill = {
   content: string
 }
 
-/** Connector configuration; credentials remain in the MCP server's own environment. */
+/** Connector settings; HTTP bearer keys stay in the Host credential store. */
 export type Connector = {
   /** User-editable key used by references and imports. */
   slug: string

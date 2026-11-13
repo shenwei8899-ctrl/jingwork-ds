@@ -10,9 +10,16 @@ import { validateWorkbench } from './validation.ts'
 import { workbenchPresets, type KnowledgeRetrievalPolicy } from './presets.ts'
 import { resolveExpert } from './expert.ts'
 import type { Expert, WorkbenchData } from './types.ts'
+import { ConnectorController } from './connector-controller.ts'
+export { ConnectorController } from './connector-controller.ts'
 
 /** Workbench configuration is edited through the shared Settings revision fence. */
 export interface Config {
+  /** Options for probing custom MCP connectors. */
+  connectorTest: {
+    /** Time limit for custom MCP connection tests. */
+    timeoutMs: number
+  }
   /** Deployment limits for backend knowledge queries. */
   knowledgeRetrieval: KnowledgeRetrievalPolicy
   /** Individual expert definitions and capability assignments. */
@@ -21,7 +28,7 @@ export interface Config {
   teams: Volatile<WorkbenchData['teams']>
   /** Custom invocable Markdown skills. */
   skills: Volatile<WorkbenchData['skills']>
-  /** MCP server settings; credentials remain in the Host environment. */
+  /** MCP server settings; secret values stay in the Host credential store. */
   connectors: Volatile<WorkbenchData['connectors']>
 }
 const slug = z
@@ -32,6 +39,7 @@ const text = z.string().max(65536).required()
 const defaults = defaultWorkbench()
 /** Schemas also validate configuration arriving from another browser or a profile edit. */
 export const Config = z.object({
+  connectorTest: z.object({ timeoutMs: z.number().step(1).min(1).max(2147483647).default(15000) }).default({}),
   knowledgeRetrieval: z.object({
     timeoutMs: z.number().step(1).min(1).default(15000),
     maxBytes: z.number().step(1).min(1).default(262144),
@@ -94,10 +102,14 @@ export const inject = ['settings', 'agentPresets', 'skills']
  * @returns Initial preset registration completion.
  */
 export async function apply(ctx: Context, config: Config): Promise<void> {
+  ctx.plugin(ConnectorController, config.connectorTest)
   ctx.effect(() => ctx.settings.configure({ auto: false }), 'workbench: settings presentation')
   const snapshot = (): WorkbenchData => ({
-    experts: config.experts.get().map(({ skills, connectors, tools, subagents, quickPrompts, knowledgeBases, ...row }) => resolveExpert({
+    experts: config.experts.get().map(({
+      skills, connectors, tools, subagents, quickPrompts, knowledgeBases, customKnowledgeBases, ...row
+    }) => resolveExpert({
       ...row, skills: [...skills], connectors: [...connectors],
+      ...(customKnowledgeBases ? { customKnowledgeBases: customKnowledgeBases.map(base => ({ ...base })) } : {}),
       ...(knowledgeBases ? { knowledgeBases: [...knowledgeBases] } : {}),
       ...(tools ? { tools: [...tools] } : {}),
       ...(subagents ? { subagents: [...subagents] } : {}),

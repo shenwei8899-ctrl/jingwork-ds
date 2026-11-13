@@ -1,4 +1,5 @@
 /** Jingwork-style workbench navigation backed by profile settings and real Agent presets. */
+import workbenchRemote from '@deepseek-ai/dsh-client-ui-workbench/remote'
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-client-locale/client'
 import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
@@ -66,8 +67,15 @@ export const inject = [
 ]
 /** Register workbench pages and the assistant, capability and library navigation entries.
  * @param ctx Browser plugin context.
+ * @returns Once the connector Remote namespace is mounted.
  */
-export function apply(ctx: Context): void {
+export async function apply(ctx: Context): Promise<void> {
+  const unmount = await ctx.remote.$mount(workbenchRemote)
+  ctx.effect(() => unmount, 'workbench: connector Remote')
+  ctx.inject(['remote.workbenchConnectors'], registerWorkbench)
+}
+
+function registerWorkbench(ctx: Context): void {
   ctx.effect(
     () => ctx.locale.register('workbench', { zh, en, ja: en, es: en, fr: en, de: en, ru: en, pt: en }),
     'workbench: dictionaries',
@@ -141,8 +149,37 @@ export function apply(ctx: Context): void {
   const face = (page: WorkbenchFace['page']): WorkbenchFace => ({
     page,
     hooks: { form: controller.form, catalog: controller.source },
+    listConnectorKnowledge: async (url, slug, signal) => {
+      try {
+        const result = await ctx.remote.workbenchConnectors.listKnowledge(url, slug, signal)
+        return result.ok ? result.value : { status: 'failed', bases: [] }
+      } catch (_error: unknown) {
+        return { status: 'failed', bases: [] }
+      }
+    },
+    listConnectorTools: async (url, slug, signal) => {
+      try {
+        const result = await ctx.remote.workbenchConnectors.listTools(url, slug, signal)
+        return result.ok ? result.value : { status: 'failed', tools: [] }
+      } catch (_error: unknown) {
+        return { status: 'failed', tools: [] }
+      }
+    },
+    testConnector: async (url, key, slug, linkerApiKey) => {
+      try {
+        const result = await ctx.remote.workbenchConnectors.test(url, key, slug, linkerApiKey)
+        if (!result.ok) return 'connectorTestFailed'
+        return result.value === 'connected' ? 'connectorTestConnected' : result.value === 'invalid' ? 'connectorInvalid' : 'connectorTestFailed'
+      } catch (_error: unknown) {
+        return 'connectorTestFailed'
+      }
+    },
     saveConnectorCredentials: async (slug, value) => {
       try {
+        if ('authorization' in value || 'linker_api_key' in value) {
+          const result = await ctx.remote.workbenchConnectors.saveCredentials(slug, value.authorization ?? '', value.linker_api_key ?? '')
+          return result.ok && result.value ? null : 'connectorCredentialError'
+        }
         const result = await ctx.remote.credentials.set(connectorCredentialRef(slug), JSON.stringify(value))
         return result.ok ? null : 'connectorCredentialError'
       } catch (_error: unknown) {

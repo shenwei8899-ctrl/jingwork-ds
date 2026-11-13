@@ -32,6 +32,7 @@ import type { InjectFace, PropsLocale, PropsRuntime, PropsStore } from '@deepsee
 import type { Expert, ExpertCategory, WorkbenchSkill } from '../types.ts'
 import { randomUUID } from '@deepseek-ai/dsh-util-crypto'
 import { AGENT_TOOL_GROUPS } from '../agent-options.ts'
+import { CustomKnowledge } from './CustomKnowledge.tsx'
 import { resolveExpert } from '../expert.ts'
 import { EXPERT_TEMPLATES } from '../defaults.ts'
 import type { WorkbenchFace } from './page.tsx'
@@ -288,7 +289,9 @@ export function AssistantsPage(props: Props) {
       experts,
       teams: [],
       skills: data.skills.filter(skill => experts.some(expert => expert.skills.includes(skill.slug))),
-      connectors: data.connectors.filter(connector => experts.some(expert => expert.connectors.includes(connector.slug))),
+      connectors: data.connectors.filter(connector => experts.some(expert =>
+        expert.connectors.includes(connector.slug)
+        || expert.customKnowledgeBases?.some(base => base.connector === connector.slug))),
     }
     saveDownload(
       `${agent.slug}.json`,
@@ -766,6 +769,10 @@ export function AssistantsPage(props: Props) {
                           ))}
                       </div>
                     )}
+                    <CustomKnowledge t={t} connectors={form.value?.connectors ?? []}
+                      selected={draft.customKnowledgeBases ?? []} revision={form.revision}
+                      list={props.listConnectorKnowledge}
+                      onChange={(customKnowledgeBases) => { update({ customKnowledgeBases }) }} />
                   </>
                 )}
                 {editor.step === 3 && (
@@ -988,7 +995,7 @@ export function AssistantsPage(props: Props) {
                         </dd>
                         <dt>{t('agentKnowledge')}</dt>
                         <dd className={css.instructionPreview}>
-                          {(draft.knowledgeBases ?? []).map(id => catalog.knowledgeBases?.find(base => base.id === id)?.name ?? id).join(', ') || t('agentNone')}
+                          {[...(draft.knowledgeBases ?? []).map(id => catalog.knowledgeBases?.find(base => base.id === id)?.name ?? id), ...(draft.customKnowledgeBases ?? []).map(base => base.name)].join(', ') || t('agentNone')}
                         </dd>
                         {editor.original !== undefined && (
                           <>

@@ -45,6 +45,9 @@ export interface WorkbenchFace {
     form: HostObservable<ConfigFormSnapshot<WorkbenchData>>
     catalog: HostObservable<WorkbenchSnapshot>
   }
+  listConnectorKnowledge: (url: string, slug: string, signal?: AbortSignal) => Promise<{ status: 'ready' | 'unsupported' | 'upstream-error' | 'failed'; bases: { id: string; name: string; description: string }[] }>
+  listConnectorTools: (url: string, slug: string, signal?: AbortSignal) => Promise<{ status: 'connected' | 'invalid' | 'failed'; tools: { name: string; description: string }[] }>
+  testConnector: (url: string, key: string, slug: string, linkerApiKey?: string) => Promise<'connectorTestConnected' | 'connectorTestFailed' | 'connectorInvalid'>
   saveConnectorCredentials: (slug: string, value: Record<string, string>) => Promise<WorkbenchKey | null>
   setEnabled: WorkbenchController['setEnabled']
   setDefault: (slug: string) => Promise<WorkbenchKey | null>
@@ -335,49 +338,51 @@ export function WorkbenchPage(props: PageProps) {
           <h1>{t(props.initialTemplates === false && page === 'capabilities' ? tab : page)}</h1>
           <p>{t(`${page}Intro`)}</p>
         </div>
-        <div className={css.actions}>
-          {page !== 'library' && (
-            <>
-              <Button
-                onClick={() => {
-                  if (data)
-                    saveDownload(
-                      'workbench.json',
-                      new Blob([JSON.stringify(data, null, 2)], {
-                        type: 'application/json',
-                      }),
-                    )
-                }}
-              >
-                {t('export')}
-              </Button>
-              <label className={css.import}>
-                {t('import')}
-                <input
-                  type="file"
-                  accept="application/json"
-                  disabled={busy || !form.writable}
-                  onChange={(event) => {
-                    const file = event.target.files?.[0]
-                    if (file) void perform(async () => props.importData(await file.text()))
-                    event.target.value = ''
+        {page !== 'capabilities' && (
+          <div className={css.actions}>
+            {page !== 'library' && (
+              <>
+                <Button
+                  onClick={() => {
+                    if (data)
+                      saveDownload(
+                        'workbench.json',
+                        new Blob([JSON.stringify(data, null, 2)], {
+                          type: 'application/json',
+                        }),
+                      )
                   }}
-                />
-              </label>
-            </>
-          )}
-          <Button
-            className={page === 'library' ? css.libraryRefresh : undefined}
-            icon={page === 'library' ? <IconRefreshOutlineRegular size={18} /> : undefined}
-            onClick={() => {
-              if (page === 'library') void props.loadLibrary()
-              else void props.load()
-              if (selectedSession) void props.files(selectedSession.id, path)
-            }}
-          >
-            {t('refresh')}
-          </Button>
-        </div>
+                >
+                  {t('export')}
+                </Button>
+                <label className={css.import}>
+                  {t('import')}
+                  <input
+                    type="file"
+                    accept="application/json"
+                    disabled={busy || !form.writable}
+                    onChange={(event) => {
+                      const file = event.target.files?.[0]
+                      if (file) void perform(async () => props.importData(await file.text()))
+                      event.target.value = ''
+                    }}
+                  />
+                </label>
+              </>
+            )}
+            <Button
+              className={page === 'library' ? css.libraryRefresh : undefined}
+              icon={page === 'library' ? <IconRefreshOutlineRegular size={18} /> : undefined}
+              onClick={() => {
+                if (page === 'library') void props.loadLibrary()
+                else void props.load()
+                if (selectedSession) void props.files(selectedSession.id, path)
+              }}
+            >
+              {t('refresh')}
+            </Button>
+          </div>
+        )}
       </header>
       {visibleError && !editing && !deleting && (
         <p role="alert" className={css.error}>
@@ -577,7 +582,9 @@ export function WorkbenchPage(props: PageProps) {
         </section>
       ) : page === 'capabilities' && !templates && tab === 'connectors' ? (
         <Connectors t={t} data={data?.connectors ?? []} query={query} writable={form.writable && data !== undefined}
-          revision={form.revision} save={props.save} notify={props.actions.show} saveCredentials={props.saveConnectorCredentials}
+          revision={form.revision} listTools={props.listConnectorTools}
+          testConnection={props.testConnector} save={props.save}
+          notify={props.actions.show} saveCredentials={props.saveConnectorCredentials}
           editCustom={(row) => { begin('connectors', row) }} remove={(row) => { setDeleting({ kind: 'connectors', entity: row }) }} />
       ) : page === 'capabilities' && templates ? (
         <div className={css.templateGrid} data-expert-templates>

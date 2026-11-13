@@ -1,12 +1,19 @@
 .catalog {
   min-width: 0;
 }
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--dsw-alias-border-l2);
+}
 .tabs {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  border-bottom: 1px solid var(--dsw-alias-border-l2);
-  padding-bottom: 12px;
 }
 .tabs button[aria-pressed='true'] {
   background: var(--dsw-alias-bg-layer-2);
@@ -147,4 +154,54 @@
   .form input {
     font-size: 16px;
   }
+}
+
+.form .success {
+  color: var(--dsw-alias-state-success-primary);
+}
+.form .failure {
+  color: var(--dsw-alias-state-error-primary);
+}
+
+.toolList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.toolList article {
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--dsw-alias-border-l2);
+}
+.toolList h3 {
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.toolList p {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--dsw-alias-label-secondary);
+  line-height: 1.7;
+}
+.toolNotice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.authorizationField {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.authorizationField > span:first-child {
+  color: var(--dsw-alias-label-secondary);
+  flex-shrink: 0;
+}
+.authorizationField > span:last-child {
+  flex: 1;
+  min-width: 0;
 }

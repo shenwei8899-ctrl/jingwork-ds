@@ -82,10 +82,28 @@ export function expertPreset(
           : config,
       })),
       ...data.connectors
+        .filter(connector => expert.customKnowledgeBases?.some(base => base.connector === connector.slug))
+        .map(connector => ({
+          id: `knowledge-${connector.slug}`, name: '@deepseek-ai/dsh-client-ui-workbench/mcp-knowledge',
+          config: {
+            serverName: connector.slug,
+            url: connector.url,
+            timeoutMs: knowledgePolicy.timeoutMs,
+            maxBytes: knowledgePolicy.maxBytes,
+            bases: expert.customKnowledgeBases
+              ?.filter(base => base.connector === connector.slug)
+              .map(({ id, name }) => ({ id, name })) ?? [],
+          },
+        })),
+      ...data.connectors
         .filter(connector => connector.enabled && expert.connectors.includes(connector.slug))
         .map(connector => ({
           id: `mcp-${connector.slug}`,
-          name: connector.builtin ? '@deepseek-ai/dsh-client-ui-workbench/connector' : '@deepseek-ai/dsh-mcp-client',
+          name: connector.builtin
+            ? '@deepseek-ai/dsh-client-ui-workbench/connector'
+            : connector.transport === 'streamable-http'
+              ? '@deepseek-ai/dsh-client-ui-workbench/custom-connector'
+              : '@deepseek-ai/dsh-mcp-client',
           config: connector.builtin ? {
             kind: connector.builtin, serverName: connector.slug,
           } : {
@@ -127,6 +145,10 @@ export function workbenchPresets(data: WorkbenchData, knowledgePolicy?: Knowledg
           name: team.name,
           description: team.description,
           instructions: `${team.instructions}\n\n你是专家团队的协调者。成员职责如下：\n${members.map(member => `### ${member.name}\n${member.instructions}`).join('\n\n')}\n\n需要并行工作时，使用 subagent 工具将子任务和对应成员职责交给子智能体。核验并汇总成员结果；不要把尚未执行的分工写成已完成。`,
+          customKnowledgeBases: [...new Map(
+            members.flatMap(member => member.customKnowledgeBases ?? [])
+              .map(base => [JSON.stringify([base.connector, base.id]), base]),
+          ).values()],
           knowledgeBases: [...new Set(members.flatMap(member => member.knowledgeBases ?? []))],
           knowledge: members
             .filter(member => member.knowledge.trim())

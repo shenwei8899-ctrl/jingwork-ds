@@ -13,6 +13,7 @@ class RemoteStub extends Service {
   constructor(ctx: Context) {
     super(ctx, 'remote')
   }
+  readonly $mount = vi.fn(async () => () => Promise.resolve())
   readonly $on = vi.fn(() => () => {})
 }
 
@@ -31,6 +32,7 @@ describe('workbench reusable pages', () => {
         developerTools: { enabled: createSnapshotStore(true) },
       } as never)
       new RemoteStub(ctx)
+      ctx.provide('remote.workbenchConnectors', { test: vi.fn().mockResolvedValue({ ok: true, value: 'connected' }) } as never)
       ctx.provide('remote.credentials', { set: vi.fn().mockResolvedValue({ ok: true, value: undefined }) } as never)
       ctx.provide('remote.agentPresets', { list: vi.fn().mockResolvedValue({ ok: true, value: { presets: [] } }) } as never)
       ctx.provide('sessions', { scope: vi.fn() } as never)

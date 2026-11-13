@@ -71,6 +71,9 @@ export function validateWorkbench(input: unknown): WorkbenchData {
       throw new Error('Invalid workbench reference')
   }
   for (const expert of data.experts) {
+    for (const base of expert.customKnowledgeBases ?? []) {
+      if (!data.connectors.some(connector => connector.slug === base.connector && !connector.builtin && connector.transport === 'streamable-http' && connector.enabled)) throw new Error('Custom knowledge requires an enabled HTTP connector')
+    }
     references(expert.subagents ?? [], data.experts)
     if (expert.enabled !== false && expert.subagents?.some(slug => data.experts.find(row => row.slug === slug)?.enabled === false)) throw new Error('Subagent must be enabled')
     if (expert.subagents?.includes(expert.slug)) throw new Error('Assistant cannot delegate to itself')

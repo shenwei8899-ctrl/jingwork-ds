@@ -94,7 +94,7 @@ describe('workbench configuration', () => {
     data.experts[0]!.skills = ['editing']
     data.experts[0]!.connectors = ['assigned', 'disabled']
     const preset = workbenchPresets(validateWorkbench(data))[0]!
-    expect(preset.plugins.filter(row => row.name === '@deepseek-ai/dsh-mcp-client').map(row => row.id)).toEqual([
+    expect(preset.plugins.filter(row => row.name === '@deepseek-ai/dsh-client-ui-workbench/custom-connector').map(row => row.id)).toEqual([
       'mcp-assigned',
     ])
     expect(JSON.stringify(preset.plugins[0]!.config)).toContain('Check every fact.')

@@ -22,6 +22,15 @@ export type Expert = {
   knowledge?: string
   /** Backend knowledge base identifiers selected for retrieval. */
   knowledgeBases?: string[]
+  /** Custom MCP knowledge bases selected for read-only retrieval. */
+  customKnowledgeBases?: {
+    /** Assigned custom MCP connector key. */
+    connector: string
+    /** Knowledge base key returned by its connector. */
+    id: string
+    /** Name shown in the expert's knowledge selection. */
+    name: string
+  }[]
   /** Optional uploaded raster avatar, stored as a validated data URL. */
   avatar?: string
   /** Optional card accent in hexadecimal RGB notation. */
@@ -81,7 +90,7 @@ export type WorkbenchSkill = {
   /** Markdown instructions returned when the skill is invoked. */
   content: string
 }
-/** Connector configuration; credentials remain in the MCP server's own environment. */
+/** Connector settings; HTTP bearer keys stay in the Host credential store. */
 export type Connector = {
   /** User-editable key used by references and imports. */
   slug: string

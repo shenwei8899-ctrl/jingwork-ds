@@ -272,7 +272,8 @@ export class WorkbenchController {
         { op: 'set' as const, path: [kind], value: next },
       ]
       if (kind === 'skills' || kind === 'connectors') {
-        const experts = data.experts.map(expert => ({ ...expert, [kind]: expert[kind].filter(key => key !== slug) }))
+        const experts = data.experts.map(expert => ({ ...expert, [kind]: expert[kind].filter(key => key !== slug),
+          ...(kind === 'connectors' && expert.customKnowledgeBases ? { customKnowledgeBases: expert.customKnowledgeBases.filter(base => base.connector !== slug) } : {}) }))
         ops.push({ op: 'set', path: ['experts'], value: experts })
       }
       return (await this.form.mutate(ops, before.revision)) ? null

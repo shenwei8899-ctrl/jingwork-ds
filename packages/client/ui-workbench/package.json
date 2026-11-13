@@ -28,6 +28,22 @@
     "./connector": {
       "types": "./lib/types/connector.d.ts",
       "default": "./lib/connector.js"
+    },
+    "./typert": {
+      "types": "./lib/typert.host.d.ts",
+      "default": "./lib/typert.host.js"
+    },
+    "./remote": {
+      "types": "./lib/typert.remote-client.d.ts",
+      "default": "./lib/typert.remote-client.js"
+    },
+    "./custom-connector": {
+      "types": "./lib/types/custom-connector.d.ts",
+      "default": "./lib/custom-connector.js"
+    },
+    "./mcp-knowledge": {
+      "types": "./lib/types/mcp-knowledge.d.ts",
+      "default": "./lib/mcp-knowledge.js"
     }
   },
   "dsh": {
@@ -94,13 +110,21 @@
     "lib/client.js",
     "lib/assets",
     "lib/types/**/*.d.ts",
-    "lib/connector.js"
+    "lib/connector.js",
+    "lib/typert.host.js",
+    "lib/typert.host.d.ts",
+    "lib/typert.remote-client.js",
+    "lib/typert.remote-client.d.ts",
+    "lib/custom-connector.js",
+    "lib/mcp-knowledge.js"
   ],
   "dependencies": {
     "@deepseek-ai/schemastery": "workspace:~",
     "imapflow": "^2.10.0",
     "mailparser": "^3.14.1",
     "nodemailer": "^10.3.1",
-    "zod": "4.4.3"
+    "zod": "4.4.3",
+    "@deepseek-ai/dsh-typert-protocol": "workspace:*",
+    "@modelcontextprotocol/client": "2.2.0"
   }
 }

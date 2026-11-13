@@ -6,6 +6,11 @@ export const AGENT_TOOL_GROUPS = ['files', 'web', 'shell', 'tasks', 'interaction
 
 /** Optional fields accepted by both profile loading and configuration import. */
 export const agentOptionSchema = {
+  customKnowledgeBases: z.array(z.object({
+    connector: z.string().pattern(/^[a-z0-9][a-z0-9_-]{0,31}$/).required(),
+    id: z.string().min(1).max(256).required(),
+    name: z.string().min(1).max(120).required(),
+  })).max(100),
   knowledgeBases: z.array(z.string().min(1).max(256)).max(100),
   avatar: z
     .string()

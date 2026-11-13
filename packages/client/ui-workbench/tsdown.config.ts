@@ -21,5 +21,10 @@ export default (options: Parameters<typeof bundle>[0]): UserConfig[] => bundle(o
         Object.keys(BUILTIN_SKILL_COPY),
       )),
     },
-  } : config.platform === 'node' ? [config, { ...config, entry: ['lib/types/connector.js'] }] : config,
+  } : config.platform === 'node' ? [
+    config,
+    ...['lib/types/connector.js', 'lib/types/custom-connector.js', 'lib/types/mcp-knowledge.js'].map(entry => ({
+      ...config, entry: [entry],
+    })),
+  ] : config,
 )
