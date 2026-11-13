@@ -53,6 +53,7 @@
     "purge:latest": "pnpm --filter @deepseek-ai/dsh-desktop run purge:latest",
     "clean": "tsx scripts/clean.ts",
     "change-scope": "tsx scripts/change-scope.ts",
+    "sync:upstream": "bash scripts/sync-upstream.sh",
     "typecheck": "tsx scripts/build.ts --scope typecheck",
     "typecheck:contracts-ready": "tsc -b tsconfig.client.json",
     "lint": "tsx scripts/compile-referenced-projects.ts host-contracts && npm run lint:contracts-ready",
