@@ -1,50 +1,54 @@
+import { appPath } from '../utils/appPath.js'
+
 export const desktopRelease = {
   "name": "macOS Apple Silicon",
   "description": "macOS 13.0 及以上 · Apple M 系列芯片",
-  "icon": "/downloads/apple.svg",
-  "filename": "JingWork-desktop-darwin-arm64-1.0.2b8.dmg",
-  "url": "/downloads/JingWork-desktop-darwin-arm64-1.0.2b8.dmg",
-  "bytes": 218312472,
-  "size": "208 MiB",
-  "sha256": "5d6f21df2281ac0141224ae28f00d0aced3625cb70cfbacf509fd31af7ea0afc",
-  "product": "Jing Work",
-  "version": "1.0.2b8",
-  "date": "2026-10-15",
+  "icon": appPath("/downloads/apple.svg"),
+  "filename": "JingWork-0.2.2-alpha.2.20261111.3-mac-arm64.dmg",
+  "url": appPath("/downloads/releases/0.2.2-alpha.2.20261111.3/JingWork-0.2.2-alpha.2.20261111.3-mac-arm64.dmg"),
+  "bytes": 275119834,
+  "size": "262 MiB",
+  "sha256": "8815beb6a0004b187ca4c1d96256d53253845a888ef2bb90a5f59f69ab4681ec",
+  "product": "JingWork",
+  "version": "0.2.2-alpha.2.20261111.3",
+  "date": "2026-11-11",
   "platform": "macOS Apple Silicon",
   "system": "macOS 13.0 及以上 · Apple M 系列芯片",
   "signing": "未经 Apple 公证",
-  "status": "开发预览版"
+  "status": "内网版"
 }
 
 export const otherPlatforms = [
-  {
-    "name": "macOS Intel",
-    "description": "Intel 芯片 Mac",
-    "icon": "/downloads/apple.svg",
-    "filename": "JingWork-desktop-darwin-amd64-1.0.2b8.dmg",
-    "url": "/downloads/JingWork-desktop-darwin-amd64-1.0.2b8.dmg",
-    "bytes": 212261808,
-    "size": "202 MiB",
-    "sha256": "f12eb36176072cee4b0d97abd8a92be7f6f1e8bb3b7de43260839e639030ea0d"
-  },
-  {
-    "name": "Windows x64",
-    "description": "Intel / AMD 处理器",
-    "icon": "/downloads/windows.svg",
-    "filename": "JingWork-desktop-windows-amd64-1.0.2b8.exe",
-    "url": "/downloads/JingWork-desktop-windows-amd64-1.0.2b8.exe",
-    "bytes": 195054007,
-    "size": "186 MiB",
-    "sha256": "244958e16dc8029cdd2b4bfbc1429e8a07b4bcbb98b2c6578d9055dbeb3e374a"
-  },
-  {
-    "name": "Windows ARM64",
-    "description": "Surface 等 ARM 设备",
-    "icon": "/downloads/windows.svg",
-    "filename": "JingWork-desktop-windows-arm64-1.0.2b8.exe",
-    "url": "/downloads/JingWork-desktop-windows-arm64-1.0.2b8.exe",
-    "bytes": 176907561,
-    "size": "169 MiB",
-    "sha256": "28f961bd1af53420081960046ad8d0425eb336803980c1295546f481768522ec"
-  }
+{
+  "name": "macOS Intel",
+  "description": "Intel 芯片 Mac",
+  "icon": appPath("/downloads/apple.svg"),
+  "filename": "JingWork-0.2.2-alpha.2.20261111.3-mac-x64.dmg",
+  "url": appPath("/downloads/releases/0.2.2-alpha.2.20261111.3/JingWork-0.2.2-alpha.2.20261111.3-mac-x64.dmg"),
+  "bytes": 297993767,
+  "size": "284 MiB",
+  "sha256": "cbb66632b59e741d0cc4e69ef19503e98a7b913e908fb59626274082bb73d348"
+},
+{
+  "name": "Windows x64",
+  "description": "Intel / AMD 处理器",
+  "icon": appPath("/downloads/windows.svg"),
+  "filename": "JingWork-0.2.2-alpha.2.20261111.3-windows-x64.exe",
+  "url": appPath("/downloads/releases/0.2.2-alpha.2.20261111.3/JingWork-0.2.2-alpha.2.20261111.3-windows-x64.exe"),
+  "bytes": 321823717,
+  "size": "307 MiB",
+  "sha256": "e7eda78a1de82027f408829184f37feb37587bbbd91d40eda8733637dea2a0ca"
+},
+{
+  "name": "Windows ARM64",
+  "description": "Surface 等 ARM 设备",
+  "icon": appPath("/downloads/windows.svg"),
+  "filename": "JingWork-0.2.2-alpha.2.20261111.3-windows-arm64.exe",
+  "url": null,
+  "bytes": 0,
+  "size": "",
+  "sha256": null
+}
 ]
+
+export const checksumUrl = appPath(`/downloads/releases/${desktopRelease.version}/SHA256SUMS`)

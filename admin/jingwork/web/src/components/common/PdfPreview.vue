@@ -31,6 +31,7 @@
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { CircleAlert, LoaderCircle } from '@lucide/vue'
 import { resolvePdfLoadErrorMessage } from '@/utils/pdfPreviewErrors'
+import { appPath } from '@/utils/appPath'
 
 const props = defineProps({
   url: {
@@ -207,7 +208,7 @@ const loadPdf = async () => {
     if (seq !== loadSeq) return
     const loadingTask = pdfjs.getDocument({
       url: props.url,
-      cMapUrl: '/assets/pdfjs-cmaps/',
+      cMapUrl: appPath('/assets/pdfjs-cmaps/'),
       cMapPacked: true
     })
     currentLoadingTask = loadingTask

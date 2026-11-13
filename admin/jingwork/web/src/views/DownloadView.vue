@@ -1,4 +1,5 @@
 <script setup>
+import { appPath } from '@/utils/appPath'
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import {
   ArrowRight,
@@ -15,7 +16,7 @@ import {
   Users,
   X
 } from '@lucide/vue'
-import { desktopRelease, otherPlatforms } from '@/content/downloads'
+import { checksumUrl, desktopRelease, otherPlatforms } from '@/content/downloads'
 import { isReleaseAvailable } from '@/apis/download_api'
 
 const menuOpen = ref(false)
@@ -82,16 +83,16 @@ onBeforeUnmount(() => {
     <a class="skip-link" href="#download-products">跳到下载选项</a>
     <header class="site-header">
       <div class="nav-inner">
-        <a class="brand" href="/" aria-label="竞网蓝鲸首页">
-          <img src="/home/jing-work-icon.png" alt="" width="46" height="46" />
+        <a class="brand" :href="appPath('/')" aria-label="竞网蓝鲸首页">
+          <img :src="appPath('/home/jing-work-icon.png')" alt="" width="46" height="46" />
           <span><strong>竞网蓝鲸</strong><small>JING WORK</small></span>
         </a>
         <nav class="desktop-nav" aria-label="主导航">
-          <a href="/#overview">概览</a><a href="/#features">产品能力</a
-          ><a href="/#companion">桌面伙伴</a><a href="/guide/">产品文档</a>
+          <a :href="appPath('/#overview')">概览</a><a :href="appPath('/#features')">产品能力</a
+          ><a :href="appPath('/#companion')">桌面伙伴</a><a :href="appPath('/guide/')">产品文档</a>
         </nav>
         <div class="nav-actions">
-          <a class="docs-link" href="/guide/desktop">安装指南</a>
+          <a class="docs-link" :href="appPath('/guide/desktop')">安装指南</a>
           <a class="button nav-button" href="#download-products" aria-current="page"
             ><Download :size="16" /> 下载</a
           >
@@ -113,10 +114,10 @@ onBeforeUnmount(() => {
         aria-label="移动端导航"
         @click="menuOpen = false"
       >
-        <a href="/#overview">概览<ChevronRight :size="16" /></a
-        ><a href="/#features">产品能力<ChevronRight :size="16" /></a
-        ><a href="/guide/">产品文档<BookOpen :size="16" /></a
-        ><a href="/guide/desktop">安装指南<ChevronRight :size="16" /></a
+        <a :href="appPath('/#overview')">概览<ChevronRight :size="16" /></a
+        ><a :href="appPath('/#features')">产品能力<ChevronRight :size="16" /></a
+        ><a :href="appPath('/guide/')">产品文档<BookOpen :size="16" /></a
+        ><a :href="appPath('/guide/desktop')">安装指南<ChevronRight :size="16" /></a
         ><a class="button primary" href="#download-products"><Download :size="17" />下载</a>
       </nav>
     </header>
@@ -125,7 +126,7 @@ onBeforeUnmount(() => {
       <section class="download-intro" aria-labelledby="download-title">
         <img
           class="download-mascot"
-          src="/home/jing-work-icon.png"
+          :src="appPath('/home/jing-work-icon.png')"
           alt="Jing Work 蓝鲸伙伴"
           width="132"
           height="132"
@@ -139,7 +140,7 @@ onBeforeUnmount(() => {
         <article class="download-product-card">
           <div class="download-product-visual download-client-visual">
             <img
-              src="/home/jing-chat.jpg"
+              :src="appPath('/home/jing-chat.jpg')"
               alt="Jing Work 桌面客户端真实聊天界面"
               width="2398"
               height="1598"
@@ -150,7 +151,7 @@ onBeforeUnmount(() => {
               <h2>Jing Work 客户端</h2>
               <p>桌面工作伙伴，打开就能开始。</p>
             </div>
-            <span class="download-version">预览版 v{{ desktopRelease.version }}</span>
+            <span class="download-version">内网版 v{{ desktopRelease.version }}</span>
           </div>
           <div class="download-product-body">
             <a
@@ -158,7 +159,7 @@ onBeforeUnmount(() => {
               class="download-primary"
               :href="desktopRelease.url"
               :download="desktopRelease.filename"
-              ><img src="/downloads/apple.svg" alt="" width="19" height="19" />下载 macOS Apple
+              ><img :src="appPath('/downloads/apple.svg')" alt="" width="19" height="19" />下载 macOS Apple
               Silicon 版本<Download :size="18"
             /></a>
             <button
@@ -173,7 +174,7 @@ onBeforeUnmount(() => {
               {{ desktopRelease.system }}<span>DMG · {{ desktopRelease.size }}</span>
             </p>
             <p class="download-preview-note">
-              {{ desktopRelease.date }} 品牌预览构建 · 未经 Apple 公证。<a href="#release-details"
+              {{ desktopRelease.date }} 内网构建 · 未经 Apple 公证。<a href="#release-details"
                 >安装前请阅读版本说明<ChevronRight :size="13"
               /></a>
             </p>
@@ -202,7 +203,7 @@ onBeforeUnmount(() => {
             </p>
           </div>
           <footer class="download-card-footer">
-            <a href="/guide/desktop">查看安装指南<ChevronRight :size="15" /></a
+            <a :href="appPath('/guide/desktop')">查看安装指南<ChevronRight :size="15" /></a
             ><a href="#release-details">版本与校验信息<ChevronRight :size="15" /></a>
           </footer>
         </article>
@@ -210,7 +211,7 @@ onBeforeUnmount(() => {
         <article class="download-product-card">
           <div class="download-product-visual download-web-visual">
             <img
-              src="/home/jing-work-icon.png"
+              :src="appPath('/home/jing-work-icon.png')"
               alt="陪你协作的蓝鲸伙伴"
               width="185"
               height="185"
@@ -224,26 +225,26 @@ onBeforeUnmount(() => {
             <span class="download-version">在线工作台</span>
           </div>
           <div class="download-product-body">
-            <a class="download-primary" href="/agent"
+            <a class="download-primary" :href="appPath('/agent')"
               ><Globe :size="19" />打开网页版工作台<ArrowRight :size="18"
             /></a>
             <p class="download-file-meta">使用管理员提供的账号登录<span>无需下载安装包</span></p>
             <p class="download-preview-note">Windows、Intel Mac 或其他设备，也可以先使用网页版。</p>
             <h3>为个人与团队而设计</h3>
             <div class="download-platforms">
-              <a class="download-platform-row" href="/guide/concepts/agents"
+              <a class="download-platform-row" :href="appPath('/guide/concepts/agents')"
                 ><span class="download-platform-icon"><Users :size="19" /></span
                 ><span class="download-row-copy"
                   ><strong>专业智能体</strong><small>选择适合当前任务的助手</small></span
                 ><ChevronRight :size="17"
               /></a>
-              <a class="download-platform-row" href="/guide/concepts/knowledge"
+              <a class="download-platform-row" :href="appPath('/guide/concepts/knowledge')"
                 ><span class="download-platform-icon"><Layers3 :size="19" /></span
                 ><span class="download-row-copy"
                   ><strong>知识与技能</strong><small>连接资料，复用工作方法</small></span
                 ><ChevronRight :size="17"
               /></a>
-              <a class="download-platform-row" href="/guide/enterprise"
+              <a class="download-platform-row" :href="appPath('/guide/enterprise')"
                 ><span class="download-platform-icon"><ShieldCheck :size="19" /></span
                 ><span class="download-row-copy"
                   ><strong>企业权限</strong><small>按账号权限使用团队资源</small></span
@@ -252,8 +253,8 @@ onBeforeUnmount(() => {
             </div>
           </div>
           <footer class="download-card-footer">
-            <a href="/guide/quickstart">快速开始<ChevronRight :size="15" /></a
-            ><a href="/guide/">阅读产品文档<ChevronRight :size="15" /></a>
+            <a :href="appPath('/guide/quickstart')">快速开始<ChevronRight :size="15" /></a
+            ><a :href="appPath('/guide/')">阅读产品文档<ChevronRight :size="15" /></a>
           </footer>
         </article>
       </section>
@@ -261,7 +262,7 @@ onBeforeUnmount(() => {
       <section class="download-team" aria-labelledby="download-team-title">
         <div class="download-team-visual">
           <img
-            src="/home/jing-experts.jpg"
+            :src="appPath('/home/jing-experts.jpg')"
             alt="Jing Work 正在运行的专家库"
             width="2398"
             height="1598"
@@ -271,13 +272,13 @@ onBeforeUnmount(() => {
           <span class="download-version">团队协作 · 统一管理</span>
           <h2 id="download-team-title">让蓝鲸，加入你的团队</h2>
           <p>统一管理模型、知识与智能体，让每位成员在自己的权限范围内开展工作。</p>
-          <a class="download-platform-row" href="/enterprise"
+          <a class="download-platform-row" :href="appPath('/enterprise')"
             ><span class="download-platform-icon"><Users :size="20" /></span
             ><span class="download-row-copy"
               ><strong>企业工作台</strong><small>供已有部署的管理员管理团队资源</small></span
             ><ArrowRight :size="18"
           /></a>
-          <a class="download-platform-row" href="/guide/enterprise"
+          <a class="download-platform-row" :href="appPath('/guide/enterprise')"
             ><span class="download-platform-icon"><BookOpen :size="20" /></span
             ><span class="download-row-copy"
               ><strong>部署与配置说明</strong><small>了解账号、服务与模型的准备要求</small></span
@@ -306,10 +307,10 @@ onBeforeUnmount(() => {
           </div>
           <div>
             <dt>仍无法安装</dt>
-            <dd>请记录完整报错、Windows 版本和系统类型，联系管理员排查；也可先使用<a href="/agent">网页版工作台</a>。</dd>
+            <dd>请记录完整报错、Windows 版本和系统类型，联系管理员排查；也可先使用<a :href="appPath('/agent')">网页版工作台</a>。</dd>
           </div>
         </dl>
-        <p><a href="/downloads/SHA256SUMS" download="SHA256SUMS">下载全部平台 SHA256 校验文件</a></p>
+        <p><a :href="checksumUrl" download="SHA256SUMS">下载全部平台 SHA256 校验文件</a></p>
       </section>
 
       <section
@@ -340,19 +341,19 @@ onBeforeUnmount(() => {
           </div>
         </dl>
         <p class="download-release-warning">
-          客户端使用企业后台 https://jingwork.openswarm.run，通过 HTTPS 登录企业账号，无需在自己的电脑部署管理后台。
+          客户端连接当前内网企业后台，通过企业统一登录使用。请在公司网络或企业 VPN 环境下载安装。
         </p>
         <div class="download-mac-guide">
           <figure class="download-mac-card">
             <figcaption><span>1</span><div><h3>遇到提示，先点击“完成”</h3><p>保留应用，随后在系统设置中允许打开。</p></div></figcaption>
-            <a href="/downloads/mac-open-warning.png" target="_blank" rel="noopener" aria-label="查看无法打开提示的大图">
-              <img src="/downloads/mac-open-warning.png" alt="macOS 提示未打开 Jing Work.app，点击左下方的完成按钮" width="520" height="470" loading="lazy" />
+            <a :href="appPath('/downloads/mac-open-warning.png')" target="_blank" rel="noopener" aria-label="查看无法打开提示的大图">
+              <img :src="appPath('/downloads/mac-open-warning.png')" alt="macOS 提示未打开 Jing Work.app，点击左下方的完成按钮" width="520" height="470" loading="lazy" />
             </a>
           </figure>
           <figure class="download-mac-card">
             <figcaption><span>2</span><div><h3>进入“隐私与安全性”，点击“仍要打开”</h3><p>打开“系统设置”，向下找到“安全性”，按图中红框操作。</p></div></figcaption>
-            <a href="/downloads/mac-privacy-security.png" target="_blank" rel="noopener" aria-label="查看隐私与安全性设置的大图">
-              <img src="/downloads/mac-privacy-security.png" alt="系统设置的隐私与安全性页面，红框标出左侧入口和右侧仍要打开按钮" width="1446" height="1054" loading="lazy" />
+            <a :href="appPath('/downloads/mac-privacy-security.png')" target="_blank" rel="noopener" aria-label="查看隐私与安全性设置的大图">
+              <img :src="appPath('/downloads/mac-privacy-security.png')" alt="系统设置的隐私与安全性页面，红框标出左侧入口和右侧仍要打开按钮" width="1446" height="1054" loading="lazy" />
             </a>
           </figure>
         </div>
@@ -368,21 +369,21 @@ onBeforeUnmount(() => {
             }}
           </button>
         </div>
-        <p><a href="/downloads/SHA256SUMS" download="SHA256SUMS">下载全部平台 SHA256 校验文件</a></p>
+        <p><a :href="checksumUrl" download="SHA256SUMS">下载全部平台 SHA256 校验文件</a></p>
         <p class="download-copy-status" role="status">{{ copyStatus }}</p>
       </section>
     </main>
 
     <footer class="site-footer">
-      <a class="brand" href="/"
-        ><img src="/home/jing-work-icon.png" alt="" width="38" height="38" /><span
+      <a class="brand" :href="appPath('/')"
+        ><img :src="appPath('/home/jing-work-icon.png')" alt="" width="38" height="38" /><span
           ><strong>竞网蓝鲸</strong><small>JING WORK</small></span
         ></a
       >
       <p>© {{ new Date().getFullYear() }} 竞网蓝鲸 · 让智能融入每一天</p>
       <div>
-        <a href="/guide/">产品文档</a><a href="/guide/guides/faq">帮助与支持</a
-        ><a href="/">返回官网</a>
+        <a :href="appPath('/guide/')">产品文档</a><a :href="appPath('/guide/guides/faq')">帮助与支持</a
+        ><a :href="appPath('/')">返回官网</a>
       </div>
     </footer>
   </div>

@@ -1,5 +1,6 @@
 import { useUserStore, checkAdminPermission, checkSuperAdminPermission } from '@/stores/user'
 import { message } from 'ant-design-vue'
+import { appPath } from '@/utils/appPath'
 
 function safeRequestMetadata(url, requestOptions, response = null) {
   let path = '[invalid-url]'
@@ -134,7 +135,7 @@ export async function apiRequest(url, options = {}, requiresAuth = true, respons
     }
 
     // 发送请求
-    const response = await fetch(url, requestOptions)
+    const response = await fetch(appPath(url), requestOptions)
 
     // 处理API返回的错误
     if (!response.ok) {
@@ -182,7 +183,7 @@ export async function apiRequest(url, options = {}, requiresAuth = true, respons
 
         // 使用setTimeout确保消息显示后再跳转
         setTimeout(() => {
-          window.location.href = '/login'
+          window.location.href = appPath('/login')
         }, 1500)
 
         throw error

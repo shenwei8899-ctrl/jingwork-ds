@@ -14,6 +14,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useThemeStore } from '@/stores/theme'
 import { useUserStore } from '@/stores/user'
+import { appPath } from '@/utils/appPath'
 import { renderMarkdown } from '@/utils/markdown_preview'
 import { HTML_PREVIEW_MAX_HEIGHT, HTML_PREVIEW_MIN_HEIGHT } from '@/utils/htmlPreviewRenderer'
 import 'katex/dist/katex.min.css'
@@ -329,7 +330,7 @@ const enhanceKbImages = () => {
     if (!src || !KB_IMAGE_PROXY_PATH_RE.test(src) || img.dataset.kbImageLoaded) return
 
     img.dataset.kbImageLoading = 'true'
-    fetch(src, { headers: userStore.getAuthHeaders() })
+    fetch(appPath(src), { headers: userStore.getAuthHeaders() })
       .then((response) => {
         if (!response.ok) throw new Error(`HTTP ${response.status}`)
         return response.blob()

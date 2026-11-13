@@ -1,4 +1,5 @@
 <script setup>
+import { appPath } from '@/utils/appPath'
 import { computed, onActivated, onDeactivated, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import {
@@ -26,8 +27,8 @@ import { healthApi } from '@/apis/system_api'
 
 const router = useRouter()
 const infoStore = useInfoStore()
-const docsUrl = '/guide/'
-const whale = '/home/jing-work-icon.png'
+const docsUrl = appPath('/guide/')
+const whale = appPath('/home/jing-work-icon.png')
 const loading = ref(true)
 const error = ref(false)
 const menuOpen = ref(false)
@@ -87,7 +88,7 @@ const features = [
     title: '换个专家，换一种超能力',
     description:
       '写文档、做研究、处理代码、整理资讯。从内置专家中挑选你的伙伴，再把常用技能交给它，让每一次协作更顺手。',
-    image: '/home/jing-experts.jpg',
+    image: appPath('/home/jing-experts.jpg'),
     alt: 'Jing Work 正在运行的内置专家库',
     tags: ['内置专家', '个性化配置', '多专家协作']
   },
@@ -98,7 +99,7 @@ const features = [
     title: '熟悉的工具，现在一起工作',
     description:
       '文档、会议、笔记、邮箱……在 Jing Work 中连接常用服务，对话时按需选用。让信息在工具之间流动，把精力留给真正重要的事。',
-    image: '/home/jing-connectors.jpg',
+    image: appPath('/home/jing-connectors.jpg'),
     alt: 'Jing Work 正在运行的内置连接器页面',
     tags: ['文档与会议', '笔记与知识', '按需连接']
   },
@@ -109,7 +110,7 @@ const features = [
     title: '一次积累，让每次工作更轻松',
     description:
       '把专业方法和工作流程装进技能包。从内容创作到分镜设计，为专家搭配需要的技能，让你的经验成为持续可用的能力。',
-    image: '/home/jing-skills.jpg',
+    image: appPath('/home/jing-skills.jpg'),
     alt: 'Jing Work 正在运行的分镜设计技能包页面',
     tags: ['技能组合', '专家挂载', '工作流复用']
   },
@@ -120,7 +121,7 @@ const features = [
     title: '说出目标，和蓝鲸一起完成',
     description:
       '总结长文、起草邮件、解释代码、拆分计划。用自然语言开启任务，把文件、工具和知识连接起来，在一个工作空间中推进。',
-    image: '/home/jing-chat.jpg',
+    image: appPath('/home/jing-chat.jpg'),
     alt: 'Jing Work 正在运行的智能助手对话首页',
     tags: ['自然语言交互', '文件与工具', '个人与企业空间']
   }
@@ -190,7 +191,7 @@ function moveTab(event, group) {
 }
 
 function showPreview(src, alt) {
-  previewImage.value = { src, alt }
+  previewImage.value = { src: appPath(src), alt }
   preview.value.showModal()
 }
 
@@ -235,7 +236,7 @@ onDeactivated(() => {
           <div class="nav-actions">
             <a class="docs-link" :href="docsUrl">产品文档</a>
             <router-link class="docs-link" to="/login?redirect=/extensions">管理后台</router-link>
-            <a class="button nav-button" href="/download">下载 <ArrowRight :size="15" /></a>
+            <a class="button nav-button" :href="appPath('/download')">下载 <ArrowRight :size="15" /></a>
             <button
               class="menu-toggle"
               :aria-expanded="menuOpen"
@@ -254,7 +255,7 @@ onDeactivated(() => {
           <a href="#faq" @click="menuOpen = false">常见问题 <ChevronRight :size="16" /></a>
           <a :href="docsUrl" @click="menuOpen = false">产品文档 <BookOpen :size="16" /></a>
           <router-link to="/login?redirect=/extensions" @click="menuOpen = false">管理后台</router-link>
-          <a class="button primary" href="/download">下载 <ArrowRight :size="17" /></a>
+          <a class="button primary" :href="appPath('/download')">下载 <ArrowRight :size="17" /></a>
         </nav>
       </header>
       <main>

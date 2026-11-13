@@ -25,6 +25,8 @@ EXPOSE 5173
 # 生产阶段
 FROM node:24-alpine AS build-stage
 WORKDIR /app
+ARG VITE_APP_BASE_PATH=/
+ENV VITE_APP_BASE_PATH=${VITE_APP_BASE_PATH}
 
 # 安装 pnpm
 RUN npm install -g pnpm@11.24.0

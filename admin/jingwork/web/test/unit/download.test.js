@@ -5,16 +5,16 @@ import { compileStyle, compileTemplate, parse } from 'vue/compiler-sfc'
 import { desktopRelease, otherPlatforms } from '../../src/content/downloads.js'
 import { isReleaseAvailable } from '../../src/apis/download_api.js'
 
-test('下载元数据与已验证的 Jing Work 品牌预览包一致', () => {
-  assert.equal(desktopRelease.bytes, 218312472)
+test('下载元数据使用已验证的内网版安装包', () => {
+  assert.equal(desktopRelease.bytes, 275119834)
   assert.ok(desktopRelease.filename.startsWith('JingWork-'))
-  assert.equal(desktopRelease.url, `/downloads/${desktopRelease.filename}`)
+  assert.equal(desktopRelease.url, `/downloads/releases/${desktopRelease.version}/${desktopRelease.filename}`)
   assert.equal(
     desktopRelease.sha256,
-    '5d6f21df2281ac0141224ae28f00d0aced3625cb70cfbacf509fd31af7ea0afc'
+    '8815beb6a0004b187ca4c1d96256d53253845a888ef2bb90a5f59f69ab4681ec'
   )
-  assert.equal(desktopRelease.version, '1.0.2b8')
-  assert.equal(desktopRelease.status, '开发预览版')
+  assert.equal(desktopRelease.version, '0.2.2-alpha.2.20261111.3')
+  assert.equal(desktopRelease.status, '内网版')
 })
 
 test('仅实际存在且大小一致的安装包可以启用下载', async () => {
@@ -61,11 +61,12 @@ test('各平台指向对应安装包而非上游地址', () => {
     otherPlatforms.map((platform) => platform.name),
     ['macOS Intel', 'Windows x64', 'Windows ARM64']
   )
-  for (const platform of otherPlatforms) {
-    assert.equal(platform.url, `/downloads/${platform.filename}`)
+  for (const platform of otherPlatforms.filter((item) => item.url)) {
+    assert.equal(platform.url, `/downloads/releases/${desktopRelease.version}/${platform.filename}`)
     assert.ok(platform.bytes > 0)
     assert.match(platform.sha256, /^[a-f0-9]{64}$/)
   }
+  assert.equal(otherPlatforms.find((item) => item.name === 'Windows ARM64').url, null)
   const view = readFileSync(new URL('../../src/views/DownloadView.vue', import.meta.url), 'utf8')
   assert.ok(!view.includes('github.com/TencentCloud'))
   assert.ok(view.includes('未经 Apple 公证'))
@@ -85,7 +86,7 @@ test('下载页和首页模板可编译，导航下载与工作台入口保持�
     assert.deepEqual(errors, [])
   }
   const home = readFileSync(new URL('../../src/views/HomeView.vue', import.meta.url), 'utf8')
-  assert.equal((home.match(/href="\/download"/g) || []).length, 2)
+  assert.equal((home.match(/appPath\('\/download'\)/g) || []).length, 2)
   assert.ok(home.includes("path: '/agent'"))
 })
 
@@ -101,4 +102,20 @@ test('深色图标滤镜只作用于下载页图标，不反色整个页面', ()
     /:root\.dark \.download-platform-icon img\[data-v-download\]\s*\{\s*filter: invert\(1\)/
   )
   assert.doesNotMatch(code, /:root\.dark\s*\{[^}]*filter:/)
+})
+
+
+test('未发布的平台不会发起下载检查', async () => {
+  const platform = otherPlatforms.find((item) => item.name === 'Windows ARM64')
+  assert.equal(await isReleaseAvailable(platform, {
+    fetcher: async () => { throw new Error('未发布安装包不应请求网络') }
+  }), false)
+})
+
+test('下载页资源使用应用前缀并说明内网登录', () => {
+  const source = readFileSync(new URL('../../src/views/DownloadView.vue', import.meta.url), 'utf8')
+  assert.doesNotMatch(source, /(?<!:)src="\/(?:home|downloads)\//)
+  assert.ok(source.includes('内网版 v{{ desktopRelease.version }}'))
+  assert.ok(source.includes('内网企业后台'))
+  assert.ok(!source.includes('jingwork.openswarm.run'))
 })
