@@ -1,7 +1,7 @@
 {
   "name": "@deepseek-ai/dsh-super-agent",
   "description": "Chat task orchestration with persistent goals and delegated execution",
-  "version": "0.2.2-alpha.2",
+  "version": "0.2.2-rc.2",
   "publishConfig": {
     "access": "public"
   },

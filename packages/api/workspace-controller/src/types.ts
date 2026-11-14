@@ -37,7 +37,7 @@ declare module '@deepseek-ai/dsh-typert-protocol' {
     'workspace/name-conflict': { readonly name: string }
     /**
      * The Session still has running work — its own turn, a subagent, a
-     * background job, or an active schedule — so archiving was refused
+     * background job, or an active schedule — so archiving or deletion was refused
      * without a write; `activity` names what must stop first.
      */
     'workspace/session-active': {
@@ -127,6 +127,16 @@ export interface WorkspaceArchiveSessionRequest {
 /** Session requested for restoration from the archived Session list. */
 export interface WorkspaceUnarchiveSessionRequest {
   readonly sessionId: SessionId
+}
+
+/** Session requested for permanent removal. */
+export interface WorkspaceDeleteSessionRequest {
+  readonly sessionId: SessionId
+}
+
+/** Confirmation that the named Session and its stored history were deleted. */
+export interface WorkspaceDeleteSessionValue {
+  readonly deleted: true
 }
 
 /** Complete archived Session set after a mutation. */

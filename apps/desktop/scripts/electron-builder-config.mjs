@@ -63,8 +63,8 @@ export function createElectronBuilderConfig(
     throw new Error('desktop package: DSH_DESKTOP_PRODUCT must be jingwork when supplied')
   }
   const jingwork = env.DSH_DESKTOP_PRODUCT === 'jingwork'
-  if (jingwork && (!unsigned || !['darwin', 'win32'].includes(resolvedPlatform) || appId !== 'com.jingwork.desktop')) {
-    throw new Error('desktop package: JingWork requires unsigned macOS or Windows packaging with app ID com.jingwork.desktop')
+  if (jingwork && (!['darwin', 'win32'].includes(resolvedPlatform) || appId !== 'com.jingwork.desktop')) {
+    throw new Error('desktop package: JingWork requires macOS or Windows packaging with app ID com.jingwork.desktop')
   }
   const skipNotarization = env.DSH_DESKTOP_MACOS_SKIP_NOTARIZATION === '1'
   if (env.DSH_DESKTOP_MACOS_SKIP_NOTARIZATION !== undefined && !['0', '1'].includes(env.DSH_DESKTOP_MACOS_SKIP_NOTARIZATION)) {
@@ -171,10 +171,10 @@ export function createElectronBuilderConfig(
       { from: fileURLToPath(new URL(jingwork ? '../resources/icon-jingwork.png' : '../resources/icon-windows.png', import.meta.url)), to: 'icon.png' },
       ...(jingwork ? [{ from: fileURLToPath(new URL('../config/jingwork-login.json', import.meta.url)), to: 'jingwork-login.json' }] : []),
       // Windows tray bitmaps; macOS keeps the Dock and ships no menu bar icon.
-      ...(packagesWindows ? [{ from: fileURLToPath(new URL('../resources/tray-windows.ico', import.meta.url)), to: 'tray.ico' }] : []),
+      ...(packagesWindows ? [{ from: fileURLToPath(new URL(jingwork ? '../resources/tray-jingwork.ico' : '../resources/tray-windows.ico', import.meta.url)), to: 'tray.ico' }] : []),
     ],
     mac: {
-      icon: fileURLToPath(new URL(jingwork ? '../resources/icon-jingwork.png' : '../resources/icon-macos.png', import.meta.url)),
+      icon: fileURLToPath(new URL(jingwork ? '../resources/icon-jingwork-macos.png' : '../resources/icon-macos.png', import.meta.url)),
       category: 'public.app-category.developer-tools',
       // macOS matches the application locale against this bundle, not Electron Framework resources.
       extendInfo: {

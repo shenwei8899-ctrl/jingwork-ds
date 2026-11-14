@@ -13,7 +13,7 @@ kind: "package-reference"
 
 助理列表以分类标签和紧凑的搜索操作栏开头。
 
-侧栏使用 JingWork 图标，上行显示“竞网蓝鲸”，下行显示“JingWork”。收起侧栏时保留同一图标。展开时品牌组合居中，图标为 40 px，与文字间隔 12 px。
+侧栏使用 JingWork 蓝鲸标志，右侧同一行显示 JingWork 字标和 Harness 标牌。收起侧栏时标志为 24 px。展开时品牌组合居中，标志为 32 px，与字标间隔 8 px；JingWork 标题为 16 px，右侧 9 px 的 Harness 标牌与标题间隔 4 px。
 
 ## 概述
 

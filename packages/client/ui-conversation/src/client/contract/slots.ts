@@ -354,9 +354,9 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
      */
     'conversation.input.permission': { kind: 'single'; scope: 'session'; owner: InputControlOwnerProps }
     /**
-     * Model selector inside the composer tool row. When expanded controls cannot
-     * share a line, the row sets --dsh-composer-model-text-display to none and
-     * --dsh-composer-model-icon-display to block for an occupant's compact display.
+     * Model selector in the flexible span between the composer's left tools and
+     * trailing actions. Long model names ellipsize in the trigger; the row may wrap
+     * the selector when the other controls leave too little room.
      * Fixed overlays must portal to the document body because the docked composer contains them.
      */
     'conversation.input.model': { kind: 'single'; scope: 'session'; owner: InputControlOwnerProps }

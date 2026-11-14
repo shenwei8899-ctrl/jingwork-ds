@@ -4,7 +4,7 @@ import type { PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
 import jingworkMark from './assets/jingwork-agent.png'
 import css from './brand.module.css'
 
-/** Render the existing JingWork artwork at the size requested by the sidebar.
+/** Render the existing JingWork whale artwork at the size requested by the sidebar.
  * @param props Sidebar mark geometry.
  * @returns JingWork brand image.
  */
@@ -12,9 +12,9 @@ export function JingworkBrandMark({ size }: SidebarBrandMarkOwnerProps) {
   return <img src={jingworkMark} width={size} height={size} alt="" className={css.mark} />
 }
 
-/** Render the two-line JingWork brand name.
+/** Render JingWork's one-line wordmark and Harness badge.
  * @param props Workbench locale binding.
- * @returns Chinese product name above the English brand.
+ * @returns the JingWork Harness brand name.
  */
 export function JingworkBrandName({ t }: PropsLocale<'workbench'>) {
   return <span className={css.name}>

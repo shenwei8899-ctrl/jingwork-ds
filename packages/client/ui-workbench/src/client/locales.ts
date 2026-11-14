@@ -1,7 +1,7 @@
 /** Workbench interface copy; expert names and instructions are user-owned configuration data. */
 export const zh = {
-  brandTitle: '竞网蓝鲸',
-  brandSubtitle: 'JingWork',
+  brandTitle: 'JingWork',
+  brandSubtitle: 'HARNESS',
   connectorPartialSave: '凭据已保存，连接器配置保存结果未确认。请刷新后检查',
   connectorStatusSaved: '连接器状态已更新',
   connectorEnabled: '已启用连接器',
@@ -380,8 +380,8 @@ export const zh = {
 export type WorkbenchKey = keyof typeof zh
 /** English workbench dictionary and fallback for other locales. */
 export const en: Record<WorkbenchKey, string> = {
-  brandTitle: '竞网蓝鲸',
-  brandSubtitle: 'JingWork',
+  brandTitle: 'JingWork',
+  brandSubtitle: 'HARNESS',
   connectorPartialSave: 'Credentials were saved. Refresh to check whether connector settings were saved.',
   connectorStatusSaved: 'Connector status updated',
   connectorEnabled: 'Enabled connectors',

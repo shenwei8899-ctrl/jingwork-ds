@@ -16,6 +16,7 @@ import { Remote, RemoteError, TypertRemoteService, principalOf, type TypertResou
 import { canonicalClientTimeZone } from '@deepseek-ai/dsh-util-time'
 import { assertNever } from '@deepseek-ai/dsh-util-values'
 import type {} from '@deepseek-ai/dsh-api-remote-access'
+import type {} from '@deepseek-ai/dsh-workspace'
 import {
   ApiSessionAgentController,
   type ApiSessionAgentResult,
@@ -169,6 +170,7 @@ export class SessionController extends TypertRemoteService {
   private readonly canOpenPath: () => boolean
   private readonly listWorkSliceMs: number
   private readonly promotions = new Set<Promise<void>>()
+  private readonly deletingSessions = new Set<SessionId>()
 
   /**
    * @param ctx - Host context containing the Session capability assembly.
@@ -191,6 +193,19 @@ export class SessionController extends TypertRemoteService {
     ctx.typert.resources.register('session', { resolve: resolveSessionResource })
     this.agents = new ApiSessionAgentController(ctx)
     this.agents.initialize()
+    ctx.on('workspace/session-deleting', async ({ sessionId }) => {
+      this.deletingSessions.add(sessionId)
+      await this.agents.beginSessionDeletion(sessionId)
+    })
+    ctx.on('workspace/session-delete-aborted', ({ sessionId }) => {
+      this.deletingSessions.delete(sessionId)
+      this.agents.endSessionDeletion(sessionId)
+    })
+    ctx.on('workspace/session-deleted', ({ sessionId }) => {
+      this.deletingSessions.delete(sessionId)
+      this.agents.endSessionDeletion(sessionId)
+      ctx.emit('api-session/removed', sessionId)
+    })
     this.commands = new SessionCommandController(ctx, this.agents, process.cwd())
     ctx.effect(() => ctx.fileUploads.registerAgentResolver(async (sessionId) => {
       const result = await this.agents.resolveAgent(sessionId)
@@ -225,7 +240,7 @@ export class SessionController extends TypertRemoteService {
       ctx.emit('api-session/added', this.listState.summaryFor(session))
     })
     ctx.on('session/disposed', (session) => {
-      ctx.emit('api-session/removed', session.id)
+      if (!this.deletingSessions.has(session.id)) ctx.emit('api-session/removed', session.id)
     })
     const publishAgentAvailability = ({ agent }: { agent: Agent }): undefined => {
       if (ctx.sessions.get(agent.id) === agent.session) {

@@ -70,12 +70,6 @@ export const inject = [
  * @returns Once the connector Remote namespace is mounted.
  */
 export async function apply(ctx: Context): Promise<void> {
-  const unmount = await ctx.remote.$mount(workbenchRemote)
-  ctx.effect(() => unmount, 'workbench: connector Remote')
-  ctx.inject(['remote.workbenchConnectors'], registerWorkbench)
-}
-
-function registerWorkbench(ctx: Context): void {
   ctx.effect(
     () => ctx.locale.register('workbench', { zh, en, ja: en, es: en, fr: en, de: en, ru: en, pt: en }),
     'workbench: dictionaries',
@@ -87,6 +81,12 @@ function registerWorkbench(ctx: Context): void {
     }))
   ctx.slots.inject('conversation.hero.brand.mark', () =>
     ctx.slots.register({ name: 'conversation.hero.brand.mark' }, JingworkBrandMark))
+  const unmount = await ctx.remote.$mount(workbenchRemote)
+  ctx.effect(() => unmount, 'workbench: connector Remote')
+  ctx.inject(['remote.workbenchConnectors'], registerWorkbench)
+}
+
+function registerWorkbench(ctx: Context): void {
   const jingwork = (globalThis as typeof globalThis & {
     dshJingwork?: {
       knowledgeBases: () => Promise<{ id: string; name: string; description: string }[]>

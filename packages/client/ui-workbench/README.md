@@ -13,7 +13,7 @@ The enterprise catalog uses responsive cards with an adaptive column count with 
 
 The assistant catalog starts with its category tabs and a compact search/action row.
 
-The sidebar uses the JingWork icon and displays 竞网蓝鲸 above JingWork. The collapsed rail keeps the same icon. Expanded branding is centered with a 40 px mark and a 12 px gap before the name.
+The sidebar pairs the JingWork blue-whale mark with a one-line JingWork wordmark and Harness badge. The collapsed rail keeps the 24 px mark. Expanded branding is centered with a 32 px mark, an 8 px gap before the wordmark, a 16 px title, and a 9 px badge 4 px after it.
 
 ## Summary
 

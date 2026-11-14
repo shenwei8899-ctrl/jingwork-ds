@@ -40,10 +40,10 @@ describe('SidebarRoot.module.css', () => {
     expect(declarations('.collapsed .panelList')?.get('gap')).toBe('12px')
   })
 
-  it('fits expanded navigation into 32px rows while retaining 36px rail controls', () => {
+  it('fits expanded navigation into 42px rows while retaining 36px rail controls', () => {
     const row = declarations('.panelRow')
-    expect(row?.get('min-height')).toBe('32px')
-    expect(row?.get('padding')).toBe('5px calc(var(--dsh-sidebar-row-padding) - var(--dsh-sidebar-paint-inset))')
+    expect(row?.get('min-height')).toBe('42px')
+    expect(row?.get('padding')).toBe('10px calc(var(--dsh-sidebar-row-padding) - var(--dsh-sidebar-paint-inset))')
     expect(row?.get('line-height')).toBe('22px')
     expect(row?.get('box-sizing')).toBe('border-box')
     expect(row?.get('border')).toBe('none')
@@ -130,15 +130,15 @@ describe('SidebarRoot.module.css', () => {
     expect(declarations('.collapsed .newSession')?.get('width')).toBe('36px')
   })
 
-  it('centers expanded branding with room for the JingWork mark and two-line name', () => {
+  it('centers expanded branding with a compact whale mark and one-line name', () => {
     expect(declarations('.brand')?.get('justify-content')).toBe('center')
-    expect(declarations('.brand')?.get('--dsh-sidebar-brand-mark-size')).toBe('40px')
-    expect(declarations('.brandIdentity')?.get('gap')).toBe('12px')
-    expect(declarations('.brandIdentity')?.get('height')).toBe('44px')
+    expect(declarations('.brand')?.get('--dsh-sidebar-brand-mark-size')).toBe('32px')
+    expect(declarations('.brandIdentity')?.get('gap')).toBe('8px')
+    expect(declarations('.brandIdentity')?.get('height')).toBe('36px')
     expect(declarations('.brandName')?.get('height')).toBe('24px')
     expect(declarations('.brandName')?.get('line-height')).toBe('24px')
-    expect(declarations('.brandName')?.get('font-size')).toBe('18px')
-    expect(declarations('.fallbackBrandName')?.get('font-size')).toBe('17px')
+    expect(declarations('.brandName')?.get('font-size')).toBe('16px')
+    expect(declarations('.fallbackBrandName')?.get('font-size')).toBe('16px')
     expect(declarations('.fallbackBrandName')?.get('white-space')).toBe('nowrap')
   })
 })

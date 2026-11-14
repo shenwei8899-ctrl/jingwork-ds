@@ -383,6 +383,13 @@ Host service backing the generated `ctx.remote.workspace` namespace.
 @Remote('delete') delete(request: WorkspaceDeleteRequest): Promise<WorkspaceDeleteValue>
 
 /**
+ * Permanently delete one inactive Session and clear its Workspace references.
+ * @param request - Session identity to remove.
+ * @returns deletion confirmation.
+ */
+@Remote('deleteSession') deleteSession(request: WorkspaceDeleteSessionRequest): Promise<WorkspaceDeleteSessionValue>
+
+/**
  * Move one Workspace within the registry display order.
  * @param request - moved Workspace and optional anchor.
  * @returns the complete resulting Workspace order.
@@ -615,6 +622,14 @@ archiveSession(sessionId: SessionId, options: ArchiveSessionOptions = {}): Promi
 unarchiveSession(sessionId: SessionId): Promise<void>
 
 /**
+ * Permanently delete one Session after refusing running work and releasing
+ * Host-owned resources. Workspace membership, archive state, and pin state
+ * are removed after the per-Session persistence artifact is deleted.
+ * @param sessionId - Session identity to delete.
+ */
+deleteSession(sessionId: SessionId): Promise<void>
+
+/**
  * Pin one session durably, prepending it to the registry-global pin set.
  * The session must exist (live or in session persistence) and must not be
  * archived. An already pinned id resolves without writing or reordering.
@@ -689,6 +704,57 @@ Admit optional follow-up work after durable archival and any stop requests. Disp
  * @mode parallel
  */
 'workspace/session-archived'(request: SessionActivityRequest): Promise<void> | void
+```
+
+Source: [`packages/workspace/workspace/src/index.ts`](../../packages/workspace/workspace/src/index.ts)
+
+<a id="workspacesession-delete-aborted--emit"></a>
+
+#### `workspace/session-delete-aborted` — emit
+
+Clear deletion admission after a failed deletion attempt.
+
+```ts cordis-catalog
+/**
+ * Clear deletion admission after a failed deletion attempt.
+ * @param request - Session whose deletion failed.
+ * @mode emit
+ */
+'workspace/session-delete-aborted'(request: SessionActivityRequest): Promise<void> | void
+```
+
+Source: [`packages/workspace/workspace/src/index.ts`](../../packages/workspace/workspace/src/index.ts)
+
+<a id="workspacesession-deleted--emit"></a>
+
+#### `workspace/session-deleted` — emit
+
+Publish that persistence removal completed for one Session.
+
+```ts cordis-catalog
+/**
+ * Publish that persistence removal completed for one Session.
+ * @param request - Session whose log was deleted.
+ * @mode emit
+ */
+'workspace/session-deleted'(request: SessionActivityRequest): Promise<void> | void
+```
+
+Source: [`packages/workspace/workspace/src/index.ts`](../../packages/workspace/workspace/src/index.ts)
+
+<a id="workspacesession-deleting--parallel"></a>
+
+#### `workspace/session-deleting` — parallel
+
+Release Host-owned live resources before the persistence backend removes a Session.
+
+```ts cordis-catalog
+/**
+ * Release Host-owned live resources before the persistence backend removes a Session.
+ * @param request - Session about to be deleted.
+ * @mode parallel
+ */
+'workspace/session-deleting'(request: SessionActivityRequest): Promise<void> | void
 ```
 
 Source: [`packages/workspace/workspace/src/index.ts`](../../packages/workspace/workspace/src/index.ts)

@@ -25,7 +25,7 @@ const UPDATE_ENVIRONMENTS = {
     secretKeyEnvName: 'DOWNLOAD_TEST_COS_SECRET_KEY',
   },
   production: {
-    originEnvName: undefined,
+    originEnvName: 'DOWNLOAD_PROD_ORIGIN',
     fixedOrigin: 'https://download.deepseek.com',
     bucketEnvName: 'DOWNLOAD_PROD_COS_BUCKET',
     secretIdEnvName: 'DOWNLOAD_PROD_COS_SECRET_ID',
@@ -166,13 +166,20 @@ export function resolveDesktopAutoUpdateConfig(env, platform, arch) {
   const environment = resolveDesktopAutoUpdateEnvironment(env)
   const target = resolveDesktopAutoUpdateTarget(platform, arch)
   const deployment = UPDATE_ENVIRONMENTS[environment]
+  const product = env.DSH_DESKTOP_PRODUCT ?? 'dsh'
+  if (product !== 'dsh' && product !== 'jingwork') throw new Error('desktop auto-update: DSH_DESKTOP_PRODUCT must be "dsh" or "jingwork"')
   let origin = deployment.fixedOrigin
+  if (environment === 'production' && product === 'jingwork') {
+    const originEnvName = deployment.originEnvName
+    if (originEnvName === undefined) throw new Error('desktop auto-update: selected product has no production origin setting')
+    origin = httpsOrigin(requiredEnvironmentValue(env, originEnvName), originEnvName)
+  }
   if (origin === undefined) {
     const { originEnvName } = deployment
     if (originEnvName === undefined) throw new Error('desktop auto-update: selected deployment has no origin')
     origin = httpsOrigin(requiredEnvironmentValue(env, originEnvName), originEnvName)
   }
-  let releasePrefix = 'dsh-desk'
+  let releasePrefix = product === 'jingwork' ? 'jingwork' : 'dsh-desk'
   if (environment === 'test') {
     const releaseId = requiredEnvironmentValue(env, 'DOWNLOAD_TEST_RELEASE_ID')
     if (!/^[a-f0-9]{32}$/u.test(releaseId)) {

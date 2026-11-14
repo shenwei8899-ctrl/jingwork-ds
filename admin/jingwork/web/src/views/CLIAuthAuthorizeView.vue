@@ -6,17 +6,13 @@
         <span>JingWork</span>
       </header>
       <h1 id="authorization-title">{{ approved ? '登录已确认' : '确认设备登录' }}</h1>
-      <p class="intro">{{ approved ? '设备已获授权，可以返回客户端继续工作' : '请核对授权码，确认这是你本人发起的登录' }}</p>
+      <p class="intro">{{ approved ? '设备已获授权，可以返回客户端继续工作' : '请确认这是你本人发起的设备登录' }}</p>
 
       <a-spin v-if="loading" class="loading" tip="正在读取设备授权…" />
       <template v-else>
         <a-alert v-if="errorMessage" class="authorization-error" type="error" :message="errorMessage" show-icon />
         <a-result v-if="approved" status="success" title="授权成功" sub-title="可以关闭此页面并返回 JingWork" />
         <div v-else-if="session" class="session-summary">
-          <div class="code-block">
-            <span class="code-label">设备授权码</span>
-            <strong>{{ userCode }}</strong>
-          </div>
           <dl>
             <div><dt>应用名称</dt><dd>{{ applicationName }}</dd></div>
             <div><dt>授权状态</dt><dd><span class="status">{{ canApprove ? statusLabel : '已失效' }}</span></dd></div>
@@ -129,18 +125,6 @@ h1 { margin: 0; font-size: 26px; line-height: 1.4; font-weight: 500; }
 .intro { margin: 10px 0 28px; color: var(--color-text-secondary); font-size: 14px; line-height: 1.7; }
 .loading { display: block; padding: 36px 0; }
 .session-summary { display: flex; flex-direction: column; gap: 24px; }
-.code-block {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  padding: 24px 16px;
-  border: 1px solid var(--gray-150);
-  border-radius: 12px;
-  background: var(--gray-50);
-  .code-label { color: var(--color-text-secondary); font-size: 12px; }
-  strong { color: var(--color-text); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 28px; font-weight: 500; letter-spacing: 2px; }
-}
 dl {
   display: grid;
   gap: 16px;
@@ -159,6 +143,5 @@ dl {
   .cli-auth-view { padding: 24px 16px; }
   .cli-auth-panel { padding: 28px 24px; }
   h1 { font-size: 24px; }
-  .code-block strong { font-size: 26px; }
 }
 </style>

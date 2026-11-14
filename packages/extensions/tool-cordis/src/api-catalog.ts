@@ -3118,6 +3118,11 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
         throws: ['{SessionPersistenceNotFoundError} when the session does not exist.', '{SessionAlreadyOwnedError} for `write` when ownership is taken.'],
       },
       {
+        signature: 'async delete(id: SessionId): Promise<void>',
+        description: 'Permanently remove one stored Session and all of its format generations. The backend refuses while a writer owns the Session; callers must first stop and release its live Agent. Missing ids resolve without a write.',
+        parameters: [{ name: 'id', description: 'the stored Session to remove.' }],
+      },
+      {
         signature: 'abstract flush(): Promise<void>',
         description: 'Flush every active write handle owned by this service instance in one durability barrier: each handle\'s routed live events drain durably and its session materializes, exactly as that handle\'s own `SessionHandle.flush` would. Read handles buffer nothing and are untouched. A handle closed concurrently counts as flushed — close itself drains durably.',
         parameters: [],
@@ -4779,6 +4784,12 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
         returns: 'deletion confirmation.',
       },
       {
+        signature: '@Remote(\'deleteSession\') deleteSession(request: WorkspaceDeleteSessionRequest): Promise<WorkspaceDeleteSessionValue>',
+        description: 'Permanently delete one inactive Session and clear its Workspace references.',
+        parameters: [{ name: 'request', description: 'Session identity to remove.' }],
+        returns: 'deletion confirmation.',
+      },
+      {
         signature: '@Remote(\'insertBefore\') insertBefore(request: WorkspaceInsertBeforeRequest): Promise<WorkspaceOrderValue>',
         description: 'Move one Workspace within the registry display order.',
         parameters: [{ name: 'request', description: 'moved Workspace and optional anchor.' }],
@@ -4919,6 +4930,11 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
         description: 'Unarchive one session durably by dropping it from the registry-global archive set; the accounting slot was never touched, so the session returns to its recorded position. Unarchiving runs no session-existence check because removing an id cannot introduce an unknown one, so an entry whose session is gone still resolves. An id that is not archived resolves without writing.',
         parameters: [{ name: 'sessionId', description: 'The session to unarchive.' }],
         returns: 'resolution after durability.',
+      },
+      {
+        signature: 'deleteSession(sessionId: SessionId): Promise<void>',
+        description: 'Permanently delete one Session after refusing running work and releasing Host-owned resources. Workspace membership, archive state, and pin state are removed after the per-Session persistence artifact is deleted.',
+        parameters: [{ name: 'sessionId', description: 'Session identity to delete.' }],
       },
       {
         signature: 'pinSession(sessionId: SessionId): Promise<void>',
@@ -5696,6 +5712,30 @@ export const EVENT_API: readonly EventApiEntry[] = [
     summary: 'Admit optional follow-up work after durable archival and any stop requests.',
     description: 'Admit optional follow-up work after durable archival and any stop requests. Dispatched inside the registry\'s write queue: a listener registers its work and returns, and runs the work and any unbounded I/O afterwards. Listener failures are logged without undoing archival. Listeners own and drain their background work.',
     parameters: [{ name: 'request', description: 'newly archived Session; repeated archive requests do not dispatch.' }],
+  },
+  {
+    name: 'workspace/session-delete-aborted',
+    mode: 'emit',
+    signature: '\'workspace/session-delete-aborted\'(request: SessionActivityRequest): Promise<void> | void',
+    summary: 'Clear deletion admission after a failed deletion attempt.',
+    description: 'Clear deletion admission after a failed deletion attempt.',
+    parameters: [{ name: 'request', description: 'Session whose deletion failed.' }],
+  },
+  {
+    name: 'workspace/session-deleted',
+    mode: 'emit',
+    signature: '\'workspace/session-deleted\'(request: SessionActivityRequest): Promise<void> | void',
+    summary: 'Publish that persistence removal completed for one Session.',
+    description: 'Publish that persistence removal completed for one Session.',
+    parameters: [{ name: 'request', description: 'Session whose log was deleted.' }],
+  },
+  {
+    name: 'workspace/session-deleting',
+    mode: 'parallel',
+    signature: '\'workspace/session-deleting\'(request: SessionActivityRequest): Promise<void> | void',
+    summary: 'Release Host-owned live resources before the persistence backend removes a Session.',
+    description: 'Release Host-owned live resources before the persistence backend removes a Session.',
+    parameters: [{ name: 'request', description: 'Session about to be deleted.' }],
   },
   {
     name: 'workspace/session-stop',
@@ -10728,6 +10768,14 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'WorkspaceDeleteRequest',
     declaration: 'export interface WorkspaceDeleteRequest {\n    readonly workspaceId: WorkspaceId;\n}',
+  },
+  {
+    name: 'WorkspaceDeleteSessionRequest',
+    declaration: 'export interface WorkspaceDeleteSessionRequest {\n    readonly sessionId: SessionId;\n}',
+  },
+  {
+    name: 'WorkspaceDeleteSessionValue',
+    declaration: 'export interface WorkspaceDeleteSessionValue {\n    readonly deleted: true;\n}',
   },
   {
     name: 'WorkspaceDeleteValue',

@@ -1,5 +1,6 @@
 .root {
   position: relative;
+  flex: 1 1 auto;
   min-width: 0;
 }
 
@@ -10,13 +11,11 @@
   anchor-name: var(--dsh-model-anchor);
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 4px;
+  width: 100%;
   min-width: 0;
-  /* Preferred width: the composer measures this expanded seat against the
-     space the other controls leave, so the cap must not shrink with the row.
-     A row-relative cap would let the measured demand fall with the available
-     width, and the expanded text would then always fit. */
-  max-width: 360px;
+  max-width: none;
   height: 28px;
   padding: 0 4px 0 8px;
   border: none;
@@ -28,6 +27,7 @@
   font-size: 13px;
   line-height: 20px;
   font-weight: 400;
+  text-align: left;
   cursor: pointer;
 }
 
@@ -47,6 +47,9 @@
 }
 
 .triggerLabel {
+  order: 1;
+  flex: 0 1 auto;
+  max-width: 100%;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -58,6 +61,7 @@
    all deficit first — it ellipsizes away to nothing before the model name
    loses a single pixel, and the chevron stays snug throughout. */
 .triggerEffort {
+  order: 2;
   flex-shrink: 1000;
   min-width: 0;
   overflow: hidden;
@@ -66,23 +70,24 @@
   color: var(--dsw-alias-label-caption);
 }
 
-/* The Models glyph replaces the text when the composer row cannot fit it. */
+/* Keep the model glyph at the selector's trailing edge beside its visible name. */
 .triggerIcon {
+  order: 0;
   display: var(--dsh-composer-model-icon-display, none);
   flex: 0 0 auto;
 }
 
-/* The composer measures expanded row demand and owns these display variables.
-   Outside a composer, the trigger retains its text. */
-.triggerLabel,
-.triggerEffort {
-  display: var(--dsh-composer-model-text-display, block);
-}
-
 .chevron {
+  order: 3;
   flex: 0 0 auto;
   color: var(--dsw-alias-label-caption);
   transition: transform 120ms ease;
+}
+
+/* Outside a composer, the trigger retains its text. */
+.triggerLabel,
+.triggerEffort {
+  display: var(--dsh-composer-model-text-display, block);
 }
 
 .chevronOpen {

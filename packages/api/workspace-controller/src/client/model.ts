@@ -11,6 +11,8 @@ import type {
   WorkspaceCreateRequest,
   WorkspaceCreateValue,
   WorkspaceDeleteValue,
+  WorkspaceDeleteSessionValue,
+  WorkspaceDeleteSessionRequest,
   WorkspaceInsertSessionBeforeRequest,
   WorkspaceOrderValue,
   WorkspacePinSessionRequest,
@@ -133,6 +135,15 @@ export class ClientWorkspaceModel implements WorkspaceFollowSink {
     const result = await this.remote.delete({ workspaceId })
     if (result.ok) this.remove(workspaceId, true)
     return result
+  }
+
+  /**
+   * Permanently delete one Session through the Host registry.
+   * @param sessionId - inactive Session to remove.
+   * @returns the Host's deletion result or a Remote failure.
+   */
+  async deleteSession(sessionId: WorkspaceDeleteSessionRequest['sessionId']): Promise<RemoteResult<WorkspaceDeleteSessionValue>> {
+    return this.remote.deleteSession({ sessionId })
   }
 
   /**

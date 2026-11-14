@@ -430,12 +430,30 @@ export interface SessionIdInjected {
   copySessionId: (sessionId: SessionId) => Promise<void>
 }
 
+/** Open the permanent-delete confirmation for one captured Session. */
+export interface DeleteSessionInjected {
+  requestSessionDelete: (sessionId: SessionId, displayTitle: string) => void
+}
+
 /** A Session rename the rename action asked for; the dialog entry opens on it. */
 export interface SessionRenameTarget {
   /** Session to rename. */
   sessionId: SessionId
   /** Title the dialog seeds its draft from. */
   currentTitle: string
+}
+
+/** Session identity and display title captured by the delete menu action. */
+export interface SessionDeleteTarget {
+  sessionId: SessionId
+  displayTitle: string
+}
+
+/** Delete dialog share: pending request, settlement, and Host deletion hop. */
+export interface SessionDeleteDialogInjected {
+  hooks: { deleteRequest: HostObservable<SessionDeleteTarget | null> }
+  settleSessionDelete: () => void
+  deleteSession: (sessionId: SessionId) => Promise<void>
 }
 
 /** Rename dialog share: the pending request, its settlement, and the rename hop the dialog confirms with. */
@@ -483,6 +501,13 @@ export type SessionArchiveConfirmProps =
   & PropsLocale<'workspace'>
   & Omit<SessionArchiveConfirmInjected, 'hooks'>
   & PropsHooks<SessionArchiveConfirmInjected['hooks']>
+
+/** Props of the permanent Session-delete confirmation in `shell.overlay`. */
+export type SessionDeleteDialogProps =
+  PropsRuntime<'shell.overlay'>
+  & PropsLocale<'workspace'>
+  & Omit<SessionDeleteDialogInjected, 'hooks'>
+  & PropsHooks<SessionDeleteDialogInjected['hooks']>
 
 /** Props of the existing overlay's keyed notice dispatcher. */
 export type RowToastProps =

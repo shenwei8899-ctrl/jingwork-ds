@@ -1,7 +1,7 @@
 {
   "name": "@deepseek-ai/dsh-knowledge",
   "description": "Literal reference material in an agent's scoped system prompt",
-  "version": "0.2.2-alpha.2",
+  "version": "0.2.2-rc.2",
   "publishConfig": {
     "access": "public"
   },

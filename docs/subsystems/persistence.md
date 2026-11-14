@@ -386,6 +386,14 @@ abstract create(header: SessionHeader, options?: SessionPersistenceCreateOptions
 abstract open(id: SessionId, access: SessionAccess, options?: SessionPersistenceOpenOptions): Promise<SessionHandle>
 
 /**
+ * Permanently remove one stored Session and all of its format generations.
+ * The backend refuses while a writer owns the Session; callers must first
+ * stop and release its live Agent. Missing ids resolve without a write.
+ * @param id - the stored Session to remove.
+ */
+async delete(id: SessionId): Promise<void>
+
+/**
  * Flush every active write handle owned by this service instance in one
  * durability barrier: each handle's routed live events drain durably and
  * its session materializes, exactly as that handle's own

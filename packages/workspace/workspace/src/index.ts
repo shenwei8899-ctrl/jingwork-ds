@@ -40,7 +40,7 @@ export function WorkspaceId(id: string): WorkspaceId {
 }
 
 /**
- * An archiveSession or pinSession request named a session neither live nor in
+ * An archive, pin, or delete request named a session neither live nor in
  * session persistence — a definite miss only; storage faults propagate as
  * themselves.
  */
@@ -49,14 +49,14 @@ export class WorkspaceUnknownSessionError extends Error {
    * @param sessionId - The unknown session id.
    * @param verb - The registry operation that named the session.
    */
-  constructor(readonly sessionId: SessionId, verb: 'archive' | 'pin') {
+  constructor(readonly sessionId: SessionId, verb: 'archive' | 'pin' | 'delete') {
     super(`cannot ${verb} session '${sessionId}': live sessions and session persistence hold no such session`)
     this.name = 'WorkspaceUnknownSessionError'
   }
 }
 
 /**
- * An archiveSession request named a session that at least one
+ * An archive or delete request named a session that at least one
  * `workspace/session-activity` listener reported active. Nothing was written;
  * `activity` names what must stop before the session can be archived.
  */
@@ -65,8 +65,12 @@ export class WorkspaceActiveSessionError extends Error {
    * @param sessionId - The active session id.
    * @param activity - The reported activity, in listener order.
    */
-  constructor(readonly sessionId: SessionId, readonly activity: readonly SessionActivity[]) {
-    super(`cannot archive session '${sessionId}': the session is active (${activity.map(entry => entry.kind).join(', ')})`)
+  constructor(
+    readonly sessionId: SessionId,
+    readonly activity: readonly SessionActivity[],
+    verb: 'archive' | 'delete' = 'archive',
+  ) {
+    super(`cannot ${verb} session '${sessionId}': the session is active (${activity.map(entry => entry.kind).join(', ')})`)
     this.name = 'WorkspaceActiveSessionError'
   }
 }
@@ -161,6 +165,24 @@ declare module '@deepseek-ai/cordis' {
      * @mode parallel
      */
     'workspace/session-unarchiving'(request: SessionActivityRequest): Promise<void> | void
+    /**
+     * Release Host-owned live resources before the persistence backend removes a Session.
+     * @param request - Session about to be deleted.
+     * @mode parallel
+     */
+    'workspace/session-deleting'(request: SessionActivityRequest): Promise<void> | void
+    /**
+     * Publish that persistence removal completed for one Session.
+     * @param request - Session whose log was deleted.
+     * @mode emit
+     */
+    'workspace/session-deleted'(request: SessionActivityRequest): Promise<void> | void
+    /**
+     * Clear deletion admission after a failed deletion attempt.
+     * @param request - Session whose deletion failed.
+     * @mode emit
+     */
+    'workspace/session-delete-aborted'(request: SessionActivityRequest): Promise<void> | void
   }
 }
 
@@ -428,6 +450,48 @@ export class WorkspaceRegistry extends Service {
         ...state,
         archivedSessionIds: state.archivedSessionIds.filter(id => id !== sessionId),
       })
+    })
+  }
+
+  /**
+   * Permanently delete one Session after refusing running work and releasing
+   * Host-owned resources. Workspace membership, archive state, and pin state
+   * are removed after the per-Session persistence artifact is deleted.
+   * @param sessionId - Session identity to delete.
+   */
+  deleteSession(sessionId: SessionId): Promise<void> {
+    return this.enqueueOperation(async () => {
+      if (!(await this.sessionKnown(sessionId))) throw new WorkspaceUnknownSessionError(sessionId, 'delete')
+      const activity = await this.ctx.waterfall(
+        'workspace/session-activity', { sessionId }, () => Promise.resolve([]),
+      )
+      if (activity.length > 0) throw new WorkspaceActiveSessionError(sessionId, activity, 'delete')
+      try {
+        await this.ctx.parallel('workspace/session-deleting', { sessionId })
+        await this.ctx.sessionPersistence.delete(sessionId)
+      } catch (error: unknown) {
+        this.ctx.emit('workspace/session-delete-aborted', { sessionId })
+        throw error
+      }
+      this.ctx.emit('workspace/session-deleted', { sessionId })
+      const state = this.requireState()
+      const cleanup = await Promise.allSettled([
+        ...[...this.entities.values()].map(entity => entity.detachSession(sessionId)),
+        this.setState({
+          ...state,
+          archivedSessionIds: state.archivedSessionIds.filter(id => id !== sessionId),
+          pinnedSessionIds: state.pinnedSessionIds.filter(id => id !== sessionId),
+        }),
+      ])
+      this.headers.delete(sessionId)
+      this.sessionPaths.delete(sessionId)
+      this.missingSessionPaths.delete(sessionId)
+      this.invalidSessionPaths.delete(sessionId)
+      for (const result of cleanup) {
+        if (result.status === 'rejected') {
+          this.ctx.logger.error(`workspace: Session "${sessionId}" was deleted, but a registry reference could not be cleared: ${String(result.reason)}`)
+        }
+      }
     })
   }
 

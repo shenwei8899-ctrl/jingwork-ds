@@ -1,9 +1,9 @@
-/** Content-sized model collapse for the composer's two control groups. */
+/** Measure the composer's flex lines for a compact model selector when needed. */
 
 /**
- * Collapse the model text only when the expanded controls cannot share a line.
- * The model seat consumes the row's inherited display variables; wrapping remains
- * available when even the icon cannot fit. Each notification is measured synchronously.
+ * Collapse the model text only when one flex line overflows its available width.
+ * Wrapped lines are measured independently, so an otherwise roomy model seat keeps
+ * its name visible. Each notification is measured synchronously.
  * @param row - Composer control row with its leading and trailing groups.
  * @returns Disconnect the layout observers and font listener.
  */
@@ -14,11 +14,19 @@ export function observeControlRow(row: HTMLElement): () => void {
     const style = getComputedStyle(row)
     const available = row.getBoundingClientRect().width
       - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight)
-    const widths = Array.from(row.children, child => child.getBoundingClientRect().width)
-      .filter(width => width > 0)
-    const needed = widths.reduce((sum, width) => sum + width, 0)
-      + Math.max(0, widths.length - 1) * parseFloat(style.columnGap)
-    row.toggleAttribute('data-model-compact', needed > available)
+    const lines = new Map<number, number[]>()
+    for (const child of Array.from(row.children)) {
+      const { width, top } = child.getBoundingClientRect()
+      if (width <= 0) continue
+      const line = lines.get(top) ?? []
+      line.push(width)
+      lines.set(top, line)
+    }
+    const gap = parseFloat(style.columnGap)
+    const exceedsLine = [...lines.values()].some(widths =>
+      widths.reduce((sum, width) => sum + width, 0)
+      + Math.max(0, widths.length - 1) * gap > available)
+    row.toggleAttribute('data-model-compact', exceedsLine)
   }
   const resize = new ResizeObserver(measure)
   resize.observe(row)

@@ -458,6 +458,15 @@ export class JsonlBackendTracker {
   }
 
   /**
+   * Whether this process still has an open read or write handle for one id.
+   * @param id - Session id to check.
+   * @returns Whether the Session has an open handle.
+   */
+  hasOpenSession(id: SessionId): boolean {
+    return [...this.openHandles].some(handle => handle.id === id)
+  }
+
+  /**
    * Iterate the pending sessions for listing.
    * @returns the pending entries, keyed by session id.
    */

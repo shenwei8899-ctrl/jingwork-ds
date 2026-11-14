@@ -23,7 +23,7 @@ import pLimit, { type LimitFunction } from 'p-limit'
 import {
   SessionPersistence, SessionPersistenceRevision, SessionFormatUnsupportedError,
   SessionPersistenceCorruptionError,
-  SessionAlreadyExistsError, SessionPersistenceNotFoundError,
+  SessionAlreadyExistsError, SessionAlreadyOwnedError, SessionPersistenceNotFoundError,
   assertStoredId, materializeCreateHeader, sessionFormatVersionRefusal, validateStoredEvents,
   type SessionAccess, type SessionHandle,
   type SessionHandleReadResult,
@@ -33,7 +33,7 @@ import {
   type SessionPersistenceRevision as PersistenceRevision,
 } from '@deepseek-ai/dsh-session-persistence'
 import { JsonlBackendTracker, JsonlSessionHandle, type StorageHandleState } from './storage.ts'
-import { SessionWriteLease } from './lease.ts'
+import { LEASE_FILENAME, SessionWriteLease } from './lease.ts'
 import { SESSION_FORMAT_VERSION, SessionId as makeSessionId, SessionLogOffset } from '@deepseek-ai/dsh-session'
 import type { SessionEvent, SessionId, SessionHeader, SessionLogOffset as SessionLogOffsetType } from '@deepseek-ai/dsh-session'
 import {
@@ -461,6 +461,39 @@ class JsonlSessionPersistence extends SessionPersistence {
         throw new AggregateError([failure, releaseFailure], `session "${id}": write open failed and its lock release failed`)
       }
       throw failure
+    }
+  }
+
+  /**
+   * Permanently remove every committed format generation for one Session.
+   * @param id - stored Session identity.
+   */
+  override async delete(id: SessionId): Promise<void> {
+    await this.ensureRootEncoding()
+    if (this.tracker.hasOpenSession(id) || this.tracker.hasPending(id)) {
+      throw new SessionAlreadyOwnedError(id)
+    }
+    const selected = await this.findLog(id)
+    if (selected === undefined) return
+    const directory = dirname(selected.sourcePath)
+    const lease = await this.acquireLease(id, undefined, directory)
+    try {
+      if (this.tracker.hasOpenSession(id) || this.tracker.hasPending(id)) {
+        throw new SessionAlreadyOwnedError(id)
+      }
+      const preparation = this.migrationPreparations.get(id)
+      if (preparation !== undefined) {
+        preparation.controller.abort(new Error(`session "${id}" was deleted`))
+        await Promise.allSettled([preparation.promise])
+      }
+      for (const entry of await readdir(directory)) {
+        if (entry === LEASE_FILENAME) continue
+        await rm(join(directory, entry), { recursive: true, force: true })
+      }
+      this.coldLogMemo.delete(id)
+      this.migrationPreparations.delete(id)
+    } finally {
+      await lease.release()
     }
   }
 

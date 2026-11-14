@@ -222,6 +222,8 @@ class FakeWorkspaces implements IWorkspaces {
     return this.onUnarchive(sessionId)
   }
 
+  async deleteSession(_sessionId: SessionId): Promise<void> {}
+
   pinSession(sessionId: SessionId): Promise<void> {
     this.pinCalls.push(sessionId)
     return this.onPin(sessionId)

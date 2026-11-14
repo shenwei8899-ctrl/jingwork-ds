@@ -1,10 +1,10 @@
 /**
- * Render the Windows tray icon with an enlarged whale from `resources/icon-windows.svg`.
+ * Render the Windows tray icons for DeepSeek Harness and JingWork.
  *
  * The tray shows the icon at 16 logical pixels, so Windows picks one of the
  * bundled bitmaps by display scale. Each size is rasterized from the vector
  * source separately instead of downscaling one large bitmap, which keeps edges
- * crisp at every scale. The committed `resources/tray-windows.ico` is the output;
+ * crisp at every scale. The committed ICO files are the outputs;
  * rerun `pnpm run render:tray-icon` in `apps/desktop` after changing the vector source.
  */
 
@@ -16,10 +16,16 @@ import sharp from 'sharp'
 /** Bitmap edge lengths bundled in the tray icon: 16 px at 100 % through 400 % display scale. */
 export const TRAY_ICON_SIZES = [16, 20, 24, 32, 40, 48, 64] as const
 
-/** Vector source and committed output of the tray icon. */
+/** Vector source and committed output of the DeepSeek Harness tray icon. */
 export const TRAY_ICON_PATHS = {
   source: fileURLToPath(new URL('../resources/icon-windows.svg', import.meta.url)),
   output: fileURLToPath(new URL('../resources/tray-windows.ico', import.meta.url)),
+} as const
+
+/** JingWork artwork and committed Windows tray icon. */
+export const JINGWORK_TRAY_ICON_PATHS = {
+  source: fileURLToPath(new URL('../resources/icon-jingwork.png', import.meta.url)),
+  output: fileURLToPath(new URL('../resources/tray-jingwork.ico', import.meta.url)),
 } as const
 
 /** Coordinate space of the vector source; sharp's SVG density is scaled against it. */
@@ -109,6 +115,19 @@ export async function renderTrayIconEntries(svg: Buffer, sizes: readonly number[
   })))
 }
 
+/**
+ * Rasterize the square JingWork application artwork at each tray size.
+ * @param png - JingWork's square application icon.
+ * @param sizes - Bitmap edges to render.
+ * @returns PNG entries in the given order.
+ */
+export async function renderJingworkTrayIconEntries(png: Buffer, sizes: readonly number[] = TRAY_ICON_SIZES): Promise<IcoEntry[]> {
+  return Promise.all(sizes.map(async size => ({
+    size,
+    png: await sharp(png).resize(size, size).png().toBuffer(),
+  })))
+}
+
 function pngDimensions(png: Buffer): { width: number; height: number } {
   if (png.length < 24 || !png.subarray(0, PNG_SIGNATURE.length).equals(PNG_SIGNATURE)) throw new Error('tray icon: bitmap is not a PNG stream')
   return { width: png.readUInt32BE(16), height: png.readUInt32BE(20) }
@@ -118,6 +137,9 @@ async function main(): Promise<void> {
   const entries = await renderTrayIconEntries(await readFile(TRAY_ICON_PATHS.source))
   await writeFile(TRAY_ICON_PATHS.output, packIco(entries))
   console.info(`tray icon: wrote ${TRAY_ICON_PATHS.output} with ${entries.map(entry => String(entry.size)).join(', ')} px bitmaps`)
+  const jingworkEntries = await renderJingworkTrayIconEntries(await readFile(JINGWORK_TRAY_ICON_PATHS.source))
+  await writeFile(JINGWORK_TRAY_ICON_PATHS.output, packIco(jingworkEntries))
+  console.info(`tray icon: wrote ${JINGWORK_TRAY_ICON_PATHS.output} with ${jingworkEntries.map(entry => String(entry.size)).join(', ')} px bitmaps`)
 }
 
 if (process.argv[1] !== undefined && import.meta.filename === resolve(process.argv[1])) await main()

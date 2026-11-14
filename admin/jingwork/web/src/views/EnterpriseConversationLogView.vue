@@ -475,6 +475,9 @@ onBeforeUnmount(() => {
   margin-bottom: 26px;
   align-items: flex-start;
 }
+.chat-message.human {
+  flex-direction: row-reverse;
+}
 .message-avatar {
   flex-shrink: 0;
   display: grid;
@@ -487,8 +490,9 @@ onBeforeUnmount(() => {
   color: var(--main-color);
 }
 .message-body {
-  flex: 1;
+  flex: 0 1 auto;
   min-width: 0;
+  max-width: min(85%, 960px);
 }
 .message-caption {
   display: flex;
@@ -501,6 +505,9 @@ onBeforeUnmount(() => {
     font-size: 11px;
     color: var(--color-text-tertiary);
   }
+}
+.human .message-caption {
+  justify-content: flex-end;
 }
 .message-text {
   font-size: 14px;
