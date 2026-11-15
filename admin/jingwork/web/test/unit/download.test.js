@@ -6,14 +6,14 @@ import { desktopRelease, otherPlatforms } from '../../src/content/downloads.js'
 import { isReleaseAvailable } from '../../src/apis/download_api.js'
 
 test('下载元数据使用已验证的内网版安装包', () => {
-  assert.equal(desktopRelease.bytes, 275119834)
+  assert.equal(desktopRelease.bytes, 282849302)
   assert.ok(desktopRelease.filename.startsWith('JingWork-'))
   assert.equal(desktopRelease.url, `/downloads/releases/${desktopRelease.version}/${desktopRelease.filename}`)
   assert.equal(
     desktopRelease.sha256,
-    '8815beb6a0004b187ca4c1d96256d53253845a888ef2bb90a5f59f69ab4681ec'
+    '67919281687bb99c213669f29106036d622d5d2bf6b888fd53f325f405aa9a5d'
   )
-  assert.equal(desktopRelease.version, '0.2.2-alpha.2.20261111.3')
+  assert.equal(desktopRelease.version, '0.2.2-rc.2')
   assert.equal(desktopRelease.status, '内网版')
 })
 

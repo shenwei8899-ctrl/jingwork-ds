@@ -4,17 +4,17 @@ export const desktopRelease = {
   "name": "macOS Apple Silicon",
   "description": "macOS 13.0 及以上 · Apple M 系列芯片",
   "icon": appPath("/downloads/apple.svg"),
-  "filename": "JingWork-0.2.2-alpha.2.20261111.3-mac-arm64.dmg",
-  "url": appPath("/downloads/releases/0.2.2-alpha.2.20261111.3/JingWork-0.2.2-alpha.2.20261111.3-mac-arm64.dmg"),
-  "bytes": 275119834,
-  "size": "262 MiB",
-  "sha256": "8815beb6a0004b187ca4c1d96256d53253845a888ef2bb90a5f59f69ab4681ec",
+  "filename": "JingWork-0.2.2-rc.2-mac-arm64.dmg",
+  "url": appPath("/downloads/releases/0.2.2-rc.2/JingWork-0.2.2-rc.2-mac-arm64.dmg"),
+  "bytes": 282849302,
+  "size": "270 MiB",
+  "sha256": "67919281687bb99c213669f29106036d622d5d2bf6b888fd53f325f405aa9a5d",
   "product": "JingWork",
-  "version": "0.2.2-alpha.2.20261111.3",
-  "date": "2026-11-11",
+  "version": "0.2.2-rc.2",
+  "date": "2026-11-15",
   "platform": "macOS Apple Silicon",
   "system": "macOS 13.0 及以上 · Apple M 系列芯片",
-  "signing": "未经 Apple 公证",
+  "signing": "安装包未签名；macOS 未经 Apple 公证",
   "status": "内网版"
 }
 
@@ -23,21 +23,21 @@ export const otherPlatforms = [
   "name": "macOS Intel",
   "description": "Intel 芯片 Mac",
   "icon": appPath("/downloads/apple.svg"),
-  "filename": "JingWork-0.2.2-alpha.2.20261111.3-mac-x64.dmg",
-  "url": appPath("/downloads/releases/0.2.2-alpha.2.20261111.3/JingWork-0.2.2-alpha.2.20261111.3-mac-x64.dmg"),
-  "bytes": 297993767,
-  "size": "284 MiB",
-  "sha256": "cbb66632b59e741d0cc4e69ef19503e98a7b913e908fb59626274082bb73d348"
+  "filename": "JingWork-0.2.2-rc.2-mac-x64.dmg",
+  "url": appPath("/downloads/releases/0.2.2-rc.2/JingWork-0.2.2-rc.2-mac-x64.dmg"),
+  "bytes": 305318998,
+  "size": "291 MiB",
+  "sha256": "3ff9acef7bc817a1c234f7f6c959a64cd9ff238fea7a47400bc3b8f17160dead"
 },
 {
   "name": "Windows x64",
   "description": "Intel / AMD 处理器",
   "icon": appPath("/downloads/windows.svg"),
-  "filename": "JingWork-0.2.2-alpha.2.20261111.3-windows-x64.exe",
-  "url": appPath("/downloads/releases/0.2.2-alpha.2.20261111.3/JingWork-0.2.2-alpha.2.20261111.3-windows-x64.exe"),
-  "bytes": 321823717,
-  "size": "307 MiB",
-  "sha256": "e7eda78a1de82027f408829184f37feb37587bbbd91d40eda8733637dea2a0ca"
+  "filename": "JingWork-0.2.2-rc.2-windows-x64.exe",
+  "url": appPath("/downloads/releases/0.2.2-rc.2/JingWork-0.2.2-rc.2-windows-x64.exe"),
+  "bytes": 328996711,
+  "size": "314 MiB",
+  "sha256": "7f8381faf81df5cc8cd1c14cd086359ce020089762a654c65ceca506f8ce0184"
 },
 {
   "name": "Windows ARM64",
