@@ -1,0 +1,61 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write admin/jingwork/README.md
+/yuxi:
+  en: 20a8d11ce354b747
+  zh: 57b97fc5a1baf79f
+/yuxi/what-yuxi-can-do:
+  en: f50e42dc27552b54
+  zh: 35e8b5ea530dc887
+/yuxi/tech-stack:
+  en: f69ebb471c9972e9
+  zh: 2b92af4fe79be969
+/yuxi/sponsors:
+  en: 8f79a41558facd31
+  zh: d2d024eb49dc8a92
+/yuxi/quick-start:
+  en: 1985dd2230f19f78
+  zh: 57e34eafe140222f
+/yuxi/quick-start/prerequisites:
+  en: 4cd759649dfa9abd
+  zh: a939d9c5a58910f0
+/yuxi/quick-start/1-get-the-code-and-initialize:
+  en: 46a06b552cef8557
+  zh: 2b91f82f94972842
+/yuxi/quick-start/2-start-the-development-environment:
+  en: 4238cb9cca3ac372
+  zh: 662d331e07cff1f2
+/yuxi/documentation:
+  en: 08d36c6dba3438cf
+  zh: 143994bade040f29
+/yuxi/feature-showcase:
+  en: 20d4acaeb22ebc76
+  zh: b4ea370d82093877
+/yuxi/feature-showcase/01-unified-agent-workspace:
+  en: 89072fb57ee21911
+  zh: 59296dfc5bb79ad9
+/yuxi/feature-showcase/02-knowledge-bases-and-rag:
+  en: b2f1a2bd227100e3
+  zh: dc6898b003975ba1
+/yuxi/feature-showcase/03-knowledge-graphs-and-mind-maps:
+  en: 7b70c77cf47c0de7
+  zh: e2ef44c743b8889d
+/yuxi/feature-showcase/04-multi-agent-execution-and-extensions:
+  en: ae2e31f3cbe4c37c
+  zh: 7336c0bce0d1fcee
+/yuxi/feature-showcase/05-sandbox-workspace-and-file-artifacts:
+  en: 361121b3d176f76d
+  zh: 96bd6d671ca469cf
+/yuxi/feature-showcase/06-team-governance-and-operations:
+  en: 7cb93b6d034ca91e
+  zh: 5f707a2e94314581
+/yuxi/contributing:
+  en: dedaa8d08f46888e
+  zh: 40598df479a13a8f
+/yuxi/license:
+  en: 4dfc416793d2ad22
+  zh: 8138c7dbd6551e31
+/yuxi/star-history:
+  en: 60be7f4b8a614ce2
+  zh: 36c32194939b5c69

@@ -1,46 +1,56 @@
-![Yuxi：可私有部署的多租户知识智能体平台](https://xerrors.oss-cn-shanghai.aliyuncs.com/posts/2026/08/20260818-151118-mac-1787037059154-8c08f48c.png)
+# Yuxi
 
-**Yuxi = Cloud Agents + Knowledge RAG**，Yuxi 是一个可私有部署的多租户知识智能体平台。自定义智能体，权限可控，沉淀企业轨迹。它把知识库检索、知识图谱、LangGraph 多智能体编排、MCP/Skills、沙盒工具和权限管理放进同一个工作区。让每个用户都拥有一个云端 Codex。
+English | [中文](README.zh.md)
 
-[项目主页](https://xerrors.github.io/Yuxi/) · [快速开始](https://xerrors.github.io/Yuxi/intro/quick-start) · [演示视频](https://www.bilibili.com/video/BV1erE26iEgv/) · [版本记录](https://github.com/xerrors/Yuxi/releases) · [English](README.en.md)
+![Yuxi: a self-hosted, multi-tenant knowledge agent platform](https://xerrors.oss-cn-shanghai.aliyuncs.com/posts/2026/08/20260818-151118-mac-1787037059154-8c08f48c.png)
 
+Yuxi is a self-hosted, multi-tenant knowledge agent platform. It brings knowledge base retrieval, knowledge graphs, LangGraph multi-agent orchestration, MCP/Skills, sandbox tools, and access control into one workspace.
 
 [![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=ffffff)](https://github.com/xerrors/Yuxi/blob/main/docker-compose.yml)
 [![Release](https://img.shields.io/github/v/release/xerrors/Yuxi?color=046A82)](https://github.com/xerrors/Yuxi/releases/latest)
 [![License](https://img.shields.io/github/license/xerrors/Yuxi.svg?logo=github)](https://github.com/xerrors/Yuxi/blob/main/LICENSE)
 [![DeepWiki](https://img.shields.io/badge/DeepWiki-blue.svg)](https://deepwiki.com/xerrors/Yuxi)
-[![Bilibili](https://img.shields.io/badge/知识库演示-00A1D6?logo=bilibili&logoColor=fff)](https://www.bilibili.com/video/BV1erE26iEgv/)
+[![Bilibili](https://img.shields.io/badge/Knowledge_Base_Demo-00A1D6?logo=bilibili&logoColor=fff)](https://www.bilibili.com/video/BV1erE26iEgv/)
 
 <a href="https://trendshift.io/repositories/24335" target="_blank"><img src="https://trendshift.io/api/badge/repositories/24335" alt="xerrors%2FYuxi | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
 
-## Yuxi 能做什么
+[Project home](https://xerrors.github.io/Yuxi/) · [Quick start](https://xerrors.github.io/Yuxi/intro/quick-start) · [Demo video](https://www.bilibili.com/video/BV1erE26iEgv/) · [Releases](https://github.com/xerrors/Yuxi/releases)
 
-Yuxi 是面向需要企业自部署的多用户 Agent 产品，且需要自己掌握数据、模型和权限的团队：
+## What Yuxi Can Do
 
-- **二开友好**：MIT 协议、代码简洁、可拓展性强、高并发部署友好。
-- **Harness**：功能完善的云端多用户 Harness，自定义智能体，沉淀企业轨迹。
-- **Knowledge**： 高效、精准的 Agentic RAG 套件，上传文档，解析、分块和向量索引。
-- **执行多步骤任务**：组合工具、MCP、Skills、子智能体和沙盒，产出可预览、可下载的文件。
-- **连接知识图谱**：从 Milvus 知识库的文档块中抽取实体和关系，写入 Neo4j 并参与检索。
-- **管理团队使用范围**：按用户、部门和共享范围管理知识库、智能体、Skills 和模型。
-- **对比运行质量**：评估知识库的检索结果，也可以用 Langfuse Dataset 评估完整智能体任务。
+Yuxi is built for teams that need control over their data, models, and permissions:
 
+- **Build knowledge-based Q&A**: Upload documents, parse and chunk them, build vector indexes, and let agents answer questions using retrieved content.
+- **Extend the platform**: Build on MIT-licensed code designed for customization and high-concurrency deployment.
+- **Run a cloud Harness**: Configure multi-user agents and retain enterprise execution traces.
+- **Execute multi-step tasks**: Combine tools, MCP, Skills, sub-agents, and sandboxes to produce previewable, downloadable files.
+- **Connect knowledge graphs**: Extract entities and relationships from document chunks in Milvus knowledge bases, store them in Neo4j, and use them in retrieval.
+- **Manage team access**: Control access to knowledge bases, agents, Skills, and models by user, department, and sharing scope.
+- **Compare execution quality**: Evaluate knowledge base retrieval results, or use Langfuse Datasets to evaluate complete agent tasks.
 
-## 赞助商
+## Tech Stack
 
-| 赞助商 | 介绍 |
+| Layer | Technologies |
+| --- | --- |
+| Frontend | Vue 3 · Vite · Ant Design · G6 |
+| Backend | FastAPI · LangGraph · ARQ worker |
+| Storage | PostgreSQL · Redis · MinIO · Milvus · Neo4j |
+| Document processing | MinerU · PaddleX · RapidOCR |
+| Deployment | Docker Compose |
+
+## Sponsors
+
+| Sponsor | Introduction |
 | :---: | :--- |
-| <img src="https://xerrors.oss-cn-shanghai.aliyuncs.com/github/%E4%B8%8B%E8%BD%BD.jpeg" alt="Fluxion AI LOGO" width="180" /> | Fluxion AI面向个人开发者、技术团队与企业，通过统一API接入并管理全球主流AI模型；通过多线路动态调度提升可用性，模型表现、响应时间与费用透明可查。根据不同模型与线路，API调用成本较官方或基准价格可降低40%—98%。专属链接[注册](https://fluxionai.space/register?source=github&campaign=yuxi&promo=YUXI) 获 $7 API 额度 |
+| <img src="https://xerrors.oss-cn-shanghai.aliyuncs.com/github/%E4%B8%8B%E8%BD%BD.jpeg" alt="Fluxion AI LOGO" width="180" /> | Fluxion AI provides individuals, engineering teams, and enterprises with unified API access to major AI models worldwide. Dynamic multi-route scheduling improves availability, and model performance, response times, and costs are transparent. Depending on the model and route, API costs can be 40%–98% below official or baseline prices. [Register through this dedicated link](https://fluxionai.space/register?source=github&campaign=yuxi&promo=YUXI) to receive $7 in API credit. |
 
-## 快速启动
+## Quick Start
 
-语析（Yuxi）完全基于 Docker 启动，服务和中间件主要包括：LangGraph、Vue、FastAPI、Milvus、Neo4j、PostgreSQL、MinerU、PaddleOCR。
+### Prerequisites
 
-### 前置条件
+Install [Docker Engine](https://docs.docker.com/get-docker/) and Docker Compose, and have a working LLM API available. The repository's default configuration targets `v0.7.3`.
 
-安装 [Docker Engine](https://docs.docker.com/get-docker/) 和 Docker Compose，并准备一个可用的大模型 API。当前仓库默认配置对应 `v0.7.3`。
-
-### 1. 获取代码并初始化
+### 1. Get the Code and Initialize
 
 ```bash
 git clone --branch v0.7.3 --depth 1 https://github.com/xerrors/Yuxi.git
@@ -53,272 +63,267 @@ cd Yuxi
 .\scripts\init.ps1
 ```
 
-初始化脚本会创建 `.env`、读取 SiliconFlow API Key，并为 JWT、API Key 派生和 Sandbox provisioner 生成独立的安全密钥。也可以手动复制 `.env.template` 并填写这些值。
+The initialization script creates `.env`, prompts for a SiliconFlow API Key, and generates separate security keys for JWT, API Key derivation, and the Sandbox provisioner. You can also copy `.env.template` and fill in these values manually.
 
-### 2. 启动开发环境
+### 2. Start the Development Environment
 
 ```bash
 docker compose up --build -d
 ```
 
-查看服务状态：
+Check service status:
 
 ```bash
 docker compose ps
 curl --fail http://localhost:5050/api/system/ready
 ```
 
-返回的 `status` 为 `ready` 后，打开 [http://localhost:5173](http://localhost:5173)，按页面提示初始化超级管理员并登录。API 文档位于 [http://localhost:5050/docs](http://localhost:5050/docs)。
+Once the returned `status` is `ready`, open [http://localhost:5173](http://localhost:5173), follow the page instructions to initialize the superadmin account, and sign in. API documentation is available at [http://localhost:5050/docs](http://localhost:5050/docs).
 
-从 v0.7.1 或 v0.7.2 升级到当前版本时，不能直接执行 `docker compose up`。请先阅读[生产部署与升级](docs/advanced/deployment.md)，在停机窗口完成备份和迁移。
+When upgrading from v0.7.1 or v0.7.2 to the current version, do not run `docker compose up` directly. Read the [production deployment and upgrade guide](docs/advanced/deployment.md) first, and complete the backup and migration during a maintenance window.
 
-## 文档导航
+## Documentation
 
-- [项目介绍](https://xerrors.github.io/Yuxi/intro/project-overview)：了解能力、概念和系统边界。
-- [快速开始](https://xerrors.github.io/Yuxi/intro/quick-start)：从零启动本地环境。
-- [模型配置](https://xerrors.github.io/Yuxi/intro/model-config)：接入聊天、嵌入和重排模型。
-- [知识库教程](https://xerrors.github.io/Yuxi/intro/knowledge-base)：创建知识库并验证检索。
-- [智能体开发](https://xerrors.github.io/Yuxi/agents/agents-config)：配置 Agent、工具和扩展。
-- [生产部署](https://xerrors.github.io/Yuxi/advanced/deployment)：部署、升级、备份和排障。
-- [版本变更记录](https://xerrors.github.io/Yuxi/develop-guides/changelog)：查看已发布变更。
+- [Project overview](https://xerrors.github.io/Yuxi/intro/project-overview): Capabilities, concepts, and system boundaries.
+- [Quick start](https://xerrors.github.io/Yuxi/intro/quick-start): Set up a local environment from scratch.
+- [Model configuration](https://xerrors.github.io/Yuxi/intro/model-config): Connect chat, embedding, and rerank models.
+- [Knowledge base tutorial](https://xerrors.github.io/Yuxi/intro/knowledge-base): Create knowledge bases and verify retrieval.
+- [Agent development](https://xerrors.github.io/Yuxi/agents/agents-config): Configure agents, tools, and extensions.
+- [Production deployment](https://xerrors.github.io/Yuxi/advanced/deployment): Deployment, upgrades, backups, and troubleshooting.
+- [Changelog](https://xerrors.github.io/Yuxi/develop-guides/changelog): Published changes.
 
-## 能力展示
+## Feature Showcase
 
-Yuxi 把知识进入系统、Agent 执行任务和团队治理放在一条完整链路中。以下按六个核心模块介绍系统能力：
+Yuxi connects knowledge ingestion, agent execution, and team governance into one workflow. The following six modules introduce its core capabilities:
 
+| Module | What It Solves | Key Capabilities |
+| --- | --- | --- |
+| Unified agent workspace | Ask questions, execute tasks, and receive deliverables in one interface | Multi-turn conversations, knowledge retrieval, task status, human approval |
+| Knowledge bases and RAG | Provide retrieved context for answers | Multi-format ingestion, Embedding/Rerank, retrieval testing, RAG evaluation |
+| Knowledge graphs and mind maps | Discover entity relationships and browse knowledge base file structures | Graph construction, subgraph exploration, node details, file metadata maps |
+| Multi-agent execution and extensions | Delegate complex tasks to specialized roles and tools | SubAgents, Skills, MCP, Tools, agent configuration |
+| Sandbox workspace and artifacts | Turn conversations into reusable files | Isolated file systems, file generation, online preview, downloads |
+| Team governance and operations | Manage capabilities, permissions, and execution in multi-user environments | Multi-tenancy, user and department permissions, model configuration, API Keys, Dashboard |
 
-| 模块               | 解决的问题                           | 代表能力                                             |
-| -------------------- | -------------------------------------- | ------------------------------------------------------ |
-| 统一智能体工作台   | 在一个界面完成提问、执行与交付       | 多轮对话、知识库检索、任务状态、人工审批               |
-| 知识库与 RAG | 为回答提供检索内容             | 多格式入库、Embedding/Rerank、检索测试、RAG 评估     |
-| 知识图谱与知识导图 | 发现实体关系并浏览知识库文件结构     | 图谱构建、子图浏览、节点详情、文件元数据导图         |
-| 多智能体与扩展生态 | 把复杂任务拆给不同角色和工具         | SubAgents、Skills、MCP、Tools、Agent 配置            |
-| 沙盒工作区与产物   | 把对话结果变成可继续使用的文件       | 隔离文件系统、文件生成、在线预览、下载               |
-| 团队治理与运行管理 | 在多人环境中管理能力、权限和运行状态 | 多租户、用户与部门权限、模型配置、API Key、Dashboard |
+### 01 · Unified Agent Workspace
 
-### 01 · 统一智能体工作台
+Reference knowledge base documents, personal files, or extension Skills in the same chat interface. View task execution status and receive answers or generated files directly in the conversation.
 
-用户可以在同一个对话界面里引用知识库文档、个人文件或扩展 Skill；查看任务执行状态，并在对话中获取回答或生成的文件。
+- Use `@` to quickly reference knowledge bases, files, and specific Skills.
+- View task breakdowns, tool execution status, and context token usage.
+- Preview and download generated artifacts.
 
-- 支持使用 `@` 快速引入知识库、文件与特定 Skill。
-- 展示任务拆解步骤、工具调用状态与上下文 Token 消耗。
-- 支持预览和下载生成的文件产物。
-
-![Yuxi 统一智能体工作台](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260825145022410.png)
+![Yuxi unified agent workspace](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260825145022410.png)
 
 <details>
-<summary><strong>展开详细截图：对话、执行状态与人工审批</strong></summary>
+<summary><strong>More screenshots: conversations, execution status, and human approval</strong></summary>
 
-**长任务执行状态与过程追踪**
+**Long-running task status and execution tracking**
 
-后台异步执行复杂任务时，界面会实时呈现智能体的思考链路、步骤计划、子任务状态与工具调用日志，不再让长任务变成黑盒等待。
+While complex tasks run asynchronously in the background, the interface shows the agent's reasoning progress, plans, subtask status, and tool logs in real time, making long-running work visible rather than leaving users waiting without feedback.
 
-![image-20260826195730155](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260826195730155.png)
+![Long-running task tracking](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260826195730155.png)
 
-**人工审批与交付卡片**
+**Human approval and delivery cards**
 
-在执行涉及修改文件、调用外部高危接口等关键操作时，系统会弹出确认卡片等待人工审批；任务完成后自动汇总生成成果并提供交互式交付入口。
+For critical operations such as modifying files or calling high-risk external APIs, the system displays a confirmation card and waits for human approval. When a task finishes, it summarizes the results and provides interactive access to deliverables.
 
-![人工审批与文件交付](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260825163940350.png)
+![Human approval and file delivery](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260825163940350.png)
 
 </details>
 
-### 02 · 知识库与 RAG
+### 02 · Knowledge Bases and RAG
 
-支持将团队各类资料集中管理并解析为结构化知识库。Agent 可以检索相关文档片段，作为回答问题的上下文。
+Manage team materials centrally and parse them into structured knowledge bases. Agents can retrieve relevant document chunks as context for answering questions.
 
-- 集中管理文件与目录结构，实时查看解析进度、Chunk 切片与 Token 统计。
-- 支持配置 Embedding 与 Rerank 算法，并在后台直接进行多路召回测试与调优。
-- 内置 RAG 效果评估工具，通过实际问答集量化测试知识库检索与回答质量。
+- Manage files and directories centrally, with live parsing progress, chunk details, and token statistics.
+- Configure Embedding and Rerank algorithms, and test and tune multiple retrieval paths directly in the management interface.
+- Use built-in RAG evaluation tools and real Q&A datasets to measure retrieval and answer quality.
 
-![image-20260830144756161](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260830144756161.png)
+![Knowledge base management](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260830144756161.png)
 
 <details>
-<summary><strong>展开详细截图：入库、检索与评估</strong></summary>
+<summary><strong>More screenshots: ingestion, retrieval, and evaluation</strong></summary>
 
-**文档解析与切片管理**
+**Document parsing and chunk management**
 
-支持 PDF、Word、PPT、Excel、Markdown 等多种常见文档格式。内置 MinerU、PaddleX、RapidOCR 等解析引擎，提取文本、图片和表格内容并切分为 Chunk，生成向量索引供检索使用。
+Support common formats including PDF, Word, PowerPoint, Excel, and Markdown. Built-in parsing engines such as MinerU, PaddleX, and RapidOCR extract text, images, and tables, split content into chunks, and build vector indexes for retrieval.
 
-![文档入库与解析状态](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260825155256725.png)
+![Document ingestion and parsing status](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260825155256725.png)
 
-**知识库类型与外部数据源**
+**Knowledge base types and external sources**
 
-除了开箱即用的本地向量知识库，系统还支持直接连接 Dify、Notion 等外部知识库服务，通过统一检索器供 Agent 调用。
+Alongside the built-in local vector knowledge base, Yuxi connects to external knowledge services such as Dify and Notion. A unified retriever makes them available to agents.
 
-![知识库类型](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260825155356171.png)
+![Knowledge base types](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260825155356171.png)
 
-**检索测试与重排序（Rerank）**
+**Retrieval testing and reranking**
 
-提供直观的检索测试工作台。输入测试 Query 即可实时查看 Embedding 向量初筛得分、混合检索结果以及 Rerank 重排序后的分数变化，方便直观验证召回效果。
+An interactive retrieval testing workspace lets you enter a query and inspect initial embedding similarity scores, hybrid retrieval results, and score changes after reranking, making recall quality easier to verify.
 
-![image-20260830144827319](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260830144827319.png)
+![Retrieval testing and reranking](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260830144827319.png)
 
-**RAG 效果评估**
+**RAG evaluation**
 
-支持构建专属的基准问答评估集，自动批量运行评测并输出检索召回率、答案相关性等量化指标，帮助快速发现知识盲区与配置短板。
+Build benchmark Q&A datasets, run batch evaluations, and inspect quantitative metrics such as retrieval recall and answer relevance to identify knowledge gaps and configuration weaknesses.
 
-![image-20260830144852289](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260830144852289.png)
+![RAG evaluation](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260830144852289.png)
 
-自动生成单条 QA 和多跳 QA
+Automatically generate single-hop and multi-hop Q&A pairs.
 
-![image-20260826200055381](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260826200055381.png)
+![Q&A generation](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260826200055381.png)
 
-![image-20260830144919806](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260830144919806.png)
+![Multi-hop Q&A generation](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260830144919806.png)
 
-![image-20260830144950126](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260830144950126.png)
+![Evaluation results](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260830144950126.png)
 
 </details>
 
-### 03 · 知识图谱与知识导图
+### 03 · Knowledge Graphs and Mind Maps
 
-从非结构化文档中抽取实体与关系，构建知识图谱。既支持在交互式拓扑图谱中探索实体关联，也支持根据文件层级和主题元数据自动生成清晰的知识导图。
+Turn unstructured documents into entity–relationship networks. Explore relationships in interactive graphs, or generate knowledge maps from file hierarchies and topic metadata.
 
-- 从知识库中自动抽取实体与关系，在 Milvus/Neo4j 中构建知识图谱索引。
-- 支持按关键词搜索实体、点击节点查看属性详情，并高亮探索关联子图。
-- 结合知识库文件元数据自动生成多层级知识导图，浏览知识库结构。
+- Automatically extract entities and relationships from knowledge bases and build graph indexes using Milvus/Neo4j.
+- Search entities by keyword, click nodes to inspect properties, and highlight related subgraphs.
+- Generate multi-level knowledge maps from knowledge base file metadata to browse a business domain at a glance.
 
-![image-20260830145027082](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260830145027082.png)
+![Knowledge graph exploration](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260830145027082.png)
 
 <details>
-<summary><strong>展开详细截图：图谱构建、节点关系与知识导图</strong></summary>
+<summary><strong>More screenshots: graph construction, node relationships, and mind maps</strong></summary>
 
-**图谱构建与索引状态**
+**Graph construction and index status**
 
-解析文档时自动执行实体识别与关系抽取，构建面向具体业务领域的知识图谱。可直观查看实体总数、关系边数量与构建进度。
+Document parsing automatically performs entity recognition and relationship extraction to build domain-specific knowledge graphs. View entity counts, relationship counts, and construction progress directly.
 
-![image-20260826200519930](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260826200519930.png)
+![Graph construction and index status](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260826200519930.png)
 
-**知识导图**
+**Knowledge maps**
 
-基于文件的目录结构、分类标签与元数据特征，自动生成结构化的主题脑图/知识导图，方便用户以树状脉络快速浏览海量知识内容。
+Generate structured topic mind maps from directory structures, category labels, and file metadata, making large knowledge collections easier to browse as a tree.
 
-![image-20260830145125067](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260830145125067.png)
+![Knowledge map](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260830145125067.png)
 
 </details>
 
-### 04 · 多智能体与扩展生态
+### 04 · Multi-Agent Execution and Extensions
 
-一个 Agent 可以灵活组合模型、提示词、知识库、外部工具与专用子智能体。面对复杂任务，主智能体负责规划拆解，多个 SubAgents 分头异步并行执行，Skills 与 MCP 协议提供能力扩展。
+Combine models, prompts, knowledge bases, external tools, and specialized sub-agents in a single agent. For complex tasks, the main agent plans and delegates work while multiple SubAgents execute asynchronously in parallel. Skills and MCP provide additional capabilities.
 
-- 自由配置 Agent 的基座模型、知识挂载、工具调用与系统提示词。
-- 支持多个 SubAgents 异步并行执行深度调研、数据分析或内容生成。
-- 原生兼容 Skills 插件机制与 MCP（Model Context Protocol）标准协议。
+- Configure the agent's base model, connected knowledge bases, tool access, and system prompt.
+- Run multiple SubAgents asynchronously in parallel for deep research, data analysis, or content generation.
+- Use native support for Skills extensions and MCP (Model Context Protocol).
 
-![Yuxi 多智能体编排](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260825152252874.png)
+![Yuxi multi-agent orchestration](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260825152252874.png)
 
 <details>
-<summary><strong>展开详细截图：Agent 配置、子智能体与扩展能力</strong></summary>
+<summary><strong>More screenshots: agent configuration, sub-agents, and extensions</strong></summary>
 
-**Agent 配置与行为定制**
+**Agent configuration and behavior customization**
 
-智能体提供丰富的模块化配置项，可以按需组合大模型、挂载的知识库、自定义 Tools、MCP 服务、前置提示词与子智能体，并支持灵活配置在部门或团队内的共享可见范围。
+Modular configuration lets you combine models, knowledge bases, custom Tools, MCP services, initial prompts, and sub-agents. Configure sharing visibility within departments or teams as needed.
 
-![Agent 配置](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260825151729055.png)
+![Agent configuration](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260825151729055.png)
 
-**子智能体并行执行**
+**Parallel sub-agent execution**
 
-支持主智能体将复杂的多步骤任务拆解后，派出多个专属 SubAgent 异步并行跑任务（例如分头检索不同领域的法规、分别撰写报告不同章节），执行完毕后汇总结果。
+The main agent can break a complex, multi-step task into independent assignments and dispatch specialized SubAgents in parallel—for example, researching regulations in different domains or writing separate report chapters. Their results are collected and summarized when they finish.
 
-![子智能体并行执行](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260825151559976.png)
+![Parallel sub-agent execution](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260825151559976.png)
 
-**Skills、MCP 与生态扩展**
+**Skills, MCP, and ecosystem extensions**
 
-统一接入并管理 Skills 扩展技能与 MCP Servers 外部协议，支持针对不同角色分配权限与使用范围；借助渐进式披露机制，在真正需要时按需动态解析并加载工具。Skill 在线安装支持 skills.sh 以及魔搭社区的 skill。
+Connect and manage Skills and external MCP servers in one place, with role-specific permissions and access scopes. Progressive disclosure dynamically resolves and loads tools when they are needed. Online Skill installation supports skills.sh and the ModelScope community.
 
-![image-20260830145227399](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260830145227399.png)
+![Skills and MCP extensions](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260830145227399.png)
 
-可以查看并在线编辑 skill
+View and edit Skills online.
 
-![image-20260830145217595](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260830145217595.png)
+![Online Skill editing](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260830145217595.png)
 
-可以配置 skill 权限和依赖
+Configure Skill permissions and dependencies.
 
-![image-20260830145359700](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260830145359700.png)
+![Skill permissions and dependencies](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260830145359700.png)
 
-内置工具列表
+Built-in tool list.
 
-![内置工具](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260826201207239.png)
+![Built-in tools](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260826201207239.png)
 
 </details>
 
-### 05 · 沙盒工作区与文件产物
+### 05 · Sandbox Workspace and File Artifacts
 
-智能体可以通过沙盒工具读写文件。智能体不仅能在对话中回答问题，还能把分析研究成果沉淀为 Markdown 文档、数据表格、HTML 页面或可执行代码，并在工作区中随时查看与下载。
+Agents can read and write files through sandbox tools. Beyond answering questions in chat, agents can turn research and analysis into Markdown documents, spreadsheets, HTML pages, or executable code that users can view and download from the workspace.
 
-- 通过沙盒限制工具可访问的文件范围。
-- 支持生成图文报告、数据分析图表、Web 页面等多种格式产物。
-- 在浏览器中预览受支持的文件格式，并打包下载。
+- Limit the files tools can access through the sandbox.
+- Generate illustrated reports, data analysis charts, web pages, and other artifacts.
+- Preview supported file formats in the browser and download files as an archive.
 
-![Yuxi 沙盒工作区与文件产物](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260825152123583.png)
+![Yuxi sandbox workspace and artifacts](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260825152123583.png)
 
 <details>
-<summary><strong>展开详细截图：文件管理、在线预览与任务交付</strong></summary>
+<summary><strong>More screenshots: file management, online preview, and task delivery</strong></summary>
 
-**工作区文件管理**
+**Workspace file management**
 
-可视化管理任务在工作区中读取与产生的文件，清晰展示目录层级、文件类型与体积大小，方便在会话之间复用中间产物。
+Visually manage files read and produced in the workspace during task execution. Directory hierarchies, file types, and sizes are displayed clearly, making intermediate artifacts easier to reuse across conversations.
 
-![image-20260826201931458](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260826201931458.png)
+![Workspace file management](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260826201931458.png)
 
+**Online preview for HTML, PDF, charts, and code**
 
-**HTML、PDF、图表与代码在线预览**
+Render and interact with generated reports, HTML visualizations, images, charts, and scripts in the browser's built-in previewer without downloading them first. Markdown files can also be edited and saved online.
 
-智能体生成的报告文档、可视化 HTML 网页、图片图表或代码脚本，无需下载即可直接在浏览器内置的预览器中渲染并进行交互查看。markdown 还支持在线编辑保存。
+![Online file preview](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260826202142495.png)
 
-![image-20260826202142495](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260826202142495.png)
+**File delivery in conversations**
 
+When a task finishes, structured delivery cards appear in the conversation with file summaries, formats, and action buttons. Open a preview or save files locally.
 
-**对话中的文件交付**
-
-任务执行完毕后，对话气泡中会生成结构化的交付卡片，直观呈现文件摘要、格式与操作按钮，支持直接打开预览或保存到本地。
-
-![image-20260826202412695](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260826202412695.png)
-
+![File delivery cards](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260826202412695.png)
 
 </details>
 
-### 06 · 团队治理与运行管理
+### 06 · Team Governance and Operations
 
-专为企业和团队多人协作打造。管理员可以集中管理成员与部门组织架构、统一配置模型接入凭据与 API Key，并通过监控看板查看平台的运行状况与调用指标。
+Built for collaboration across teams and enterprises. Administrators centrally manage members and departments, configure model credentials and API Keys, and monitor platform operations and usage metrics through dashboards.
 
-- 支持按租户、用户与部门配置知识库、Agent 以及功能的读写权限。
-- 集中配置和调度多供应商的大模型能力，统一管理 API Key 凭据。
-- 实时统计分析使用量、请求趋势与资源负载，辅助运行维护。
+- Configure read and write permissions for knowledge bases, agents, and features by tenant, user, and department.
+- Centrally configure models from multiple providers and manage API Key credentials.
+- Track usage, request trends, and resource load to support stable operations.
 
-![image-20260826201755760](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260826201755760.png)
+![Team governance and operations](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260826201755760.png)
 
 <details>
-<summary><strong>展开详细截图：权限、模型与运行数据</strong></summary>
+<summary><strong>More screenshots: permissions, models, and operational data</strong></summary>
 
-**用户、部门与细粒度权限体系**
+**Users, departments, and fine-grained permissions**
 
-提供符合企业组织架构的多租户权限体系，支持按照部门或用户组精确控制对知识库、智能体、工具和沙盒工作区的访问与编辑权限。
+A multi-tenant permission system maps to organizational structures, with department- or user-group-level control over access to and editing of knowledge bases, agents, tools, and sandbox workspaces.
 
-![image-20260826201638124](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260826201638124.png)
+![User and department permissions](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260826201638124.png)
 
+**Model providers and centralized credentials**
 
-**模型供应商与统一凭据管理**
+Connect providers including OpenAI, Anthropic, DeepSeek, Qwen, and OpenAI-compatible self-hosted endpoints such as vLLM. Maintain API Key credentials centrally and assign model capabilities while keeping secrets hidden from ordinary members.
 
-支持接入主流大模型供应商（OpenAI、Anthropic、DeepSeek、Qwen 及 OpenAI 兼容自建端点如 vLLM 等），集中维护 API Key 凭据并统一分配模型能力，密钥对普通成员完全脱敏。
+![Model providers and capabilities](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260825152458034.png)
 
-![模型供应商与模型能力](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260825152458034.png)
+**Dashboard and system monitoring**
 
-**Dashboard 与系统运行监控**
+Operational dashboards display request volumes, token usage, knowledge base retrieval frequency, and long-running task queue status in real time to support capacity planning and cost tracking.
 
-直观的运维数据看板，实时展示系统请求量、Token 消耗统计、知识库检索频次与长任务排队状态，为容量规划和成本核算提供数据支撑。
+![System dashboard](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260826201346254.png)
 
-![image-20260826201346254](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260826201346254.png)
-
-![image-20260826201430096](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260826201430096.png)
+![Usage and operational metrics](https://xerrors.oss-cn-shanghai.aliyuncs.com/github/image-20260826201430096.png)
 
 </details>
 
-## 参与贡献
+## Contributing
 
-欢迎提交 Issue、改进文档、修复 Bug 和贡献功能。开发流程见 [CONTRIBUTING.md](CONTRIBUTING.md)，完整规范见 [文档参与指南](docs/develop-guides/contributing.md)。
+Issues, documentation improvements, bug fixes, and new features are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for the development workflow and the [contribution guide](docs/develop-guides/contributing.md) for the full guidelines.
 
-感谢所有贡献者的支持！
+Thanks to all contributors for supporting this project!
 
 <a href="https://github.com/xerrors/Yuxi/contributors">
   <img src="https://contrib.rocks/image?repo=xerrors/Yuxi&max=100&columns=10" />
@@ -326,18 +331,18 @@ Yuxi 把知识进入系统、Agent 执行任务和团队治理放在一条完整
 
 ---
 
-## 许可证
+Yuxi's implementation and documentation draw on the following excellent open-source projects:
 
-Yuxi 本体采用 MIT License，详见 [LICENSE](LICENSE)。Docker Compose 引入的第三方组件遵循各自的许可证；再分发和商业部署前，请按实际镜像版本核对上游许可和源码义务，相关边界见[生产部署指南](docs/advanced/deployment.md)。
+- [LightRAG](https://github.com/HKUDS/LightRAG): Early graph construction and retrieval ideas.
+- [DeepAgents](https://github.com/langchain-ai/deepagents): Deep agent framework.
+- [DeerFlow](https://github.com/bytedance/deer-flow): Sandbox agent architecture ideas.
+- [RAGFlow](https://github.com/infiniflow/ragflow): Document chunking strategies.
+- [LangGraph](https://github.com/langchain-ai/langgraph): Agent orchestration foundation.
+- [QwenPaw](https://github.com/agentscope-ai/QwenPaw): Model configuration and personal file area design.
 
-Yuxi 的实现和文档参考了以下优秀的开源项目：
+## License
 
-- [LightRAG](https://github.com/HKUDS/LightRAG)：早期图谱构建和检索思路；
-- [DeepAgents](https://github.com/langchain-ai/deepagents)：深度智能体框架；
-- [DeerFlow](https://github.com/bytedance/deer-flow)：沙盒智能体架构思路；
-- [RAGFlow](https://github.com/infiniflow/ragflow)：文档分块策略；
-- [LangGraph](https://github.com/langchain-ai/langgraph)：智能体编排基础；
-- [QwenPaw](https://github.com/agentscope-ai/QwenPaw)：模型配置和个人文件区域设计。
+Yuxi itself is licensed under the MIT License. See [LICENSE](LICENSE) for details. Third-party components included through Docker Compose retain their own licenses. Before redistribution or commercial deployment, check the upstream licenses and source-code obligations for the actual image versions you use; see the [production deployment guide](docs/advanced/deployment.md) for the relevant boundaries.
 
 ## Star History
 
@@ -349,5 +354,4 @@ Yuxi 的实现和文档参考了以下优秀的开源项目：
  </picture>
 </a>
 
-
-[![给 Yuxi 一个 Star](https://xerrors.oss-cn-shanghai.aliyuncs.com/posts/2026/08/20260818-184409-image-da91658b.png)](https://github.com/xerrors/Yuxi)
+[![Give Yuxi a Star](https://xerrors.oss-cn-shanghai.aliyuncs.com/posts/2026/08/20260818-184409-image-da91658b.png)](https://github.com/xerrors/Yuxi)

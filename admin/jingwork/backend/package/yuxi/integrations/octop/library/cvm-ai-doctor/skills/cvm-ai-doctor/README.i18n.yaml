@@ -1,0 +1,49 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write admin/jingwork/backend/package/yuxi/integrations/octop/library/cvm-ai-doctor/skills/cvm-ai-doctor/README.md
+/cvm-doctor-ai-system-diagnosis-and-repair-skill:
+  en: 86a21c60b06b34cc
+  zh: 98db832031d9e7c5
+/cvm-doctor-ai-system-diagnosis-and-repair-skill/what-it-is:
+  en: 12a120ebafab146f
+  zh: 18afbc990abf58c6
+/cvm-doctor-ai-system-diagnosis-and-repair-skill/core-design:
+  en: fd5a63f78f9ff5c2
+  zh: 5edb975b960aa7ae
+/cvm-doctor-ai-system-diagnosis-and-repair-skill/core-design/two-stage-quick-deep-architecture:
+  en: e520dd868a208849
+  zh: 25df4d84dae9f40a
+/cvm-doctor-ai-system-diagnosis-and-repair-skill/core-design/three-tier-scenario-matching:
+  en: 9c7c35bdea264d1c
+  zh: a77aa25b726c9a0f
+/cvm-doctor-ai-system-diagnosis-and-repair-skill/core-design/cross-platform-support:
+  en: dd6a0a4e74d54ff7
+  zh: 025eaa4eedd0a469
+/cvm-doctor-ai-system-diagnosis-and-repair-skill/project-structure:
+  en: 7e0caf394c40550c
+  zh: 28d8bbe1e0b70584
+/cvm-doctor-ai-system-diagnosis-and-repair-skill/scenario-coverage:
+  en: f7e5da73ece56ea3
+  zh: 902ecc529f1ea401
+/cvm-doctor-ai-system-diagnosis-and-repair-skill/how-to-use:
+  en: c8994640a237a769
+  zh: b86e34a4155e44fa
+/cvm-doctor-ai-system-diagnosis-and-repair-skill/how-to-use/prerequisites:
+  en: dad10d44561b27c9
+  zh: 5fddad783b2332ae
+/cvm-doctor-ai-system-diagnosis-and-repair-skill/how-to-use/use-as-an-ai-agent-skill:
+  en: 823a6572d56b2a2a
+  zh: e532ffa822052b73
+/cvm-doctor-ai-system-diagnosis-and-repair-skill/how-to-use/extend-scenarios:
+  en: b04ed26387a08ef8
+  zh: 8f6cb9f464bb0cd2
+/cvm-doctor-ai-system-diagnosis-and-repair-skill/remote-diagnosis:
+  en: cb34cc7d43d6beff
+  zh: cf1dd9836ce92eac
+/cvm-doctor-ai-system-diagnosis-and-repair-skill/documentation:
+  en: 5d599f79503a3bc6
+  zh: 3f1169d3f86a0dab
+/cvm-doctor-ai-system-diagnosis-and-repair-skill/version-information:
+  en: d6702ee607762ade
+  zh: 4bea0dd2f1031de5

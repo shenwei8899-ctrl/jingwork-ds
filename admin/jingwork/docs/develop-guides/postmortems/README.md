@@ -1,14 +1,16 @@
-# 工程事故复盘
+# Engineering Postmortems
 
-Postmortem 只用于已经逃逸、且同时具有较高影响、系统性或高再发现成本的缺陷。普通 bug、开发中被测试及时发现的问题、无用户/数据/安全/可用性影响的局部错误不强制复盘，但仍需风险相称的回归证据。
+English | [中文](README.zh.md)
 
-满足以下任一条件，由修复负责人和 Reviewer 判断是否达到门槛：
+Use a postmortem only for an escaped defect with high impact, systemic reach, or high rediscovery cost. Ordinary bugs, issues found promptly by development tests, and local errors without user, data, security, or availability impact do not require one; they still need regression evidence proportional to risk.
 
-- 造成安全、权限、数据完整性、数据丢失或外部副作用风险；
-- 关键用户链路或生产可用性受到显著影响；
-- 多个模块、入口或部署会以同一机制重复失败；
-- 既有测试、gate 或 Review 全绿仍让高价值错误逃逸，且原因不显然、未来重新发现成本高。
+A fix owner and reviewer decide whether an incident meets the bar if it has any of these conditions:
 
-复盘用于把已经逃逸的事故转化为更早、更明确的未来失败，不承担归责或推理过程记录。每份复盘必须指定真实 Owner，链接对应修复/decision，保存可验证事实时间线、因果链、安全网漏过机制、reproducer、直接 oracle、负向案例、实际 gate 和未解决风险。仅增加 checklist、培训提醒或“加强 Review”不能单独关闭复盘。
+- It creates risk to security, authorization, data integrity, data loss, or external side effects.
+- It significantly affects a critical user flow or production availability.
+- The same mechanism can cause repeated failures across multiple modules, entry points, or deployments.
+- Existing tests, gates, or review all passed while a high-value defect escaped, and the cause is not obvious or would be costly to rediscover.
 
-使用 [TEMPLATE.md](./TEMPLATE.md) 创建 `YYYY-MM-DD-topic.md`。复盘被后续事实取代时保留历史并链接当前 Owner，不把历史事故文档改写成当前运行契约。
+A postmortem turns an escaped incident into an earlier and clearer future failure. It does not assign blame or preserve reasoning transcripts. Each postmortem must name a real owner, link the fix or decision, retain a verifiable timeline and causal chain, describe how safeguards failed, provide a reproducer and direct oracle, list the gates actually run, and state unresolved risks. A checklist, training reminder, or request to “improve review” cannot close a postmortem by itself.
+
+Use [TEMPLATE.md](./TEMPLATE.md) to create `YYYY-MM-DD-topic.md`. When later facts supersede a postmortem, preserve its history and link the current owner; do not rewrite an incident record as a current operating contract.

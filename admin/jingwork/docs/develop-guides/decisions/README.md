@@ -1,58 +1,60 @@
-# 工程决策记录
+# Engineering Decision Records
 
-决策记录保存非平凡变更的当前判断、真实替代方案、接受的代价和验证。它补充代码与当前文档，不替代二者。
+English | [中文](README.zh.md)
 
-## 生命周期
+Decision records preserve the current judgment for a nontrivial change, the real alternatives, accepted costs, and verification. They supplement code and current documentation; they do not replace either.
 
-- `proposed/`：尚未实现的提案；必须写问题、候选方案、验收标准和风险。
-- `implemented/`：已经生效的当前决定；使用现在时，只保留问题、决策、替代方案、后果和验证。
-- `rejected/`：明确拒绝且值得保留原因的提案；不构成当前实现要求。
-- `archived/`：冻结历史，不能修改或作为当前权威。当前机制必须链接到新的 owning record。
+## Lifecycle
 
-提案实现后，把记录移动到 `implemented/` 并改写为当前事实；不要保留迁移 checklist、进度日志或”应当”式 spec。决定被部分取代时，在新旧记录中交叉链接；完全失去当前价值时，将旧记录移到 `archived/`，或在理由已经被新记录完整吸收后删除。任何记录移入 `archived/` 前先改写为问题、决策、替代方案、后果、验证结构，不保留提案、进度或迁移章节。
+- `proposed/`: proposals that are not implemented; record the problem, candidate approaches, acceptance criteria, and risks.
+- `implemented/`: decisions currently in effect; use present tense and retain only the problem, decision, alternatives, consequences, and verification.
+- `rejected/`: proposals explicitly rejected for reasons worth preserving; they do not define current implementation requirements.
+- `archived/`: frozen history that must not be edited or treated as current authority. Current mechanisms must link to a new owning record.
 
-正式发布时随版本归档：把发布日期前生效的 `implemented` 记录移动到 `archived/<版本>/`（如 `archived/0.7.3/`），状态改写为 `archived`，并在该目录的 `CHANGELOG.md` 中按主题汇总各记录的决策与后果；发布日期当天或之后的记录保留在 `implemented/`，进入下一个发布周期。归档记录自归档起冻结，其机制的当前行为由代码、机制文档和仍在 `implemented/` 的后续记录拥有。
+After implementation, move a proposal to `implemented/` and rewrite it as current facts. Do not keep migration checklists, progress logs, or spec-style requirements. Cross-link records when a decision partly supersedes another. Move an obsolete record to `archived/`, or delete it after a new record fully incorporates its rationale. Before archiving, rewrite it to cover the problem, decision, alternatives, consequences, and verification; remove proposal, progress, or migration sections.
 
-非平凡工作必须在实现前创建 `proposed`。小而完整、在同一变更中已经生效且没有待裁决替代或风险的修复可直接写 `implemented`，但 PR 必须解释为何不需要 proposal；不得用 diff 大小或文件数量自动判定 trivial。完整流程见 [Yuxi Spec Loop](../spec-loop.md)。
+At a formal release, archive implemented records that took effect before the release date under `archived/<version>/` (for example, `archived/0.7.3/`), set their status to archived, and summarize their decisions and consequences by topic in that directory's `CHANGELOG.md`. Keep records dated on or after release day in `implemented/` for the next release cycle. Archived records are frozen; code, mechanism documentation, and later implemented records own current behavior.
 
-## 何时需要
+Nontrivial work requires a `proposed` record before implementation. A small, complete fix that takes effect in the same change and has no unresolved alternative or risk may go directly to `implemented`, but the PR must explain why no proposal was needed. Do not classify work as trivial based only on diff size or file count. See [Yuxi Spec Loop](../spec-loop.md) for the complete process.
 
-满足任一条件即为非平凡：
+## When a record is needed
 
-- 改变重要工程主张的语义 Owner、commit/publication 边界、oracle、负向案例或实际 gate。
-- 改变持久状态、事务发布点、权限、worker 生命周期、模型可见输入或兼容承诺。
-- 引入新的抽象、依赖、配置、fallback、状态机或长期维护表面。
-- 接受一个并不显然、未来可能重开的工程取舍。
+A change is nontrivial if any of these conditions apply:
 
-局部文案、机械重命名和不改变行为的等价清理可以免除，但 PR 要明确说明原因。
+- It changes the semantic owner of an important engineering claim, a commit/publication point, an oracle, a negative case, or an actual gate.
+- It changes persistent state, a transaction publication point, permissions, worker lifecycle, model-visible input, or a compatibility commitment.
+- It introduces a new abstraction, dependency, configuration, fallback, state machine, or long-term maintenance surface.
+- It accepts an engineering trade-off that is not obvious and may be revisited later.
 
-## 格式
+Local copy edits, mechanical renames, and equivalent cleanup that do not change behavior are exempt, but the PR must state why.
 
-文件名使用 `YYYY-MM-DD-topic.md`。所有记录包含：
+## Format
+
+Use `YYYY-MM-DD-topic.md` filenames. Every record includes:
 
 ```markdown
-# 决策标题
+# Decision title
 
-状态：implemented
-类型：feature
-Owner：path/to/owner
+Status: implemented
+Type: feature
+Owner: path/to/owner
 
-## 问题
-## 决策
-## 替代方案
-## 后果
-## 验证
+## Problem
+## Decision
+## Alternatives
+## Consequences
+## Verification
 ```
 
-`类型` 只使用 `feature`、`bug-fix`、`simplification`、`architecture`、`process`、`testing`。`Owner` 指向拥有当前行为的首要代码、契约或文档；一项决定跨越多个事实 Owner 时，在正文明确分工，不能让 decision record 反向成为运行时事实源。
+`Type` uses only `feature`, `bug-fix`, `simplification`, `architecture`, `process`, or `testing`. `Owner` points to the primary code, contract, or document that owns current behavior. When a decision spans multiple fact owners, state their responsibilities in the record; a decision record must not become the runtime source of truth.
 
-新建或实质更新的 `proposed`、`implemented` 记录，在 `## 提案` 或 `## 决策` 内用 `### 实现方案` 凝练说明受影响模块及职责、入口到结果的主链路，以及涉及的关键接口、状态、持久化和失败边界；流程类决定说明规则的维护位置与执行方式。几段文字或一张小表即可，详细行为链接到对应 Owner，避免逐函数清单和施工步骤。落地时同步改写为实际方案。Reviewer 必须能据此理解如何落地，仅写原则或“交给 service 处理”不满足要求；历史记录不批量补写。
+New or substantially revised `proposed` and `implemented` records include a concise `### Implementation` subsection under `## Proposal` or `## Decision`. It describes affected modules and responsibilities, the main path from entry point to result, and relevant interfaces, state, persistence, and failure handling. Process decisions identify where the rule is maintained and how it is enforced. A few paragraphs or a small table are enough. Link detailed behavior to its owner; do not list every function or construction step. Rewrite the proposal as the actual design when it ships. Reviewers must be able to understand implementation from this description; principles alone or “the service handles it” are insufficient. Historical records are not retroactively expanded.
 
-`proposed` 使用 `## 问题`、`## 提案`、`## 替代方案`、`## 验收标准`、`## 风险`，并在验收标准中包含以下证据矩阵：
+`proposed` records use `## Problem`, `## Proposal`, `## Alternatives`, `## Acceptance Criteria`, and `## Risks`. Acceptance criteria include this evidence matrix:
 
 ```markdown
-| 验收主张 | 失败面 | 语义 Owner | 直接证据 / 命令 | 负向案例 | 当前结果 |
+| Acceptance claim | Failure mode | Semantic owner | Direct evidence / command | Negative case | Current result |
 |---|---|---|---|---|---|
 ```
 
-`simplification` 提案和 implemented 记录还必须分别在 `## 验收标准` 或 `## 验证` 中包含 `旧能力不存在：` 与 `重新引入条件：`，避免只增加替代物而不删除旧表面。`rejected` 说明拒绝原因。不要保存 chain-of-thought、逐步实现叙事、Review 对话、人员评价或敏感数据。
+`simplification` proposals and implemented records also include `Old capability absent:` and `Reintroduction condition:` under `## Acceptance Criteria` or `## Verification`, respectively. This prevents adding a replacement without removing the old surface. A `rejected` record explains why the proposal was rejected. Do not preserve chain-of-thought, step-by-step implementation narration, review conversations, personnel evaluations, or sensitive data.

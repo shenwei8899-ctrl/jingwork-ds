@@ -1,0 +1,16 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write admin/jingwork/docs/develop-guides/decisions/README.md
+/engineering-decision-records:
+  en: f30243ccd7ff8fc6
+  zh: 3d708c9703b3f960
+/engineering-decision-records/lifecycle:
+  en: 633341be39c48817
+  zh: cfc18ae402e128be
+/engineering-decision-records/when-a-record-is-needed:
+  en: 0270f6fd9e9050d3
+  zh: 2b96518bed51b29f
+/engineering-decision-records/format:
+  en: 9d3c178f21d8999e
+  zh: bb8628d32707a5cb

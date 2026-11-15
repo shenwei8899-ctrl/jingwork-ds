@@ -1,0 +1,43 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write admin/jingwork/backend/package/yuxi/integrations/octop/library/cvm-ai-doctor/skills/cvm-ai-doctor/scripts/README.md
+/cvm-doctor-scripts:
+  en: 2dacea769cf12a8d
+  zh: b2b7cf6d0363b8d1
+/cvm-doctor-scripts/available-scripts:
+  en: edeaa2449001be7b
+  zh: 82210d7664f245ae
+/cvm-doctor-scripts/available-scripts/quick-scan-sh:
+  en: 6848afec98c4f77f
+  zh: 4192b33840144e1c
+/cvm-doctor-scripts/available-scripts/quick-scan-ps1:
+  en: 7b92d2cfac5dc9a6
+  zh: bc456a110f548f46
+/cvm-doctor-scripts/cluster-scripts-remote-execution-via-tat:
+  en: b22bfc725758b379
+  zh: 639e403da1174a31
+/cvm-doctor-scripts/cluster-scripts-remote-execution-via-tat/cluster-os-snapshot-sh:
+  en: b26ae067b5e473ed
+  zh: 4d5013c80162fb02
+/cvm-doctor-scripts/cluster-scripts-remote-execution-via-tat/cluster-deep-cpu-sh:
+  en: 53488448ebe33b06
+  zh: 723e7a678b58fa78
+/cvm-doctor-scripts/cluster-scripts-remote-execution-via-tat/cluster-deep-memory-sh:
+  en: 7c785f830a8ae087
+  zh: e932b73278f36ff2
+/cvm-doctor-scripts/cluster-scripts-remote-execution-via-tat/cluster-deep-disk-sh:
+  en: 18859a0fa25efebf
+  zh: 017acda4a1cbcc2d
+/cvm-doctor-scripts/cluster-scripts-remote-execution-via-tat/cluster-deep-ssh-sh:
+  en: 64f4a38e84d59b4e
+  zh: 7dbecf34959befb7
+/cvm-doctor-scripts/cluster-scripts-remote-execution-via-tat/cluster-deep-network-sh:
+  en: f2f5c07eb054fa64
+  zh: 0fcf25586d917cb6
+/cvm-doctor-scripts/when-to-use:
+  en: 74b323a16c03baf1
+  zh: 7fe9080dc114145e
+/cvm-doctor-scripts/design-philosophy:
+  en: bcfef69dd5ba327c
+  zh: ba1eb414d9b1f00e

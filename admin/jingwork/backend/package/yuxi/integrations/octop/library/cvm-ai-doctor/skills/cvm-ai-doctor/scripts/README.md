@@ -1,5 +1,7 @@
 # CVM Doctor Scripts
 
+English | [中文](README.zh.md)
+
 Executable diagnostics scripts for rapid system health checks.
 
 ## Available Scripts

@@ -1,5 +1,7 @@
 # yuxi-cli
 
+English | [中文](README.zh.md)
+
 Yuxi command line client.
 
 First-stage scope:

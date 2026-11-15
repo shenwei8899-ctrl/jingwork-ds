@@ -1,5 +1,7 @@
-# Octop 公共专家模板
+# Public Octop expert templates
 
-来自同级 Octop 仓库的 `src/octop/library`，随本次集成固定快照保存，许可证见 LICENSE。排除 default，因为它是桌面默认智能体而非公开专家模板。
+English | [中文](README.zh.md)
 
-市场目录和技能包实时使用 Octop 的 SkillHub 公共 API。导入保留提示词、Skill 正文和资源文件，只补充 Yuxi 要求的 slug 元数据。不复制桌面个人配置、模型密钥或账号凭据。
+This fixed snapshot comes from `src/octop/library` in the sibling Octop repository. See LICENSE for its license. The `default` template is excluded because it is the desktop default agent, not a public expert template.
+
+The marketplace catalog and skill packages use Octop's public SkillHub API at runtime. Imports preserve prompts, Skill bodies, and resource files, and add only the slug metadata required by Yuxi. They do not copy desktop personal settings, model keys, or account credentials.

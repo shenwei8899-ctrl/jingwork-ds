@@ -66,9 +66,9 @@ site:approved-domain "distinctive title phrase"
 
 Do not let a broad query silently substitute a different guideline, consensus, or edition.
 
-## Cache and provenance
+## Cache and source records
 
-An internal cache may speed retrieval when permitted, but it must store provenance:
+An internal cache may speed retrieval when permitted, but it must store source records:
 
 - canonical URL and retrieval URL;
 - retrieval time and HTTP status;
