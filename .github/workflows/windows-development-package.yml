@@ -4,12 +4,25 @@ on:
   push:
     branches: ['codex/windows-package-0.2.2-alpha.2']
   workflow_dispatch:
+    inputs:
+      version:
+        description: Product version to package
+        required: true
+        default: 0.2.2-alpha.2
+        type: string
+      architecture:
+        description: Windows target architecture
+        required: true
+        default: x64
+        type: choice
+        options: [x64, arm64, both]
 
 permissions:
   contents: read
 
 jobs:
   package:
+    if: ${{ github.event_name == 'push' || inputs.architecture == 'both' || matrix.arch == inputs.architecture }}
     strategy:
       fail-fast: false
       matrix:
@@ -22,6 +35,8 @@ jobs:
             runner: windows-11-arm
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 180
+    env:
+      PACKAGE_VERSION: ${{ inputs.version || '0.2.2-alpha.2' }}
     concurrency:
       group: windows-development-package-${{ github.ref }}-${{ matrix.target }}
       cancel-in-progress: false
@@ -56,8 +71,8 @@ jobs:
           $versions = @('package.json', 'apps/desktop/package.json') | ForEach-Object {
             (Get-Content -Raw $_ | ConvertFrom-Json).version
           }
-          if (($versions | Select-Object -Unique).Count -ne 1 -or $versions[0] -ne '0.2.2-alpha.2') {
-            throw "Expected both manifests to declare 0.2.2-alpha.2; found $($versions -join ', ')"
+          if (($versions | Select-Object -Unique).Count -ne 1 -or $versions[0] -ne $env:PACKAGE_VERSION) {
+            throw "Expected both manifests to declare $env:PACKAGE_VERSION; found $($versions -join ', ')"
           }
           if ([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString().ToLowerInvariant() -ne '${{ matrix.arch }}') {
             throw 'The runner architecture does not match the package target'
@@ -67,7 +82,7 @@ jobs:
           $env:DSH_DESKTOP_TARGET_PLATFORM = 'win32'
           $env:DSH_DESKTOP_TARGET_ARCH = '${{ matrix.arch }}'
           for ($attempt = 1; $attempt -le 3; $attempt++) {
-            pnpm run package:desktop:win:${{ matrix.arch }}:unsigned -- --build-version 0.2.2-alpha.2
+            pnpm run package:desktop:win:${{ matrix.arch }}:unsigned -- --build-version $env:PACKAGE_VERSION
             $packageExit = $LASTEXITCODE
             if ($packageExit -eq 0) { exit 0 }
             $record = Get-ChildItem 'apps/desktop/.desktop-build/packaging-runs' -Directory |
@@ -83,16 +98,16 @@ jobs:
           }
       - name: Record installer checksum
         run: |
-          $installer = "apps/desktop/.desktop-build/targets/${{ matrix.target }}/unsigned-artifacts/deepseek-harness-0.2.2-alpha.2-${{ matrix.target }}-unsigned.exe"
+          $installer = "apps/desktop/.desktop-build/targets/${{ matrix.target }}/unsigned-artifacts/deepseek-harness-$env:PACKAGE_VERSION-${{ matrix.target }}-unsigned.exe"
           $hash = Get-FileHash -Algorithm SHA256 -LiteralPath $installer
           "### ${{ matrix.target }} installer`n`n$($hash.Hash.ToLowerInvariant())  $([IO.Path]::GetFileName($installer))" >> $env:GITHUB_STEP_SUMMARY
       - name: Upload installer
         uses: actions/upload-artifact@v7.0.1
         with:
-          name: JingWork-Windows-${{ matrix.target }}-0.2.2-alpha.2
+          name: JingWork-Windows-${{ matrix.target }}-${{ env.PACKAGE_VERSION }}
           compression-level: 0
           include-hidden-files: true
-          path: apps/desktop/.desktop-build/targets/${{ matrix.target }}/unsigned-artifacts/deepseek-harness-0.2.2-alpha.2-${{ matrix.target }}-unsigned.exe
+          path: apps/desktop/.desktop-build/targets/${{ matrix.target }}/unsigned-artifacts/deepseek-harness-${{ env.PACKAGE_VERSION }}-${{ matrix.target }}-unsigned.exe
           if-no-files-found: error
           retention-days: 14
       - name: Upload packaging diagnostics
