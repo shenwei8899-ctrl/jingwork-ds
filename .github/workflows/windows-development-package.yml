@@ -12,19 +12,12 @@ on:
         required: true
         default: 0.2.2-alpha.2
         type: string
-      architecture:
-        description: Windows target architecture
-        required: true
-        default: x64
-        type: choice
-        options: [x64, arm64, both]
 
 permissions:
   contents: read
 
 jobs:
   package:
-    if: ${{ github.ref_name == 'codex/windows-package-0.2.2-alpha.2' || inputs.architecture == 'both' || matrix.arch == (inputs.architecture || 'x64') }}
     strategy:
       fail-fast: false
       matrix:
@@ -32,9 +25,6 @@ jobs:
           - target: win-x64
             arch: x64
             runner: windows-2025
-          - target: win-arm64
-            arch: arm64
-            runner: windows-11-arm
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 180
     env:
