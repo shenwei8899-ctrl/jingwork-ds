@@ -2,7 +2,9 @@ name: Package Desktop · Windows · x64 and ARM64
 
 on:
   push:
-    branches: ['codex/windows-package-0.2.2-alpha.2']
+    branches:
+      - codex/windows-package-0.2.2-alpha.2
+      - codex/jingwork-desktop-0.2.2-rc.2
   workflow_dispatch:
     inputs:
       version:
@@ -22,7 +24,7 @@ permissions:
 
 jobs:
   package:
-    if: ${{ github.event_name == 'push' || inputs.architecture == 'both' || matrix.arch == inputs.architecture }}
+    if: ${{ github.ref_name == 'codex/windows-package-0.2.2-alpha.2' || inputs.architecture == 'both' || matrix.arch == (inputs.architecture || 'x64') }}
     strategy:
       fail-fast: false
       matrix:
@@ -36,7 +38,7 @@ jobs:
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 180
     env:
-      PACKAGE_VERSION: ${{ inputs.version || '0.2.2-alpha.2' }}
+      PACKAGE_VERSION: ${{ inputs.version || (github.ref_name == 'codex/windows-package-0.2.2-alpha.2' && '0.2.2-alpha.2' || '0.2.2-rc.2') }}
     concurrency:
       group: windows-development-package-${{ github.ref }}-${{ matrix.target }}
       cancel-in-progress: false
