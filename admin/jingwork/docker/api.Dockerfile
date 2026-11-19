@@ -55,6 +55,10 @@ COPY backend/package /app/package
 # 如果网络还是不好，可以在后面添加 --index-url https://pypi.tuna.tsinghua.edu.cn/simple
 RUN uv sync --no-cache --group test --no-dev --frozen
 
+RUN UV_CACHE_DIR=/tmp/skill-scanner-build-cache UV_TOOL_DIR=/opt/security-tools UV_TOOL_BIN_DIR=/usr/local/bin \
+    uv tool install --python /usr/local/bin/python cisco-ai-skill-scanner==2.3.2 \
+    && rm -rf /tmp/skill-scanner-build-cache
+
 # 复制 server 代码
 COPY backend/server /app/server
 COPY docker/api-entrypoint.sh /usr/local/bin/yuxi-entrypoint

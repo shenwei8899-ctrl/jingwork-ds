@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import SkillCardList from '@/components/extensions/SkillCardList.vue'
+import SkillSubmissionReview from '@/components/extensions/SkillSubmissionReview.vue'
 
 const skillPanel = ref(null)
 </script>
@@ -9,6 +10,7 @@ const skillPanel = ref(null)
 <template>
   <div class="enterprise-skill-manage">
     <PageHeader title="Skill 管理" :loading="skillPanel?.loading || false" :show-border="true" />
+    <SkillSubmissionReview />
     <SkillCardList ref="skillPanel" />
   </div>
 </template>

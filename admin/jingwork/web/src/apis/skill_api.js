@@ -3,6 +3,16 @@ import { apiGet, apiPost, apiPut, apiDelete, apiAdminGet, apiAdminPost } from '.
 const BASE_URL = '/api/system/skills'
 const USER_BASE_URL = '/api/skills'
 
+export const listSkillSubmissions = () => apiAdminGet('/api/system/skill-submissions')
+
+export const reviewSkillSubmission = (id, status, comment) => apiAdminPost(
+  `/api/system/skill-submissions/${encodeURIComponent(id)}/review`, { status, comment }
+)
+
+export const scanSkillSubmission = (id) => apiAdminPost(
+  `/api/system/skill-submissions/${encodeURIComponent(id)}/scan`
+)
+
 export const listSkills = async () => {
   return apiGet(BASE_URL)
 }

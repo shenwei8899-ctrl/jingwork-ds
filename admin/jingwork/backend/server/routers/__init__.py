@@ -21,6 +21,7 @@ from server.routers.model_provider_router import model_providers
 from server.routers.project_router import projects
 from server.routers.scheduled_agent_router import scheduled_agents
 from server.routers.skill_router import skills, user_skills
+from server.routers.skill_submission_router import skill_submissions
 from server.routers.system_router import system
 from server.routers.system_task_router import tasks
 from server.routers.tool_router import tools
@@ -63,6 +64,7 @@ router.include_router(department)  # /api/departments/* 部门与权限相关数
 router.include_router(tasks)  # /api/tasks/* 后台任务查询与管理
 router.include_router(mcp)  # /api/system/mcp-servers/* MCP 服务管理
 router.include_router(model_providers)  # /api/system/model-providers/* 独立模型配置
+router.include_router(skill_submissions)
 router.include_router(skills)  # /api/system/skills/* Skills 管理
 router.include_router(user_skills)  # /api/skills/* 用户可用 Skills
 router.include_router(tools)  # /api/system/tools/* 工具列表与配置
