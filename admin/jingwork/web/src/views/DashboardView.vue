@@ -2,16 +2,16 @@
   <div class="dashboard-container">
     <PageHeader
       v-model:active-key="activeTab"
-      title="数据总览"
+      :title="enterprisePage ? '研效看板' : '数据总览'"
       :tabs="dashboardTabs"
       :loading="loading"
       :show-border="true"
       aria-label="数据总览视图切换"
       @change="handleTabChange"
     >
-      <template #info>
+      <template v-if="activeTab !== 'enterprise'" #info>
         <span class="header-context">
-          {{ activeTab === 'overview' ? '系统运行与资源使用' : '会话趋势与历史审计' }}
+          Web 运行记录与资源使用
         </span>
       </template>
       <template #actions>
@@ -54,6 +54,8 @@
       </template>
     </PageHeader>
 
+    <EnterpriseProductivityPanel v-if="activeTab === 'enterprise'" />
+
     <StatsOverviewComponent
       v-if="overviewActivated"
       v-show="activeTab === 'overview'"
@@ -62,11 +64,7 @@
     />
 
     <!-- Tab 1: 系统概览主要内容区域 -->
-    <div
-      v-if="overviewActivated"
-      v-show="activeTab === 'overview'"
-      class="dashboard-grid"
-    >
+    <div v-if="overviewActivated" v-show="activeTab === 'overview'" class="dashboard-grid">
       <!-- 调用统计模块 - 占据2x1网格 -->
       <CallStatsComponent :loading="loading" ref="callStatsRef" />
 
@@ -138,14 +136,23 @@ import CallStatsComponent from '@/components/dashboard/CallStatsComponent.vue'
 import StatsOverviewComponent from '@/components/dashboard/StatsOverviewComponent.vue'
 import FeedbackModalComponent from '@/components/dashboard/FeedbackModalComponent.vue'
 import ThreadStatsComponent from '@/components/dashboard/ThreadStatsComponent.vue'
+import EnterpriseProductivityPanel from '@/components/dashboard/EnterpriseProductivityPanel.vue'
 
 const route = useRoute()
 const router = useRouter()
-const dashboardTabs = [
-  { key: 'overview', label: '系统概览' },
-  { key: 'threads', label: '会话分析' }
-]
-const normalizeTab = (tab) => (tab === 'threads' ? 'threads' : 'overview')
+const enterprisePage = route.query.page === 'productivity'
+const defaultTab = enterprisePage ? 'enterprise' : 'overview'
+const dashboardTabs = enterprisePage
+  ? [
+      { key: 'enterprise', label: '企业研效' },
+      { key: 'overview', label: 'Web 运行概览' },
+      { key: 'threads', label: 'Web 会话分析' }
+    ]
+  : [
+      { key: 'overview', label: '系统概览' },
+      { key: 'threads', label: '会话分析' }
+    ]
+const normalizeTab = (tab) => (dashboardTabs.some((item) => item.key === tab) ? tab : defaultTab)
 const activeTab = ref(normalizeTab(route.query.tab))
 const overviewActivated = ref(activeTab.value === 'overview')
 const threadActivated = ref(activeTab.value === 'threads')
@@ -212,6 +219,7 @@ const loadAllStats = async () => {
 
 // 切换 Tab 处理
 const handleTabChange = async ({ key }) => {
+  if (key === 'enterprise') return
   if (key === 'overview') {
     overviewActivated.value = true
     await loadAllStats()
@@ -233,7 +241,7 @@ watch(activeTab, (tab) => {
   if (normalizedTab === 'overview') overviewActivated.value = true
   if (normalizedTab === 'threads') threadActivated.value = true
   const query = { ...route.query }
-  if (normalizedTab === 'overview') delete query.tab
+  if (normalizedTab === defaultTab) delete query.tab
   else query.tab = normalizedTab
   if (route.query.tab !== query.tab) router.replace({ query })
 })
@@ -287,6 +295,24 @@ onUnmounted(() => {
   background-color: var(--gray-25);
   min-height: calc(100vh - 64px);
   overflow-x: hidden;
+
+  :deep(.page-header) {
+    height: auto;
+    min-height: 48px;
+    padding-block: 8px;
+    flex-wrap: wrap;
+  }
+
+  :deep(.page-header-left),
+  :deep(.page-header-tabs) {
+    flex-wrap: wrap;
+    height: auto;
+  }
+
+  :deep(.page-header-tabs) {
+    flex-shrink: 1;
+    row-gap: 6px;
+  }
 }
 
 .header-context {

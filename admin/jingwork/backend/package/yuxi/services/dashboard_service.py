@@ -6,9 +6,12 @@ from datetime import datetime
 from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
+from yuxi.repositories.agent_repository import AgentRepository
 from yuxi.repositories.conversation_repository import ConversationRepository
 from yuxi.repositories.dashboard_repository import DashboardRepository
+from yuxi.repositories.desktop_conversation_repository import DesktopConversationRepository
 from yuxi.storage.minio.client import normalize_public_minio_url
+from yuxi.storage.postgres.models_business import User
 from yuxi.utils.datetime_utils import format_utc_datetime
 
 
@@ -23,6 +26,12 @@ class DashboardService:
     async def get_basic_stats(self) -> dict[str, Any]:
         """读取基础统计指标（会话数、消息数、用户数、满意度）。"""
         return await self.repo.get_basic_stats()
+
+    async def get_enterprise_overview(self, user: User) -> dict[str, Any]:
+        """组合桌面日志用量与当前管理员在管理页可见的智能体数量。"""
+        usage = await DesktopConversationRepository(self.db).overview()
+        agents = await AgentRepository(self.db).list_visible(user=user, include_subagent_definitions=True)
+        return {**usage, "total_agents": len(agents)}
 
     async def get_user_activity_stats(self, *, now: datetime | None = None) -> dict[str, Any]:
         """统计用户总量与活跃趋势。"""

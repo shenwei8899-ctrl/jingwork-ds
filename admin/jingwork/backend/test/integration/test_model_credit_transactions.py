@@ -123,3 +123,67 @@ async def test_selected_enterprise_model_uses_its_own_price_and_denies_other_mod
             await db.execute(delete(ModelCreditBalance).where(ModelCreditBalance.period == period))
             await db.commit()
         await pg_manager.close()
+
+
+@pytest.mark.asyncio
+async def test_unmetered_calls_record_usage_idempotently_without_balance_changes(monkeypatch):
+    """真实模型包装链路记录用量，缺失和重复回调保持可核对状态。"""
+    from langchain_core.language_models.fake_chat_models import FakeMessagesListChatModel
+    from langchain_core.messages import AIMessage
+    from sqlalchemy import func
+    from yuxi.models import chat
+    from yuxi.models.managed import ManagedChatModel
+    from yuxi.repositories.model_credit_repository import ModelCreditRepository
+
+    pg_manager.initialize()
+    uid = "pytest-tokens-" + uuid4().hex
+    spec = "test:" + uuid4().hex
+    async with pg_manager.get_async_session_context() as db:
+        db.add(User(uid=uid, username=uid, password_hash="unused"))
+        await db.commit()
+
+    async def policy(*args):
+        return {"managed": False, "default_model": spec}
+
+    async def forbid_balances(*args, **kwargs):
+        raise AssertionError("用量采集不应获取计费余额")
+
+    monkeypatch.setattr(service, "effective_policy", policy)
+    monkeypatch.setattr(ModelCreditRepository, "locked_balances", forbid_balances)
+    try:
+        call_id, model, cap = await service.reserve_call(uid, None, 100)
+        assert model == spec and cap is None
+        assert call_id is not None
+        usage = {"input_tokens": 100, "output_tokens": 20, "input_token_details": {"cache_read": 80}}
+        await asyncio.gather(service.settle_call(call_id, usage), service.settle_call(call_id, usage))
+        await service.settle_call(call_id, None)
+        unknown, _, _ = await service.reserve_call(uid, spec, 100)
+        await service.settle_call(unknown, None)
+        actual_usage = {"input_tokens": 30, "output_tokens": 5, "total_tokens": 35}
+        fake = FakeMessagesListChatModel(responses=[AIMessage(content="测试", usage_metadata=actual_usage)])
+        monkeypatch.setattr(chat, "load_chat_model", lambda *args, **kwargs: fake)
+        await ManagedChatModel(model_spec=spec, uid=uid).ainvoke("测试")
+        async with pg_manager.get_async_session_context() as db:
+            repo = ModelCreditRepository(db)
+            call = await repo.call(call_id)
+            missing = await repo.call(unknown)
+            assert call.status == "usage_recorded"
+            assert call.usage == usage and call.credits is None
+            assert missing.status == "usage_unknown" and missing.usage is None
+            records = await repo.calls(uid)
+            assert len(records) == 3
+            assert any(row.usage == actual_usage for row in records)
+            assert (
+                await db.scalar(
+                    select(func.count())
+                    .select_from(ModelCreditBalance)
+                    .where(ModelCreditBalance.scope == "user:" + uid)
+                )
+                == 0
+            )
+    finally:
+        async with pg_manager.get_async_session_context() as db:
+            await db.execute(delete(ModelCreditCall).where(ModelCreditCall.uid == uid))
+            await db.execute(delete(User).where(User.uid == uid))
+            await db.commit()
+        await pg_manager.close()

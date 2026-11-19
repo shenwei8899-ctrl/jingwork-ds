@@ -18,8 +18,13 @@
       />
       <DashboardMetricCard
         :icon="BadgeCheck"
-        :value="`${toolStats?.success_rate || 0}%`"
+        :value="
+          (toolStats?.successful_calls || 0) + (toolStats?.failed_calls || 0)
+            ? `${toolStats.success_rate}%`
+            : '—'
+        "
         label="成功率"
+        title="成功调用 ÷ 已结束调用（成功或失败）"
         :tone="getSuccessTone()"
         compact
       />

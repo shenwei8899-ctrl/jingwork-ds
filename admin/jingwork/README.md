@@ -28,7 +28,16 @@ Yuxi is built for teams that need control over their data, models, and permissio
 - **Manage team access**: Control access to knowledge bases, agents, Skills, and models by user, department, and sharing scope.
 - **Compare execution quality**: Evaluate knowledge base retrieval results, or use Langfuse Datasets to evaluate complete agent tasks.
 
+The JingWork organization overview counts archived desktop conversations and messages from the same records as the conversation log. Member totals follow the IAM account directory when IAM is enabled. Activity counts members with synchronized messages during the latest 30 Shanghai calendar days through the current time. The overview displays the latest synchronization time and links to the conversation log and member directory.
+
+Member statistics show cumulative and daily prompts, conversations, and recorded tokens, with date filters, name search, sorting, and CSV export. Token counts come from actual enterprise model input and output usage. Missing historical usage remains unavailable.
+
+Enterprise productivity uses synchronized desktop conversations, the IAM directory, and actual enterprise model usage. Totals, daily trends, member rankings, and expert and model distributions share one read-only database snapshot. Labeled tabs provide Web runtime and conversation analysis. Satisfaction is unavailable without feedback, Web activity follows message timestamps, and tool success rates use completed calls.
+
+Desktop conversation logs list synchronized deliveries and successful file-tool outputs below their conversation, with filename, size, generation time, and authenticated download. Updated desktop clients backfill locally available files using independent message, delivery, and mutation cursors. Files are stored in a private object bucket and remain downloadable while the client is offline. Each file follows the shared 100 MiB upload limit.
+
 ## Tech Stack
+
 
 | Layer | Technologies |
 | --- | --- |

@@ -4,7 +4,7 @@
       <DashboardMetricCard
         :icon="Users"
         :value="formatNumber(userStats?.total_users)"
-        label="总用户"
+        label="本地账号"
         tone="info"
         compact
       />

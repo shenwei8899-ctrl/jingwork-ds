@@ -76,9 +76,21 @@ async def reserve_call(uid, requested_model, input_tokens, *, thread_id=None):
     """预占最坏输入价格和固定输出上限，余额不足时不产生上游调用。"""
     async with pg_manager.get_async_session_context() as db:
         policy = await effective_policy(uid, db)
-        if not policy["managed"]:
-            return None, requested_model, None
         spec = requested_model or policy["default_model"]
+        if not policy["managed"]:
+            call = ModelCreditCall(
+                id=str(uuid4()),
+                uid=uid,
+                period=current_period(),
+                model_spec=spec,
+                thread_id=thread_id,
+                price={},
+                reservation=0,
+                status="usage_pending",
+            )
+            db.add(call)
+            await db.commit()
+            return call.id, spec, None
         allowed = policy.get("allowed_models") or [policy["default_model"]]
         # 显式选择仍须处于管理员授权集合，计费使用实际所选模型。
         if spec not in allowed:
@@ -131,6 +143,19 @@ async def settle_call(call_id, usage):
         original = await repo.call(call_id)
         if original is None:
             raise HTTPException(404, "调用记录不存在")
+        if original.status in {"usage_pending", "usage_recorded", "usage_unknown"}:
+            call = await repo.call(call_id, lock=True)
+            if call.status == "usage_recorded":
+                return
+            if usage is None:
+                call.status = "usage_unknown"
+            else:
+                validate_usage(usage)
+                call.usage = usage
+                call.status = "usage_recorded"
+                call.settled_at = utc_now_naive()
+            await db.commit()
+            return
         enterprise, member = await repo.locked_balances(original.uid, original.period)
         call = await repo.call(call_id, lock=True)
         if call.status == "settled":

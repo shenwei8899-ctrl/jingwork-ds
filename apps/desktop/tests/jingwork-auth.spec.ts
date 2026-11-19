@@ -31,6 +31,27 @@ async function persist(context: Awaited<ReturnType<typeof fixture>>) {
   return join(directory, file)
 }
 
+it('submits and downloads skills with native credentials and checks current publication', async () => {
+  const context = await fixture()
+  await persist(context)
+  const skill = { slug: 'meeting', name: 'Meeting', description: 'Summarize meetings', content: 'Write notes.' }
+  context.send.mockResolvedValueOnce(Response.json({ data: { status: 'pending' } }))
+  expect(await context.auth.submitSkill(skill)).toBe('pending')
+  expect(context.send.mock.calls.at(-1)?.[0]).toBe(origin + '/api/skills/submissions')
+  const init = context.send.mock.calls.at(-1)?.[1]
+  expect(new Headers(init?.headers).get('Authorization')).toBe(`Bearer ${granted.secret}`)
+  expect(JSON.parse(String(init?.body))).toEqual(skill)
+  context.send.mockResolvedValueOnce(Response.json({ data: [{ id: 'version-1', ...skill }] }))
+  expect(await context.auth.skills()).toEqual([{ id: 'version-1', slug: skill.slug, name: skill.name, description: skill.description }])
+  context.send.mockResolvedValueOnce(Response.json({ data: skill }))
+  expect(await context.auth.downloadSkill('version-1')).toEqual(skill)
+  context.send.mockResolvedValueOnce(new Response(null, { status: 404 }))
+  await expect(context.auth.downloadSkill('version-1')).rejects.toThrow('unavailable')
+  const calls = context.send.mock.calls.length
+  await expect(context.auth.submitSkill({ ...skill, content: ' ' })).rejects.toThrow('Invalid')
+  expect(context.send.mock.calls.length).toBe(calls)
+})
+
 it.each(['https://example.com/unsafe%2fpath', 'https://user:secret@example.com', 'http://example.com', 'file:///tmp/a',
   'https://example.com/?secret=value'])('rejects an unsafe login deployment %s', (value) => {
   expect(() => jingworkOrigin(value)).toThrow()

@@ -1,4 +1,6 @@
 <script setup>
+/** 企业管理布局，页头复用 JingWork 桌面品牌。 */
+import jingworkMark from '@/assets/jingwork-agent.png'
 import EnterpriseSystemLogView from '@/views/EnterpriseSystemLogView.vue'
 import EnterpriseToolManageView from '@/views/EnterpriseToolManageView.vue'
 import { computed, onMounted, provide, ref } from 'vue'
@@ -116,9 +118,12 @@ function select(key) {
 <template>
   <div class="enterprise-console" :class="{ collapsed }">
     <header class="enterprise-header">
-      <router-link to="/extensions" class="enterprise-brand" title="竞网蓝鲸首页">
-        <img src="/enterprise-logo.png" alt="竞网蓝鲸" />
-        <span v-if="!collapsed"><strong>竞网蓝鲸</strong><small>JING WORK</small></span>
+      <router-link to="/extensions" class="enterprise-brand" title="JingWork 首页" aria-label="JingWork 首页">
+        <img :src="jingworkMark" alt="" />
+        <span v-if="!collapsed" class="enterprise-brand-name">
+          <span class="enterprise-brand-title">JingWork</span>
+          <span class="enterprise-brand-badge">HARNESS</span>
+        </span>
       </router-link>
       <span class="enterprise-title">企业 Agent 平台</span>
     </header>
@@ -272,24 +277,36 @@ function select(key) {
 .enterprise-brand {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 8px;
   color: inherit;
   text-decoration: none;
 }
 .enterprise-brand img {
-  width: 44px;
-  height: 44px;
+  display: block;
+  width: 32px;
+  height: 32px;
   object-fit: contain;
 }
-.enterprise-brand strong {
-  font-size: 14px;
-  letter-spacing: 2px;
+.enterprise-brand-name {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  line-height: 1;
+  white-space: nowrap;
 }
-.enterprise-brand small {
-  display: block;
+.enterprise-brand-title {
+  font-size: 16px;
+  font-weight: 500;
+}
+.enterprise-brand-badge {
+  padding: 1px 3px;
+  border-radius: 2px;
+  background: var(--gray-900);
+  color: var(--gray-0);
   font-size: 9px;
-  letter-spacing: 2px;
-  margin-top: 3px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
 }
 .enterprise-title {
   padding-left: 24px;

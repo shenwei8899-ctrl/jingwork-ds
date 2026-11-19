@@ -395,6 +395,32 @@ class Skill(Base):
         }
 
 
+class SkillSubmission(Base):
+    """桌面 Markdown Skill 的不可变内容版本及人工审核结果。"""
+
+    __tablename__ = "skill_submissions"
+    __table_args__ = (
+        UniqueConstraint("created_by", "content_hash", name="uq_skill_submission_content"),
+        CheckConstraint("status IN ('pending', 'approved', 'rejected', 'withdrawn')", name="ck_skill_submission_status"),
+    )
+
+    id = Column(String(36), primary_key=True)
+    slug = Column(String(32), nullable=False)
+    name = Column(String(120), nullable=False)
+    description = Column(Text, nullable=False)
+    content = Column(Text, nullable=False)
+    content_hash = Column(String(64), nullable=False)
+    created_by = Column(String(64), nullable=False, index=True)
+    submitted_by = Column(String(128), nullable=False)
+    status = Column(String(16), nullable=False, default="pending", index=True)
+    scan_report = Column(JSON_VALUE, nullable=False)
+    review_comment = Column(Text, nullable=False, default="")
+    reviewed_by = Column(String(64), nullable=True)
+    reviewed_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, nullable=False, default=utc_now_naive)
+    updated_at = Column(DateTime, nullable=False, default=utc_now_naive)
+
+
 class Conversation(Base):
     """Conversation table - 对话表"""
 
@@ -1411,6 +1437,29 @@ class DesktopConversationEvent(Base):
         UniqueConstraint("user_id", "device_id", "agent_id", "event_id", name="uq_desktop_conversation_source"),
         CheckConstraint("event_type IN ('user_message', 'assistant_message')", name="ck_desktop_conversation_role"),
         Index("ix_desktop_conversation_thread", "user_id", "device_id", "agent_id", "thread_id", "timestamp"),
+    )
+
+
+class DesktopConversationFile(Base):
+    """桌面交付文件的私有对象与不可变来源关联。"""
+
+    __tablename__ = "desktop_conversation_files"
+    id = Column(String(64), primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    device_id = Column(String(128), nullable=False)
+    agent_id = Column(String(128), nullable=False)
+    thread_id = Column(String(512), nullable=False)
+    source_id = Column(String(256), nullable=False)
+    filename = Column(String(255), nullable=False)
+    size = Column(BigInteger, nullable=False)
+    sha256 = Column(String(64), nullable=False)
+    object_name = Column(String(200), nullable=False)
+    timestamp = Column(DateTime, nullable=False)
+    received_at = Column(DateTime, nullable=False, default=utc_now_naive)
+    __table_args__ = (
+        UniqueConstraint("user_id", "device_id", "agent_id", "source_id", name="uq_desktop_conversation_file_source"),
+        Index("ix_desktop_conversation_files_thread", "user_id", "device_id", "agent_id", "thread_id"),
+        CheckConstraint("size >= 0", name="ck_desktop_conversation_file_size"),
     )
 
 

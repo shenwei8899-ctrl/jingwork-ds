@@ -23,7 +23,7 @@ from yuxi.utils import logger
 from yuxi.utils.singleton import SingletonMeta
 
 AGENT_RUN_TERMINAL_STATUS_SQL = ", ".join(f"'{status}'" for status in AGENT_RUN_TERMINAL_STATUSES)
-BUSINESS_SCHEMA_VERSION = 13
+BUSINESS_SCHEMA_VERSION = 15
 KNOWLEDGE_SCHEMA_VERSION = 2
 SCHEMA_VERSION_TABLE = "yuxi_schema_migrations"
 AGENT_RUN_LEASE_SCHEMA_STATEMENTS = (
@@ -588,6 +588,40 @@ class PostgresManager(metaclass=SingletonMeta):
             await conn.run_sync(lambda sync: DesktopAutomationSnapshot.__table__.create(sync, checkfirst=True))
             await conn.execute(text(
                 f"UPDATE {SCHEMA_VERSION_TABLE} SET version = 13, applied_at = CURRENT_TIMESTAMP WHERE domain = 'business'"
+            ))
+
+    async def upgrade_skill_submissions(self) -> None:
+        """创建 Skill 审核表并原子推进业务版本，支持重复执行。"""
+        from yuxi.storage.postgres.models_business import SkillSubmission
+
+        async with self.async_engine.begin() as conn:
+            version = await conn.scalar(text(
+                f"SELECT version FROM {SCHEMA_VERSION_TABLE} WHERE domain = 'business' FOR UPDATE"
+            ))
+            if version == 14:
+                return
+            if version != 13:
+                raise RuntimeError(f"Unsupported business schema version: {version}")
+            await conn.run_sync(lambda sync: SkillSubmission.__table__.create(sync, checkfirst=True))
+            await conn.execute(text(
+                f"UPDATE {SCHEMA_VERSION_TABLE} SET version = 14, applied_at = CURRENT_TIMESTAMP WHERE domain = 'business'"
+            ))
+
+    async def upgrade_desktop_conversation_files(self) -> None:
+        """创建交付文件表并原子推进版本，支持迁移重试。"""
+        from yuxi.storage.postgres.models_business import DesktopConversationFile
+
+        async with self.async_engine.begin() as conn:
+            version = await conn.scalar(text(
+                f"SELECT version FROM {SCHEMA_VERSION_TABLE} WHERE domain = 'business' FOR UPDATE"
+            ))
+            if version == 15:
+                return
+            if version != 14:
+                raise RuntimeError(f"Unsupported business schema version: {version}")
+            await conn.run_sync(lambda sync: DesktopConversationFile.__table__.create(sync, checkfirst=True))
+            await conn.execute(text(
+                f"UPDATE {SCHEMA_VERSION_TABLE} SET version = 15, applied_at = CURRENT_TIMESTAMP WHERE domain = 'business'"
             ))
 
     async def record_schema_version(self, domain: str, version: int) -> None:

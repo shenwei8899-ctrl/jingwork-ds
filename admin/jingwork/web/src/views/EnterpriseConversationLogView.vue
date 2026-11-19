@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted, onBeforeUnmount, ref, reactive } from 'vue'
-import { RefreshCw, Search, MessageSquare, UserRound, Bot, CheckCheck } from '@lucide/vue'
+import { RefreshCw, Search, MessageSquare, UserRound, Bot, CheckCheck, FileText } from '@lucide/vue'
 import { departmentApi } from '@/apis/department_api'
 import PageHeader from '@/components/shared/PageHeader.vue'
 import { useUserStore } from '@/stores/user'
@@ -16,6 +16,10 @@ const roleOptions = [
 const users = ref([])
 const sessions = ref([])
 const messages = ref([])
+const files = ref([])
+const filesLoading = ref(false)
+const filesError = ref('')
+const downloading = ref(null)
 const total = ref(0)
 const messageTotal = ref(0)
 const page = ref(1)
@@ -33,6 +37,7 @@ const filters = reactive({
 const agents = computed(() => users.value.find((user) => user.uid === filters.uid)?.agents || [])
 let listGeneration = 0
 let detailGeneration = 0
+let filesGeneration = 0
 let alive = true
 let timer
 let applied = {}
@@ -41,21 +46,69 @@ const key = (session) =>
   JSON.stringify([session.uid, session.device_id, session.agent_id, session.thread_id])
 const excerpt = (session) =>
   (session.question || `${session.agent_name}的对话`).replace(/\s+/g, ' ').slice(0, 100)
+function fileSize(size) {
+  if (size < 1024) return `${size} B`
+  if (size < 1024 ** 2) return `${(size / 1024).toFixed(1)} KB`
+  return `${(size / 1024 ** 2).toFixed(1)} MB`
+}
+async function loadFiles(session) {
+  const ticket = ++filesGeneration
+  filesLoading.value = true
+  filesError.value = ''
+  try {
+    const result = await conversationLogApi.files({
+      uid: session.uid,
+      device_id: session.device_id,
+      agent_id: session.agent_id,
+      thread_id: session.thread_id
+    })
+    if (ticket === filesGeneration) files.value = result.items
+  } catch (e) {
+    if (ticket === filesGeneration) filesError.value = e.message || '对话文件加载失败，请重试'
+  } finally {
+    if (ticket === filesGeneration) filesLoading.value = false
+  }
+}
+async function downloadFile(file) {
+  const sessionKey = key(selected.value)
+  downloading.value = file.id
+  try {
+    const blob = await conversationLogApi.downloadFile(file.id)
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = file.filename
+    link.click()
+    URL.revokeObjectURL(url)
+  } catch (e) {
+    if (selected.value && key(selected.value) === sessionKey) {
+      filesError.value = e.message || '文件下载失败，请重试'
+    }
+  } finally {
+    downloading.value = null
+  }
+}
 async function openSession(session, append = false) {
   const ticket = ++detailGeneration
   selected.value = session
   detailLoading.value = true
   error.value = ''
-  if (!append) messages.value = []
+  if (!append) {
+    messages.value = []
+    files.value = []
+  }
   try {
-    const result = await conversationLogApi.messages({
-      uid: session.uid,
-      device_id: session.device_id,
-      agent_id: session.agent_id,
-      thread_id: session.thread_id,
-      offset: append ? messages.value.length : 0,
-      limit: 100
-    })
+    const [result] = await Promise.all([
+      conversationLogApi.messages({
+        uid: session.uid,
+        device_id: session.device_id,
+        agent_id: session.agent_id,
+        thread_id: session.thread_id,
+        offset: append ? messages.value.length : 0,
+        limit: 100
+      }),
+      loadFiles(session)
+    ])
     if (ticket !== detailGeneration) return
     messages.value = append ? [...messages.value, ...result.items] : result.items
     messageTotal.value = result.total
@@ -84,10 +137,16 @@ async function load(nextPage = 1, silent = false) {
       detailGeneration++
       selected.value = null
       messages.value = []
+      filesGeneration++
+      files.value = []
+      filesError.value = ''
+      filesLoading.value = false
       detailLoading.value = false
       if (sessions.value[0]) await openSession(sessions.value[0])
     } else if (match.message_count !== selected.value.message_count) {
       await openSession(match)
+    } else {
+      await loadFiles(match)
     }
   } catch (e) {
     if (ticket === listGeneration) error.value = e.message || '日志加载失败'
@@ -100,6 +159,8 @@ function search() {
   detailGeneration++
   selected.value = null
   messages.value = []
+  filesGeneration++
+  files.value = []
   void load()
 }
 function reset() {
@@ -134,7 +195,9 @@ onMounted(() => {
   if (!userStore.isAdmin) return
   void refresh()
   timer = setInterval(() => {
-    if (!document.hidden && !loading.value && !detailLoading.value) void load(page.value, true)
+    if (!document.hidden && !loading.value && !detailLoading.value && !filesLoading.value) {
+      void load(page.value, true)
+    }
   }, 10000)
 })
 onBeforeUnmount(() => {
@@ -142,6 +205,7 @@ onBeforeUnmount(() => {
   clearInterval(timer)
   listGeneration++
   detailGeneration++
+  filesGeneration++
 })
 </script>
 
@@ -297,6 +361,37 @@ onBeforeUnmount(() => {
                 >
               </div>
             </a-spin>
+            <section class="conversation-files" aria-label="对话文件">
+              <div class="files-heading">
+                <h3>对话文件</h3>
+                <a-button v-if="filesError" size="small" @click="loadFiles(selected)"
+                  >重试</a-button
+                >
+              </div>
+              <a-alert v-if="filesError" :message="filesError" type="error" show-icon />
+              <a-spin :spinning="filesLoading">
+                <ul v-if="files.length" class="file-list">
+                  <li v-for="file in files" :key="file.id" class="file-row">
+                    <FileText :size="20" aria-hidden="true" />
+                    <div class="file-info">
+                      <span class="file-name">{{ file.filename }}</span>
+                      <span class="file-meta"
+                        >{{ fileSize(file.size) }} · {{ time(file.timestamp) }}</span
+                      >
+                    </div>
+                    <a-button
+                      size="small"
+                      :aria-label="`下载 ${file.filename}`"
+                      :loading="downloading === file.id"
+                      :disabled="downloading !== null"
+                      @click="downloadFile(file)"
+                      >下载</a-button
+                    >
+                  </li>
+                </ul>
+                <p v-else class="files-empty">暂无已同步文件</p>
+              </a-spin>
+            </section>
           </template>
           <div v-else class="empty-chat">
             <MessageSquare :size="40" :stroke-width="1.4" />
@@ -314,6 +409,60 @@ onBeforeUnmount(() => {
 <style scoped lang="less">
 .conversation-content {
   padding: 22px 28px;
+}
+.conversation-files {
+  margin: 0 24px 24px;
+  padding: 16px;
+  border: 1px solid var(--gray-150);
+  border-radius: 8px;
+  background: var(--gray-0);
+}
+.files-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 500;
+  }
+}
+.file-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.file-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  color: var(--color-text-secondary);
+  > svg,
+  > button {
+    flex-shrink: 0;
+  }
+  & + & {
+    border-top: 1px solid var(--gray-100);
+  }
+}
+.file-info {
+  display: grid;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+.file-name {
+  color: var(--color-text);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.file-meta,
+.files-empty {
+  font-size: 12px;
+  color: var(--color-text-secondary);
 }
 .intro {
   display: flex;

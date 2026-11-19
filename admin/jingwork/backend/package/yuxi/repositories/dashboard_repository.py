@@ -19,7 +19,7 @@ from yuxi.storage.postgres.models_business import (
     ToolCall,
     User,
 )
-from yuxi.utils.datetime_utils import UTC, ensure_shanghai, format_utc_datetime, shanghai_now, utc_now
+from yuxi.utils.datetime_utils import UTC, ensure_shanghai, format_utc_datetime, utc_now
 
 
 class DashboardRepository:
@@ -34,7 +34,7 @@ class DashboardRepository:
         if time_range == "14hours":
             return func.to_char(column + text("INTERVAL '8 hours'"), "YYYY-MM-DD HH24:00")
         if time_range == "14weeks":
-            return func.to_char(column + text("INTERVAL '8 hours'"), "YYYY-IW")
+            return func.to_char(column + text("INTERVAL '8 hours'"), "IYYY-IW")
         return func.to_char(column + text("INTERVAL '8 hours'"), "YYYY-MM-DD")
 
     def _shanghai_date_group(self, column: Any) -> Any:
@@ -238,83 +238,75 @@ class DashboardRepository:
         }
 
     async def get_user_activity_stats(self, *, now: datetime | None = None) -> dict[str, Any]:
-        """统计用户总量与近期开启对话的活跃用户。"""
-        query_now = (now or utc_now()).replace(tzinfo=None)
-
-        total_result = await self.db_session.execute(select(func.count(User.id)).where(User.is_deleted == 0))
-        active_24h_result = await self.db_session.execute(
+        """按可见 Web 消息发生时间统计活跃用户与历史日分布。"""
+        raw_now = now or utc_now()
+        query_now = raw_now.astimezone(UTC).replace(tzinfo=None) if raw_now.tzinfo else raw_now
+        valid = [
+            Conversation.status.notin_(("deleted", "subagent")),
+            User.is_deleted == 0,
+            or_(Message.message_type.is_(None), Message.message_type.notin_(AUDIT_MESSAGE_TYPES)),
+            Message.created_at <= query_now,
+        ]
+        base = (
             select(func.count(distinct(User.id)))
-            .select_from(Conversation)
+            .select_from(Message)
+            .join(Conversation, Message.conversation_id == Conversation.id)
             .join(User, Conversation.uid == User.uid)
             .join(Agent, Conversation.agent_id == Agent.slug)
-            .where(
-                Conversation.updated_at >= query_now - timedelta(days=1),
-                Conversation.status.notin_(("deleted", "subagent")),
-                User.is_deleted == 0,
-            )
+            .where(*valid)
         )
-        active_30d_result = await self.db_session.execute(
-            select(func.count(distinct(User.id)))
-            .select_from(Conversation)
-            .join(User, Conversation.uid == User.uid)
-            .join(Agent, Conversation.agent_id == Agent.slug)
-            .where(
-                Conversation.updated_at >= query_now - timedelta(days=30),
-                Conversation.status.notin_(("deleted", "subagent")),
-                User.is_deleted == 0,
-            )
-        )
-
-        active_date = self._shanghai_date_group(Conversation.updated_at)
-        daily_active_result = await self.db_session.execute(
-            select(active_date.label("date"), func.count(distinct(User.id)).label("active_users"))
-            .select_from(Conversation)
-            .join(User, Conversation.uid == User.uid)
-            .join(Agent, Conversation.agent_id == Agent.slug)
-            .where(
-                Conversation.updated_at >= query_now - timedelta(days=120),
-                Conversation.updated_at < query_now,
-                Conversation.status.notin_(("deleted", "subagent")),
-                User.is_deleted == 0,
-            )
-            .group_by(active_date)
-        )
-        daily_active_by_date = {str(row.date): int(row.active_users or 0) for row in daily_active_result.all()}
+        total_users = await self.db_session.scalar(select(func.count(User.id)).where(User.is_deleted == 0))
+        active_24h = await self.db_session.scalar(base.where(Message.created_at >= query_now - timedelta(days=1)))
+        active_30d = await self.db_session.scalar(base.where(Message.created_at >= query_now - timedelta(days=30)))
         local_today = (query_now + timedelta(hours=8)).date()
-        daily_active_users = []
-        for day_offset in range(119, -1, -1):
-            date = (local_today - timedelta(days=day_offset)).strftime("%Y-%m-%d")
-            daily_active_users.append({"date": date, "active_users": daily_active_by_date.get(date, 0)})
-
+        local_start = datetime.combine(local_today - timedelta(days=119), datetime.min.time())
+        start = local_start - timedelta(hours=8)
+        active_date = self._shanghai_date_group(Message.created_at)
+        daily_rows = (
+            await self.db_session.execute(
+                select(active_date.label("date"), func.count(distinct(User.id)).label("active_users"))
+                .select_from(Message)
+                .join(Conversation, Message.conversation_id == Conversation.id)
+                .join(User, Conversation.uid == User.uid)
+                .join(Agent, Conversation.agent_id == Agent.slug)
+                .where(*valid, Message.created_at >= start)
+                .group_by(active_date)
+            )
+        ).all()
+        by_date = {str(row.date): int(row.active_users or 0) for row in daily_rows}
+        daily = []
+        for offset in range(119, -1, -1):
+            date = (local_today - timedelta(days=offset)).isoformat()
+            daily.append({"date": date, "active_users": by_date.get(date, 0)})
         return {
-            "total_users": total_result.scalar() or 0,
-            "active_users_24h": active_24h_result.scalar() or 0,
-            "active_users_30d": active_30d_result.scalar() or 0,
-            "daily_active_users": daily_active_users,
+            "total_users": total_users or 0,
+            "active_users_24h": active_24h or 0,
+            "active_users_30d": active_30d or 0,
+            "daily_active_users": daily,
         }
 
     async def get_tool_call_stats(self, *, now: datetime | None = None) -> dict[str, Any]:
         """统计有效用户与非删除会话中的工具调用。"""
         query_now = (now or utc_now()).replace(tzinfo=None)
         valid_filters = [Conversation.status.notin_(("deleted", "subagent")), User.is_deleted == 0]
-        total_result = await self.db_session.execute(
-            select(func.count(ToolCall.id))
-            .join(Message, ToolCall.message_id == Message.id)
-            .join(Conversation, Message.conversation_id == Conversation.id)
-            .join(User, Conversation.uid == User.uid)
-            .join(Agent, Conversation.agent_id == Agent.slug)
-            .where(*valid_filters)
-        )
-        successful_result = await self.db_session.execute(
-            select(func.count(ToolCall.id))
-            .join(Message, ToolCall.message_id == Message.id)
-            .join(Conversation, Message.conversation_id == Conversation.id)
-            .join(User, Conversation.uid == User.uid)
-            .join(Agent, Conversation.agent_id == Agent.slug)
-            .where(*valid_filters, ToolCall.status == "success")
-        )
-        total_calls = total_result.scalar() or 0
-        successful_calls = successful_result.scalar() or 0
+        counts = (
+            await self.db_session.execute(
+                select(
+                    func.count(ToolCall.id).label("total"),
+                    func.count(ToolCall.id).filter(ToolCall.status == "success").label("successful"),
+                    func.count(ToolCall.id).filter(ToolCall.status == "error").label("failed"),
+                )
+                .join(Message, ToolCall.message_id == Message.id)
+                .join(Conversation, Message.conversation_id == Conversation.id)
+                .join(User, Conversation.uid == User.uid)
+                .join(Agent, Conversation.agent_id == Agent.slug)
+                .where(*valid_filters)
+            )
+        ).one()
+        total_calls = counts.total
+        successful_calls = counts.successful
+        failed_calls = counts.failed
+        completed_calls = successful_calls + failed_calls
 
         most_used_result = await self.db_session.execute(
             select(ToolCall.tool_name, func.count(ToolCall.id).label("count"))
@@ -358,8 +350,8 @@ class DashboardRepository:
         return {
             "total_calls": total_calls,
             "successful_calls": successful_calls,
-            "failed_calls": total_calls - successful_calls,
-            "success_rate": round(successful_calls / total_calls * 100, 2) if total_calls else 0,
+            "failed_calls": failed_calls,
+            "success_rate": round(successful_calls / completed_calls * 100, 2) if completed_calls else 0,
             "most_used_tools": [{"tool_name": name, "count": count} for name, count in most_used_result.all()],
             "tool_error_distribution": {name: count for name, count in error_result.all()},
             "daily_tool_calls": list(reversed(daily_tool_calls)),
@@ -420,7 +412,7 @@ class DashboardRepository:
         for agent in agents:
             conversation_count = conversation_counts.get(agent.slug, 0)
             total_feedbacks, positive_feedbacks = feedback_by_agent.get(agent.slug, (0, 0))
-            satisfaction_rate = round(positive_feedbacks / total_feedbacks * 100, 2) if total_feedbacks else 100
+            satisfaction_rate = round(positive_feedbacks / total_feedbacks * 100, 2) if total_feedbacks else None
             conversation_stats.append({"agent_id": agent.slug, "conversation_count": conversation_count})
             satisfaction_stats.append(
                 {
@@ -497,7 +489,7 @@ class DashboardRepository:
             "total_users": total_users_result.scalar() or 0,
             "feedback_stats": {
                 "total_feedbacks": total_feedbacks,
-                "satisfaction_rate": round(like_count / total_feedbacks * 100, 2) if total_feedbacks else 100,
+                "satisfaction_rate": round(like_count / total_feedbacks * 100, 2) if total_feedbacks else None,
             },
         }
 
@@ -534,27 +526,27 @@ class DashboardRepository:
         local_now: datetime | None = None,
     ) -> dict[str, Any]:
         """查询并补齐十四个时间区间的调用分析序列。"""
-        query_now = now or utc_now()
-        query_local_now = local_now or shanghai_now()
+        raw_now = now or utc_now()
+        query_now = raw_now.astimezone(UTC) if raw_now.tzinfo else raw_now.replace(tzinfo=UTC)
+        query_local_now = ensure_shanghai(local_now or query_now)
         intervals = 14
-
         if time_range == "14hours":
-            start_time = query_now - timedelta(hours=intervals - 1)
-            base_local_time = ensure_shanghai(start_time)
+            base_local_time = query_local_now.replace(minute=0, second=0, microsecond=0)
+            base_local_time -= timedelta(hours=intervals - 1)
         elif time_range == "14weeks":
-            base_local_time = query_local_now - timedelta(weeks=intervals - 1)
-            base_local_time = base_local_time - timedelta(days=base_local_time.weekday())
-            base_local_time = base_local_time.replace(hour=0, minute=0, second=0, microsecond=0)
-            start_time = base_local_time.astimezone(UTC)
+            base_local_time = query_local_now.replace(hour=0, minute=0, second=0, microsecond=0)
+            base_local_time -= timedelta(days=base_local_time.weekday(), weeks=intervals - 1)
         else:
-            start_time = query_now - timedelta(days=intervals - 1)
-            base_local_time = ensure_shanghai(start_time)
-
-        query_start_time = start_time.replace(tzinfo=None)
+            base_local_time = query_local_now.replace(hour=0, minute=0, second=0, microsecond=0)
+            base_local_time -= timedelta(days=intervals - 1)
+        query_start_time = base_local_time.astimezone(UTC).replace(tzinfo=None)
+        query_end_time = query_now.replace(tzinfo=None)
         message_group = self._time_group_format(Message.created_at, time_range)
 
         if metric_type == "models":
-            category = cast(Message.extra_metadata["response_metadata"]["model_name"], String)
+            category = func.coalesce(
+                Message.extra_metadata["response_metadata"]["model_name"].as_string(), "未记录模型"
+            )
             result = await self.db_session.execute(
                 select(
                     message_group.label("date"),
@@ -568,7 +560,7 @@ class DashboardRepository:
                     Message.role == "assistant",
                     or_(Message.message_type.is_(None), Message.message_type.notin_(AUDIT_MESSAGE_TYPES)),
                     Message.created_at >= query_start_time,
-                    Message.extra_metadata.isnot(None),
+                    Message.created_at <= query_end_time,
                     Conversation.status.notin_(("deleted", "subagent")),
                     User.is_deleted == 0,
                 )
@@ -589,6 +581,7 @@ class DashboardRepository:
                 .where(
                     Conversation.updated_at.isnot(None),
                     Conversation.updated_at >= query_start_time,
+                    Conversation.updated_at <= query_end_time,
                     Conversation.status.notin_(("deleted", "subagent")),
                     User.is_deleted == 0,
                 )
@@ -615,6 +608,7 @@ class DashboardRepository:
                     .join(Agent, Conversation.agent_id == Agent.slug)
                     .where(
                         Message.created_at >= query_start_time,
+                        Message.created_at <= query_end_time,
                         or_(Message.message_type.is_(None), Message.message_type.notin_(AUDIT_MESSAGE_TYPES)),
                         Message.extra_metadata.isnot(None),
                         Message.extra_metadata["usage_metadata"].isnot(None),
@@ -639,6 +633,7 @@ class DashboardRepository:
                 .join(Agent, Conversation.agent_id == Agent.slug)
                 .where(
                     ToolCall.created_at >= query_start_time,
+                    ToolCall.created_at <= query_end_time,
                     Conversation.status.notin_(("deleted", "subagent")),
                     User.is_deleted == 0,
                 )
@@ -668,10 +663,6 @@ class DashboardRepository:
         time_data: dict[str, dict[str, int]] = {}
         for row in rows:
             date_key = row.date
-            if time_range == "14weeks":
-                base_date = datetime.strptime(f"{date_key}-1", "%Y-%W-%w")
-                iso_year, iso_week, _ = base_date.isocalendar()
-                date_key = f"{iso_year}-{iso_week:02d}"
             time_data.setdefault(date_key, {})[row.category] = row.count
 
         if time_range == "14hours":
@@ -699,18 +690,7 @@ class DashboardRepository:
             data.append({"date": date_key, "data": interval_data, "total": interval_total})
             current_time += delta
 
-        if metric_type == "tools":
-            total_result = await self.db_session.execute(
-                select(func.count(ToolCall.id))
-                .join(Message, ToolCall.message_id == Message.id)
-                .join(Conversation, Message.conversation_id == Conversation.id)
-                .join(User, Conversation.uid == User.uid)
-                .join(Agent, Conversation.agent_id == Agent.slug)
-                .where(Conversation.status.notin_(("deleted", "subagent")), User.is_deleted == 0)
-            )
-            total_count = total_result.scalar() or 0
-        else:
-            total_count = sum(item["total"] for item in data)
+        total_count = sum(item["total"] for item in data)
         peak = max(data, key=lambda item: item["total"]) if data else {"total": 0, "date": ""}
         return {
             "data": data,

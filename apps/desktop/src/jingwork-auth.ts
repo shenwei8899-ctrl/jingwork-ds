@@ -1,11 +1,12 @@
 /** Jingwork's browser authorization protocol and encrypted desktop credential cache. */
+import { brandString, type Branded } from '@deepseek-ai/dsh-brand'
 import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { readFile, rm } from 'node:fs/promises'
-import { join } from 'node:path'
+import { basename, join } from 'node:path'
 import { setTimeout as delay } from 'node:timers/promises'
 import type { DesktopClientLog } from './jingwork-client-logs.ts'
-import type { CapturedConversationEvent } from './conversation-log-source.ts'
+import type { CapturedConversationEvent, CapturedConversationFile } from './conversation-log-source.ts'
 import { writeFileAtomic } from '@deepseek-ai/dsh-atomic-write'
 
 /** Desktop authentication deployment settings. */
@@ -21,6 +22,35 @@ export interface JingworkLoginConfig {
 export interface JingworkModelCatalog {
   models: { id: string; name: string; provider: string; input?: ('text' | 'image')[] }[]
   defaultModel: string | null
+}
+
+/** A Markdown skill downloaded to the local workbench or submitted for review. */
+export interface JingworkSkill {
+  slug: string
+  name: string
+  description: string
+  content: string
+}
+
+/** Immutable server submission identifier, validated before crossing native IPC. */
+export type JingworkSkillId = Branded<'JingworkSkillSubmissionId'>
+
+/** Published skill metadata, excluding instruction text until installation. */
+export interface JingworkSkillCard {
+  id: JingworkSkillId
+  slug: string
+  name: string
+  description: string
+}
+
+function validateJingworkSkill(value: unknown): JingworkSkill {
+  if (!record(value) || typeof value.slug !== 'string' || !/^[a-z0-9][a-z0-9_-]{0,31}$/.test(value.slug)
+    || typeof value.name !== 'string' || !value.name.trim() || value.name.length > 120
+    || typeof value.description !== 'string' || value.description.length > 65536
+    || typeof value.content !== 'string' || !value.content.trim() || value.content.length > 65536) {
+    throw new Error('Invalid Jingwork skill')
+  }
+  return { slug: value.slug, name: value.name, description: value.description, content: value.content }
 }
 
 /** Role fields synchronized to a Harness workbench preset; execution remains Harness-owned. */
@@ -255,6 +285,34 @@ export class JingworkDesktopAuth {
     }
   }
 
+  /** Upload a declared file using its persisted conversation owner.
+   * @param uid Account owning the Session.
+   * @param deviceId Stable device identity.
+   * @param agentId Source preset identity.
+   * @param file Committed file declaration.
+   * @param bytes Bounded local file contents.
+   * @param signal Worker deadline and cancellation.
+   */
+  async syncConversationFile(uid: string, deviceId: string, agentId: string,
+    file: CapturedConversationFile, bytes: Uint8Array<ArrayBuffer>, signal: AbortSignal): Promise<void> {
+    const secret = this.secret
+    if (secret === undefined || this.uid !== uid) throw new Error('Conversation file account changed')
+    const form = new FormData()
+    form.set('metadata', JSON.stringify({ device_id: deviceId, agent_id: agentId,
+      thread_id: file.thread_id, source_id: file.source_id, timestamp: file.timestamp }))
+    form.set('file', new Blob([bytes]), basename(file.path))
+    const response = await this.request('/api/system/conversation-logs/files/sync', {
+      method: 'POST', headers: { Authorization: `Bearer ${secret}` }, body: form, signal,
+    })
+    if (!response.ok) throw new Error(`Conversation file synchronization failed (${response.status})`)
+    const receipt = await this.json(response)
+    if (this.secret !== secret || this.uid !== uid) throw new Error('Conversation file account changed')
+    if (!record(receipt) || typeof receipt.id !== 'string' || receipt.size !== bytes.byteLength
+      || receipt.sha256 !== createHash('sha256').update(bytes).digest('hex')) {
+      throw new Error('Invalid conversation file acknowledgement')
+    }
+  }
+
   /** Submit one account-owned audit or system log and validate persistence acknowledgement.
    * @param uid Account captured when the event occurred.
    * @param log Whitelisted, content-free event.
@@ -412,20 +470,60 @@ export class JingworkDesktopAuth {
     })
   }
 
-  private async knowledgeRequest(path: string, init: RequestInit = {}): Promise<unknown> {
+  /** List approved server skills for the signed-in account.
+   * @returns Published metadata with immutable submission identifiers.
+   */
+  async skills(): Promise<JingworkSkillCard[]> {
+    const value = await this.knowledgeRequest('/api/skills/distributed')
+    if (!record(value) || !Array.isArray(value.data)) throw new Error('Invalid Jingwork skill catalog')
+    return value.data.map((item: unknown) => {
+      if (!record(item) || typeof item.id !== 'string' || !item.id || item.id.length > 80
+        || typeof item.slug !== 'string' || typeof item.name !== 'string'
+        || typeof item.description !== 'string') throw new Error('Invalid Jingwork skill card')
+      return { id: brandString<JingworkSkillId>(item.id), slug: item.slug, name: item.name, description: item.description }
+    })
+  }
+
+  /** Submit an immutable local Markdown version for enterprise review.
+   * @param value Skill fields received across native IPC.
+   * @returns Persisted review status, including duplicate submissions.
+   */
+  async submitSkill(value: unknown): Promise<string> {
+    const skill = validateJingworkSkill(value)
+    const response = await this.knowledgeRequest('/api/skills/submissions', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(skill),
+    }, Math.max(this.config.requestTimeoutMs, 60000))
+    if (!record(response) || !record(response.data) || typeof response.data.status !== 'string'
+      || !['pending', 'approved', 'rejected', 'withdrawn'].includes(response.data.status)) {
+      throw new Error('Invalid Jingwork submission result')
+    }
+    return response.data.status
+  }
+
+  /** Download an approved version, checking current server publication state.
+   * @param id Immutable submission identifier received across native IPC.
+   * @returns Validated local skill fields.
+   */
+  async downloadSkill(id: unknown): Promise<JingworkSkill> {
+    if (typeof id !== 'string' || !id || id.length > 80) throw new Error('Invalid Jingwork skill identifier')
+    const value = await this.knowledgeRequest(`/api/skills/distributed/${encodeURIComponent(id)}`)
+    return validateJingworkSkill(record(value) ? value.data : undefined)
+  }
+
+  private async knowledgeRequest(path: string, init: RequestInit = {}, timeoutMs = this.config.requestTimeoutMs): Promise<unknown> {
     const secret = this.secret
     if (secret === undefined) throw new Error('Jingwork login is required')
     const headers = new Headers(init.headers)
     headers.set('Authorization', `Bearer ${secret}`)
-    const response = await this.request(path, { ...init, headers })
-    if (!response.ok) throw new Error('Jingwork knowledge is unavailable')
+    const response = await this.request(path, { ...init, headers }, timeoutMs)
+    if (!response.ok) throw new Error('Jingwork service is unavailable')
     const value = await this.json(response)
     if (this.secret !== secret) throw new Error('Jingwork account changed')
     return value
   }
 
-  private request(path: string, init: RequestInit = {}): Promise<Response> {
-    const timeout = AbortSignal.timeout(this.config.requestTimeoutMs)
+  private request(path: string, init: RequestInit = {}, timeoutMs = this.config.requestTimeoutMs): Promise<Response> {
+    const timeout = AbortSignal.timeout(timeoutMs)
     return this.send(this.origin + path, {
       ...init, redirect: 'error', credentials: 'omit', cache: 'no-store',
       signal: init.signal ? AbortSignal.any([init.signal, timeout]) : timeout,

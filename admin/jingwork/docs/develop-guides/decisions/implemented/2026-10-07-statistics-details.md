@@ -15,6 +15,8 @@ Owner：backend/package/yuxi/repositories/statistics_detail_repository.py
 ## 替代方案
 复制第三方代码补全统计列并填 0 会把未采集误作真实零使用；未采集指标明确标注。不抓取第三方公司成员数据填充本地。
 
+累计、每日、Token 及 IAM 全目录口径见[成员每日用量统计](2026-11-17-member-daily-token-statistics.md)。
+
 ## 后果
 数据仅覆盖桌面已捕获且已同步素材，统计会话数并非完成大模型调用次数。尚无插件版本、客户端遥测和代码采纳指标。CSV 导出当前筛选全部结果并处理公式起始字符。
 

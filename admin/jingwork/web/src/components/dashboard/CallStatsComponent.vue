@@ -69,30 +69,22 @@ const timeRangeOptions = [
   { value: '14weeks', label: '近14周' }
 ]
 const dataTypeOptions = [
-  { value: 'models', label: '模型调用' },
-  { value: 'agents', label: '智能体调用' },
-  { value: 'tokens', label: 'Token消耗' },
+  { value: 'models', label: '模型回复' },
+  { value: 'agents', label: '会话最近更新' },
+  { value: 'tokens', label: '已记录 Token' },
   { value: 'tools', label: '工具调用' }
 ]
 const isTokenView = computed(() => callDataType.value === 'tokens')
 
 const formatTokenValue = (value) => {
-  if (value === null || value === undefined || Number.isNaN(value)) {
-    return '0M'
-  }
-  const millionValue = value / 1_000_000
-  const absMillion = Math.abs(millionValue)
-  const decimalPlaces = absMillion >= 100 ? 0 : absMillion >= 10 ? 1 : 2
-  return `${millionValue.toFixed(decimalPlaces)}M`
+  if (value == null || Number.isNaN(value)) return '—'
+  return new Intl.NumberFormat('zh-CN', { notation: 'compact', maximumFractionDigits: 2 }).format(
+    value
+  )
 }
 
 const formatValueForDisplay = (value) => {
-  if (isTokenView.value) {
-    return formatTokenValue(value)
-  }
-  if (typeof value === 'number') {
-    return value.toLocaleString()
-  }
+  if (typeof value === 'number') return value.toLocaleString('zh-CN')
   return (value ?? 0).toString()
 }
 
@@ -237,9 +229,9 @@ const renderCallStatsChart = () => {
           result += `<span style="${itemStyle}">${truncatedName}: ${formatValueForDisplay(param.value)}</span><br/>`
         })
         const labelMap = {
-          models: '模型调用',
-          agents: '智能体调用',
-          tokens: 'Token消耗',
+          models: '模型回复',
+          agents: '会话最近更新',
+          tokens: '已记录 Token',
           tools: '工具调用'
         }
         const formattedTotal = formatValueForDisplay(total)

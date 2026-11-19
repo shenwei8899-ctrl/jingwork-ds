@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 import pytest
 import pytest_asyncio
-from sqlalchemy import event
+from sqlalchemy import event, select
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from yuxi.services.dashboard_service import DashboardService
@@ -306,7 +306,7 @@ async def test_agent_analytics_omits_removed_top_performers_contract(dashboard_d
     )
     assert coder_satisfaction == {
         "agent_id": "agent-coder",
-        "satisfaction_rate": 100,
+        "satisfaction_rate": None,
         "total_feedbacks": 0,
     }
 
@@ -540,3 +540,74 @@ async def test_conversation_tokens_use_runs_and_expose_missing_usage(dashboard_d
     item = (await service.list_conversations(search="thread-102"))["items"][0]
     assert item["total_tokens"] == 0
     assert item["token_usage_complete"] is True
+
+
+async def test_dashboard_satisfaction_is_unknown_without_feedback(dashboard_db):
+    """没有有效反馈时保留缺失满意度。"""
+    from sqlalchemy import delete
+    from yuxi.storage.postgres.models_business import MessageFeedback
+
+    await dashboard_db.execute(delete(MessageFeedback))
+    await dashboard_db.commit()
+    stats = await DashboardService(dashboard_db).get_basic_stats()
+    assert stats["feedback_stats"] == {"total_feedbacks": 0, "satisfaction_rate": None}
+
+
+async def test_web_activity_keeps_message_days_and_ignores_future_and_audit_messages(dashboard_db):
+    """同一会话多日活动均被计入，元数据更新时间不会改写消息发生日。"""
+    from datetime import datetime, timedelta
+    from sqlalchemy import delete
+    from yuxi.storage.postgres.models_business import MessageFeedback
+
+    await dashboard_db.execute(delete(ToolCall))
+    await dashboard_db.execute(delete(MessageFeedback))
+    await dashboard_db.execute(delete(Message))
+    conversations = (
+        await dashboard_db.scalars(
+            select(Conversation).where(Conversation.status == "active").order_by(Conversation.id)
+        )
+    ).all()
+    first = conversations[0]
+    now = datetime(2026, 11, 17, 12)
+    first.updated_at = now
+    dashboard_db.add_all(
+        [
+            Message(conversation_id=first.id, role="user", content="昨天", created_at=now - timedelta(days=1)),
+            Message(conversation_id=first.id, role="assistant", content="今天", created_at=now),
+            Message(
+                conversation_id=conversations[1].id,
+                role="assistant",
+                content="未来",
+                created_at=now + timedelta(days=1),
+            ),
+            Message(
+                conversation_id=first.id,
+                role="assistant",
+                message_type="model_audit",
+                content="审计",
+                created_at=now - timedelta(days=2),
+            ),
+        ]
+    )
+    await dashboard_db.commit()
+    stats = await DashboardService(dashboard_db).get_user_activity_stats(now=now)
+    by_date = {row["date"]: row["active_users"] for row in stats["daily_active_users"]}
+    assert by_date["2026-11-16"] == by_date["2026-11-17"] == 1
+    assert by_date["2026-11-15"] == 0
+    assert stats["active_users_24h"] == stats["active_users_30d"] == 1
+
+
+async def test_web_tool_pending_calls_are_excluded_from_failure_and_completed_success_rate(dashboard_db):
+    """运行中的工具不归类为失败，成功率只读取已结束调用。"""
+    tool = await dashboard_db.scalar(select(ToolCall).where(ToolCall.status == "success"))
+    dashboard_db.add_all(
+        [
+            ToolCall(message_id=tool.message_id, tool_name="pending", status="pending"),
+            ToolCall(message_id=tool.message_id, tool_name="error", status="error"),
+        ]
+    )
+    await dashboard_db.commit()
+    stats = await DashboardService(dashboard_db).get_tool_call_stats()
+    assert stats["total_calls"] == 3
+    assert stats["successful_calls"] == stats["failed_calls"] == 1
+    assert stats["success_rate"] == 50

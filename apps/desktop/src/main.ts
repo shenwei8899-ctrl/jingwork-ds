@@ -43,7 +43,7 @@ import { readDeviceInfo } from './device-info.ts'
 import { desktopUpdateReadyConfirmation, formatDesktopMessage, resolveDesktopLocale, resolveDesktopStartupLocale } from './locale.ts'
 import type { DesktopMessages } from './locale.ts'
 import { claimDesktopSingleInstance } from './single-instance.ts'
-import { desktopUpdateChannel } from './update-channel.ts'
+import { desktopInternalUpdate, desktopUpdateChannel } from './update-channel.ts'
 import { DesktopUpdateCoordinator } from './update-coordinator.ts'
 import { prepareDesktopUpdateWindow } from './update-window.ts'
 import { DesktopCommandManager } from './command-management.ts'
@@ -795,6 +795,7 @@ async function main(product: DesktopProduct): Promise<void> {
 
   const manifest: unknown = JSON.parse(await readFile(join(app.getAppPath(), 'package.json'), 'utf8'))
   const packagedChannel = desktopUpdateChannel(manifest)
+  const internalUpdate = desktopInternalUpdate(manifest, process.platform)
   const channelSettings = new DesktopUpdateSettings(app.getPath('userData'), packagedChannel)
   const initialChannel = await channelSettings.load()
   channelState = { channel: initialChannel.kind === 'ready' ? initialChannel.channel : null,
@@ -871,7 +872,8 @@ async function main(product: DesktopProduct): Promise<void> {
     return state
   }
 
-  const updateSchedule = new DesktopUpdateSchedule(updates, resolveDesktopUpdateScheduleConfig(process.env))
+  const updateSchedule = new DesktopUpdateSchedule(updates, resolveDesktopUpdateScheduleConfig(process.env),
+    undefined, undefined, internalUpdate)
 
   const downloadUpdate = async (version: string, revision = updates.revision): Promise<DesktopUpdateState> => {
     void track('desktop_upgrade_click', {})
@@ -927,6 +929,21 @@ async function main(product: DesktopProduct): Promise<void> {
     assertMainApplication(event)
     if (jingworkAuth === undefined) throw new Error('Jingwork authentication is not configured')
     return jingworkAuth.agents()
+  })
+  ipcMain.handle(DESKTOP_IPC.jingworkSkills, (event) => {
+    assertMainApplication(event)
+    if (jingworkAuth === undefined) throw new Error('Jingwork authentication is not configured')
+    return jingworkAuth.skills()
+  })
+  ipcMain.handle(DESKTOP_IPC.jingworkSubmitSkill, (event, skill: unknown) => {
+    assertMainApplication(event)
+    if (jingworkAuth === undefined) throw new Error('Jingwork authentication is not configured')
+    return jingworkAuth.submitSkill(skill)
+  })
+  ipcMain.handle(DESKTOP_IPC.jingworkDownloadSkill, (event, id: unknown) => {
+    assertMainApplication(event)
+    if (jingworkAuth === undefined) throw new Error('Jingwork authentication is not configured')
+    return jingworkAuth.downloadSkill(id)
   })
   ipcMain.handle(DESKTOP_IPC.jingworkOpenAgent, async (event, id: unknown) => {
     assertMainApplication(event)
@@ -1088,7 +1105,10 @@ async function main(product: DesktopProduct): Promise<void> {
           throw error
         }
       })
-      if (kind === 'applied') void mandatoryPolicy?.check('channel-change', true).catch((error: unknown) => { console.error(error) })
+      if (kind === 'applied') {
+        void mandatoryPolicy?.check('channel-change', true).catch((error: unknown) => { console.error(error) })
+        void updateSchedule.downloadAvailable().catch((error: unknown) => { console.error(error) })
+      }
       return { kind, state: publishChannel({ channel: updates.selectedChannel, packagedChannel, changing: --channelRequests > 0 }) }
     } catch (error) {
       console.error('desktop update: channel change failed', error)
@@ -1146,6 +1166,7 @@ async function main(product: DesktopProduct): Promise<void> {
                   return false
                 }
                 await updates.switchChannel(loaded.channel, async () => {})
+                void updateSchedule.downloadAvailable().catch((error: unknown) => { console.error(error) })
                 publishChannel({ channel: updates.selectedChannel, packagedChannel, changing: true })
                 return true
               } catch (error) {

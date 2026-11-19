@@ -19,7 +19,7 @@
       <DashboardMetricCard
         :icon="Activity"
         :value="formatNumber(basicStats?.active_conversations)"
-        label="活跃对话"
+        label="未归档会话"
         tone="success"
       />
       <DashboardMetricCard
@@ -31,7 +31,7 @@
       <DashboardMetricCard
         :icon="Users"
         :value="formatNumber(basicStats?.total_users)"
-        label="用户数"
+        label="本地账号数"
         tone="warning"
       />
       <DashboardMetricCard
@@ -44,7 +44,11 @@
       />
       <DashboardMetricCard
         :icon="Heart"
-        :value="`${basicStats?.feedback_stats?.satisfaction_rate || 0}%`"
+        :value="
+          basicStats?.feedback_stats?.satisfaction_rate == null
+            ? '—'
+            : `${basicStats.feedback_stats.satisfaction_rate}%`
+        "
         label="满意度"
         :tone="getSatisfactionTone()"
       />

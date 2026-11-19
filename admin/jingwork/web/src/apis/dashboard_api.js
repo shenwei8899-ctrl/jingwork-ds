@@ -6,7 +6,12 @@ import { apiAdminGet } from './base'
  */
 
 export const dashboardApi = {
-  statisticsDetails: (params) => apiAdminGet('/api/dashboard/statistics-details?' + new URLSearchParams(params)),
+  getEnterpriseProductivity: (timeRange = '30days') =>
+    apiAdminGet(
+      '/api/dashboard/stats/enterprise?' + new URLSearchParams({ time_range: timeRange })
+    ),
+  statisticsDetails: (params) =>
+    apiAdminGet('/api/dashboard/statistics-details?' + new URLSearchParams(params)),
   /**
    * 获取所有对话记录
    * @param {Object} params - 查询参数

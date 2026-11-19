@@ -35,6 +35,12 @@ async def test_storage_migration_reads_legacy_schema_before_cutover(monkeypatch)
         yield sessions.pop(0)
 
     manager = SimpleNamespace(
+        upgrade_desktop_conversation_logs=lambda: _async_value(None),
+        upgrade_managed_model_credits=lambda: _async_value(None),
+        upgrade_conversation_shares=lambda: _async_value(None),
+        upgrade_desktop_automation_snapshots=lambda: _async_value(None),
+        upgrade_skill_submissions=lambda: _async_value(None),
+        upgrade_desktop_conversation_files=lambda: _async_value(None),
         initialize=lambda: calls.append("initialize"),
         schema_migration_lock=lambda: _async_context(calls, "schema_lock"),
         create_schema_version_table=lambda: _record(calls, "create_schema_version_table"),
@@ -108,6 +114,12 @@ async def test_storage_migration_rejects_v071_schema_without_quiescence_proof(mo
         yield _Session()
 
     manager = SimpleNamespace(
+        upgrade_desktop_conversation_logs=lambda: _async_value(None),
+        upgrade_managed_model_credits=lambda: _async_value(None),
+        upgrade_conversation_shares=lambda: _async_value(None),
+        upgrade_desktop_automation_snapshots=lambda: _async_value(None),
+        upgrade_skill_submissions=lambda: _async_value(None),
+        upgrade_desktop_conversation_files=lambda: _async_value(None),
         initialize=lambda: None,
         schema_migration_lock=lambda: _async_context(calls, "schema_lock"),
         create_schema_version_table=lambda: _record(calls, "create_schema_version_table"),
@@ -152,6 +164,12 @@ async def test_current_schema_skips_schema_ddl(monkeypatch):
         yield sessions.pop(0)
 
     manager = SimpleNamespace(
+        upgrade_desktop_conversation_logs=lambda: _async_value(None),
+        upgrade_managed_model_credits=lambda: _async_value(None),
+        upgrade_conversation_shares=lambda: _async_value(None),
+        upgrade_desktop_automation_snapshots=lambda: _async_value(None),
+        upgrade_skill_submissions=lambda: _async_value(None),
+        upgrade_desktop_conversation_files=lambda: _async_value(None),
         initialize=lambda: calls.append("initialize"),
         schema_migration_lock=lambda: _async_context(calls, "schema_lock"),
         create_schema_version_table=lambda: _record(calls, "create_schema_version_table"),
@@ -215,6 +233,12 @@ async def test_main_rejects_unsupported_business_schema_before_ddl(monkeypatch, 
         yield _Session()
 
     manager = SimpleNamespace(
+        upgrade_desktop_conversation_logs=lambda: _async_value(None),
+        upgrade_managed_model_credits=lambda: _async_value(None),
+        upgrade_conversation_shares=lambda: _async_value(None),
+        upgrade_desktop_automation_snapshots=lambda: _async_value(None),
+        upgrade_skill_submissions=lambda: _async_value(None),
+        upgrade_desktop_conversation_files=lambda: _async_value(None),
         initialize=lambda: calls.append("initialize"),
         schema_migration_lock=lambda: _async_context(calls, "schema_lock"),
         create_schema_version_table=lambda: _record(calls, "create_schema_version_table"),
@@ -251,6 +275,12 @@ async def test_supported_legacy_business_schema_is_converged_and_versioned_as_cu
         yield sessions.pop(0)
 
     manager = SimpleNamespace(
+        upgrade_desktop_conversation_logs=lambda: _async_value(None),
+        upgrade_managed_model_credits=lambda: _async_value(None),
+        upgrade_conversation_shares=lambda: _async_value(None),
+        upgrade_desktop_automation_snapshots=lambda: _async_value(None),
+        upgrade_skill_submissions=lambda: _async_value(None),
+        upgrade_desktop_conversation_files=lambda: _async_value(None),
         initialize=lambda: calls.append("initialize"),
         schema_migration_lock=lambda: _async_context(calls, "schema_lock"),
         create_schema_version_table=lambda: _record(calls, "create_schema_version_table"),
@@ -307,6 +337,12 @@ async def test_failed_business_migration_does_not_record_version(monkeypatch):
         raise RuntimeError("broken checkpoint migration")
 
     manager = SimpleNamespace(
+        upgrade_desktop_conversation_logs=lambda: _async_value(None),
+        upgrade_managed_model_credits=lambda: _async_value(None),
+        upgrade_conversation_shares=lambda: _async_value(None),
+        upgrade_desktop_automation_snapshots=lambda: _async_value(None),
+        upgrade_skill_submissions=lambda: _async_value(None),
+        upgrade_desktop_conversation_files=lambda: _async_value(None),
         initialize=lambda: calls.append("initialize"),
         schema_migration_lock=lambda: _async_context(calls, "schema_lock"),
         create_schema_version_table=lambda: _record(calls, "create_schema_version_table"),
@@ -352,6 +388,12 @@ async def test_current_schema_does_not_rewrite_workdir_data(monkeypatch):
         yield sessions.pop(0)
 
     manager = SimpleNamespace(
+        upgrade_desktop_conversation_logs=lambda: _async_value(None),
+        upgrade_managed_model_credits=lambda: _async_value(None),
+        upgrade_conversation_shares=lambda: _async_value(None),
+        upgrade_desktop_automation_snapshots=lambda: _async_value(None),
+        upgrade_skill_submissions=lambda: _async_value(None),
+        upgrade_desktop_conversation_files=lambda: _async_value(None),
         initialize=lambda: calls.append("initialize"),
         schema_migration_lock=lambda: _async_context(calls, "schema_lock"),
         create_schema_version_table=lambda: _record(calls, "create_schema_version_table"),

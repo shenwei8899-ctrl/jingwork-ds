@@ -125,7 +125,7 @@ async def main() -> None:
                 "business",
                 business_version,
                 BUSINESS_SCHEMA_VERSION,
-                upgrade_from=(2, 7, 8, 9, 10, 11, 12),
+                upgrade_from=(2, 7, 8, 9, 10, 11, 12, 13, 14),
             )
             knowledge_version = versions.get("knowledge")
             _require_supported_version(
@@ -151,14 +151,18 @@ async def main() -> None:
                     await pg_manager.setup_langgraph_checkpointer()
             if business_version in {None, 2, 7, 8}:
                 await pg_manager.upgrade_agent_resource_selection()
-            if business_version not in (10, 11, 12, 13):
+            if business_version not in (10, 11, 12, 13, 14, 15):
                 await pg_manager.upgrade_desktop_conversation_logs()
-            if business_version not in (11, 12, 13):
+            if business_version not in (11, 12, 13, 14, 15):
                 await pg_manager.upgrade_managed_model_credits()
-            if business_version not in (12, 13):
+            if business_version not in (12, 13, 14, 15):
                 await pg_manager.upgrade_conversation_shares()
-            if business_version != 13:
+            if business_version not in (13, 14, 15):
                 await pg_manager.upgrade_desktop_automation_snapshots()
+            if business_version not in (14, 15):
+                await pg_manager.upgrade_skill_submissions()
+            if business_version != 15:
+                await pg_manager.upgrade_desktop_conversation_files()
 
             if knowledge_version is None:
                 await pg_manager.create_knowledge_tables()

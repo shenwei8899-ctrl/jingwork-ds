@@ -1,8 +1,8 @@
 """后台拥有的桌面原始素材副本与会话查询。"""
 
-from datetime import UTC
+from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import case, func, select
+from sqlalchemy import case, distinct, func, select, tuple_
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -55,6 +55,35 @@ class DesktopConversationRepository:
             user = users.setdefault(row.uid, {"uid": row.uid, "username": row.username, "agents": []})
             user["agents"].append({"id": row.agent_id, "name": row.name})
         return {"users": list(users.values())}
+
+    async def overview(self, *, now: datetime | None = None) -> dict:
+        """累计口径与日志一致，活跃窗口截止于给定 UTC 无时区时间或当前时间。"""
+        now = now or datetime.now(UTC).replace(tzinfo=None)
+        local_day = (now + timedelta(hours=8)).replace(hour=0, minute=0, second=0, microsecond=0)
+        start = local_day - timedelta(days=29, hours=8)
+        row = (
+            await self.db.execute(
+                select(
+                    func.count(distinct(tuple_(Event.user_id, Event.device_id, Event.agent_id, Event.thread_id))).label(
+                        "total_conversations"
+                    ),
+                    func.count(Event.id).label("total_messages"),
+                    func.count(case((Event.event_type == "user_message", 1))).label("total_questions"),
+                    func.count(case((Event.event_type == "assistant_message", 1))).label("total_replies"),
+                    func.count(distinct(Event.user_id)).label("synced_users"),
+                    func.count(
+                        distinct(case(((Event.timestamp >= start) & (Event.timestamp <= now), Event.user_id)))
+                    ).label("active_users_30d"),
+                    func.max(Event.received_at).label("last_received_at"),
+                    select(func.count(User.id)).where(User.is_deleted == 0).scalar_subquery().label("total_users"),
+                ).join(User, User.id == Event.user_id)
+            )
+        ).one()
+        return {
+            **dict(row._mapping),
+            "last_received_at": format_utc_datetime(row.last_received_at),
+            "generated_at": format_utc_datetime(now),
+        }
 
     async def sessions(
         self,

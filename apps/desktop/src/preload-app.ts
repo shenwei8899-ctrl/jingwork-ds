@@ -108,6 +108,10 @@ if (location.protocol === `${SCHEME}:` && location.hostname === 'app') {
         { id: string; name: string; description: string }[]
       >,
       openAgent: (id: string) => ipcRenderer.invoke(DESKTOP_IPC.jingworkOpenAgent, id) as Promise<string>,
+      skills: () => ipcRenderer.invoke(DESKTOP_IPC.jingworkSkills),
+      submitSkill: (skill: { slug: string; name: string; description: string; content: string }) =>
+        ipcRenderer.invoke(DESKTOP_IPC.jingworkSubmitSkill, skill) as Promise<string>,
+      downloadSkill: (id: string) => ipcRenderer.invoke(DESKTOP_IPC.jingworkDownloadSkill, id),
       name: () => ipcRenderer.invoke(DESKTOP_IPC.jingworkAccount) as Promise<string | null>,
       subscribe: (listener: () => void) => {
         const handle = (): void => { listener() }

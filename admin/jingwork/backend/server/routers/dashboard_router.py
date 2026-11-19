@@ -207,6 +207,18 @@ async def get_dashboard_stats(
     return await DashboardService(db).get_basic_stats()
 
 
+@dashboard.get("/stats/enterprise")
+async def get_enterprise_productivity_stats(
+    time_range: Literal["7days", "14days", "30days", "90days"] = "30days",
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_superadmin_user),
+):
+    """核对桌面已同步记录、IAM 成员和企业模型账本的研效统计。"""
+    from yuxi.services.enterprise_productivity_service import get_enterprise_productivity
+
+    return await get_enterprise_productivity(db, time_range)
+
+
 @dashboard.get("/stats/users", response_model=UserActivityStats)
 async def get_user_activity_stats(
     db: AsyncSession = Depends(get_db),
@@ -325,7 +337,8 @@ async def get_conversation_detail(
 async def get_statistics_details(
     start: str,
     end: str,
-    mode: Literal["members", "departments"] = "members",
+    mode: Literal["members", "departments", "daily"] = "members",
+    uid: str | None = Query(None, max_length=100),
     department_id: int | None = None,
     search: str | None = Query(None, max_length=100),
     user: User = Depends(get_superadmin_user),
@@ -333,7 +346,7 @@ async def get_statistics_details(
 ):
     from datetime import date, datetime, time, timedelta, UTC
     from zoneinfo import ZoneInfo
-    from yuxi.repositories.statistics_detail_repository import statistics_details
+    from yuxi.services.statistics_detail_service import get_statistics_details
 
     try:
         first, last = date.fromisoformat(start), date.fromisoformat(end)
@@ -341,7 +354,9 @@ async def get_statistics_details(
         raise HTTPException(422, "日期格式应为 YYYY-MM-DD") from exc
     if first > last or (last - first).days > 366:
         raise HTTPException(422, "请选择不超过一年的有效日期范围")
+    if mode == "daily" and not uid:
+        raise HTTPException(422, "每日明细需要选择成员")
     zone = ZoneInfo("Asia/Shanghai")
     begin = datetime.combine(first, time.min, zone).astimezone(UTC).replace(tzinfo=None)
     finish = datetime.combine(last + timedelta(days=1), time.min, zone).astimezone(UTC).replace(tzinfo=None)
-    return await statistics_details(db, begin, finish, department_id, search, mode)
+    return await get_statistics_details(db, begin, finish, department_id, search, mode, uid)

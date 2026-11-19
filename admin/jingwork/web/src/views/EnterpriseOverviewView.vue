@@ -13,6 +13,7 @@ import {
   ScrollText
 } from '@lucide/vue'
 import { dashboardApi } from '@/apis/dashboard_api'
+import { conversationLogApi } from '@/apis/conversation_log_api'
 import { companyApi } from '@/apis/company_api'
 import { iamApi } from '@/apis/iam_api'
 import { useUserStore } from '@/stores/user'
@@ -22,8 +23,14 @@ const loading = ref(false)
 const error = ref('')
 const data = ref(null)
 const company = ref(null)
+const members = ref(null)
+const knowledge = ref(null)
 const updated = ref('')
 const go = (page) => router.push({ path: '/enterprise', query: { page } })
+const time = (timestamp) =>
+  timestamp
+    ? new Date(timestamp).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false })
+    : '—'
 const value = (number) => (number == null ? '—' : Number(number).toLocaleString('zh-CN'))
 const steps = [
   {
@@ -52,7 +59,7 @@ const suites = computed(() => [
   {
     name: '企业智能体',
     description: '统一配置 · 权限共享 · 桌面端协同',
-    count: data.value?.agents?.total_agents,
+    count: data.value?.total_agents,
     unit: '个智能体',
     page: 'agents',
     icon: Bot
@@ -60,7 +67,7 @@ const suites = computed(() => [
   {
     name: '企业知识库',
     description: '文档解析 · 检索问答 · 企业知识管理',
-    count: data.value?.knowledge?.total_databases,
+    count: knowledge.value?.total_databases,
     unit: '个知识库',
     page: 'knowledge',
     icon: LibraryBig
@@ -76,27 +83,50 @@ const suites = computed(() => [
   {
     name: '安全与效能',
     description: '操作审计 · 对话日志 · 使用数据分析',
-    count: data.value?.basic?.total_conversations,
+    count: data.value?.total_conversations,
     unit: '条会话',
-    page: 'auditLogs',
+    page: 'conversationLogs',
     icon: ScrollText
   }
 ])
 async function load() {
+  if (loading.value) return
   loading.value = true
   error.value = ''
-  const companyRequest = userStore.token === 'iam_cookie'
-    ? iamApi.tenant().then((tenant) => ({ name: tenant.tenant_name_abb || tenant.tenant_name }))
-    : companyApi.get()
-  const statisticsRequest = userStore.isSuperAdmin ? dashboardApi.getAllStats() : Promise.resolve(null)
-  const results = await Promise.allSettled([companyRequest, statisticsRequest])
-  company.value = results[0].status === 'fulfilled' ? results[0].value : null
-  data.value = results[1].status === 'fulfilled' ? results[1].value : null
+  const configRequest = iamApi.config()
+  const requests = {
+    company: configRequest.then((config) =>
+      config.enabled
+        ? iamApi.tenant().then((tenant) => ({ name: tenant.tenant_name_abb || tenant.tenant_name }))
+        : companyApi.get()
+    ),
+    members: configRequest.then((config) =>
+      config.enabled
+        ? iamApi.directory('users', { page: 1, size: 1 }).then((directory) => ({
+            total: directory.meta.total,
+            source: 'IAM 账号目录'
+          }))
+        : null
+    ),
+    usage: conversationLogApi.overview(),
+    knowledge: userStore.isSuperAdmin ? dashboardApi.getKnowledgeStats() : Promise.resolve(null)
+  }
+  const results = await Promise.allSettled(Object.values(requests))
+  const [profile, directory, usage, resources] = results
+  company.value = profile.status === 'fulfilled' ? profile.value : null
+  data.value = usage.status === 'fulfilled' ? usage.value : null
+  members.value =
+    directory.status === 'fulfilled'
+      ? directory.value || { total: data.value?.total_users, source: '本地有效账号' }
+      : null
+  knowledge.value = resources.status === 'fulfilled' ? resources.value : null
+  const labels = ['企业信息', '成员目录', '对话统计', '知识库统计']
   error.value = results
-    .filter((result) => result.status === 'rejected')
-    .map((result) => result.reason?.message || '数据加载失败')
+    .flatMap((result, index) =>
+      result.status === 'rejected' ? [`${labels[index]}加载失败，请刷新重试`] : []
+    )
     .join('；')
-  if (!error.value) updated.value = new Date().toLocaleTimeString('zh-CN', { hour12: false })
+  updated.value = usage.status === 'fulfilled' ? time(usage.value.generated_at) : ''
   loading.value = false
 }
 onMounted(load)
@@ -107,13 +137,12 @@ onMounted(load)
       <h1>组织概览</h1>
       <div>
         <span>{{ updated ? `数据更新于 ${updated}` : '组织运行与资源使用' }}</span
-        ><a-button :loading="loading" @click="load"><RefreshCw :size="14" />刷新</a-button>
+        ><a-button :loading="loading" :disabled="loading" @click="load"
+          ><RefreshCw :size="14" />刷新</a-button
+        >
       </div>
     </header>
     <a-alert v-if="error" type="error" :message="error" show-icon style="margin-bottom: 16px" />
-    <a-alert v-if="!userStore.isSuperAdmin" type="info" show-icon
-      message="系统级统计由平台管理员查看。企业人员和组织可在“组织与成员”中管理。"
-      style="margin-bottom: 16px" />
     <a-spin :spinning="loading">
       <section class="panel onboarding">
         <h2>快速上手</h2>
@@ -140,42 +169,52 @@ onMounted(load)
           <p class="company-name">{{ company?.name || '企业信息暂不可用' }}</p>
           <div class="metrics">
             <div>
-              <span>组织成员</span
-              ><strong>{{ value(data?.basic?.total_users) }}<small> 人</small></strong
+              <span>组织成员</span><strong>{{ value(members?.total) }}<small> 人</small></strong
+              ><small>{{ members?.source || '成员目录暂不可用' }}</small
               ><button class="text-action" @click="go('organization')">
                 管理成员<ArrowUpRight :size="13" />
               </button>
             </div>
             <div>
               <span>活跃成员</span
-              ><strong>{{ value(data?.users?.active_users_30d) }}<small> 人</small></strong
-              ><small>最近 30 天</small>
+              ><strong>{{ value(data?.active_users_30d) }}<small> 人</small></strong
+              ><small>最近 30 天有同步消息</small>
             </div>
             <div>
-              <span>订阅与席位</span><strong class="plain">未接入</strong
-              ><small>当前未配置计费服务</small>
+              <span>已同步成员</span
+              ><strong>{{ value(data?.synced_users) }}<small> 人</small></strong
+              ><small>累计有聊天记录的成员</small>
             </div>
           </div>
         </section>
         <section class="panel">
-          <div class="section-heading">
+          <div class="section-heading usage-heading">
             <h2>用量概览</h2>
-            <a-button @click="go('statisticsDetails')">用量明细</a-button>
+            <div class="usage-actions">
+              <a-button @click="go('statisticsDetails')">成员用量统计</a-button>
+              <a-button @click="go('conversationLogs')">查看对话日志</a-button>
+            </div>
           </div>
+          <p class="usage-source">
+            数据来自桌面已同步对话日志，最近同步 {{ time(data?.last_received_at) }}
+          </p>
           <div class="metrics usage">
             <div>
               <span>对话会话</span
-              ><strong>{{ value(data?.basic?.total_conversations) }}<small> 条</small></strong
-              ><small>系统累计会话数</small>
+              ><strong>{{ value(data?.total_conversations) }}<small> 条</small></strong
+              ><small>已同步日志累计会话数</small>
             </div>
             <div>
               <span>对话消息</span
-              ><strong>{{ value(data?.basic?.total_messages) }}<small> 条</small></strong
-              ><small>用户与 AI 消息</small>
+              ><strong>{{ value(data?.total_messages) }}<small> 条</small></strong
+              ><small
+                >提问 {{ value(data?.total_questions) }} · 回复
+                {{ value(data?.total_replies) }}</small
+              >
             </div>
             <div>
               <span>知识库文件</span
-              ><strong>{{ value(data?.knowledge?.total_files) }}<small> 个</small></strong
+              ><strong>{{ value(knowledge?.total_files) }}<small> 个</small></strong
               ><small>企业知识资源</small>
             </div>
           </div>
@@ -343,8 +382,19 @@ p {
 .metrics .plain {
   font-size: 20px;
 }
+.usage-source {
+  margin: 20px 0;
+}
+.usage-heading,
+.usage-actions {
+  flex-wrap: wrap;
+}
+.usage-actions {
+  display: flex;
+  gap: 8px;
+}
 .usage {
-  margin-top: 40px;
+  margin-top: 20px;
 }
 .section-heading p {
   margin: 8px 0 0;
