@@ -11,6 +11,7 @@ import {
   desktopLatestInstallerFilename,
   desktopUpdateMetadataFilename,
   resolveDesktopUploadConfig,
+  resolveDesktopInternalUpdate,
 } from './desktop-auto-update-environment.mjs'
 import { desktopTargetBuildPaths } from './desktop-build-paths.mjs'
 import { validateDesktopBuildVersion } from './desktop-build-version.mjs'
@@ -194,7 +195,9 @@ export async function createDesktopUploadPlan(
   const environment = options.environment ?? process.env
   const repositoryRoot = options.repositoryRoot ?? REPOSITORY_ROOT
   const appRoot = options.appRoot ?? APP_ROOT
-  const artifactsRoot = options.artifactsRoot ?? desktopTargetBuildPaths(targetName).artifacts
+  const internalUpdate = resolveDesktopInternalUpdate(environment, target.platform, target.arch)
+  const paths = desktopTargetBuildPaths(targetName)
+  const artifactsRoot = options.artifactsRoot ?? (internalUpdate ? paths.internalArtifacts : paths.artifacts)
   const dshVersion = options.packagedProductVersion ?? await manifestVersion(join(repositoryRoot, 'package.json'), 'dsh package')
   const desktopVersion = options.packagedProductVersion ?? await manifestVersion(join(appRoot, 'package.json'), 'desktop package')
   if (dshVersion !== desktopVersion) {
@@ -220,6 +223,7 @@ export async function createDesktopUploadPlan(
     || buildRecord.target !== targetName
     || (buildRecord.channel ?? 'nightly') !== update.channel
     || buildRecord.environment !== update.environment
+    || (buildRecord.internalUpdate ?? false) !== internalUpdate
     || buildRecord.publicUrl !== update.publicUrl) {
     throw new Error(`desktop upload: ${targetName} package completion record for ${buildVersion} does not match the ${update.environment} update destination`)
   }
@@ -242,7 +246,7 @@ export async function createDesktopUploadPlan(
     throw new Error(`desktop upload: ${metadataFilename}.files must contain exactly one target update file`)
   }
 
-  const base = `deepseek-harness-${buildVersion}-${target.os}-${target.arch}`
+  const base = `deepseek-harness-${buildVersion}-${target.os}-${target.arch}${internalUpdate ? '-internal' : ''}`
   const updaterExtension = target.platform === 'darwin' ? 'zip' : 'exe'
   const updaterInfo = updateFileInfo(metadata.files[0], `${metadataFilename}.files[0]`, `${base}.${updaterExtension}`)
   const updaterPath = await verifyChecksummedArtifact(artifactsRoot, updaterInfo)
@@ -283,7 +287,7 @@ export async function createDesktopUploadPlan(
     contents: dump(published),
   }
   artifacts.push(channelArtifact)
-  const latestFilename = desktopLatestInstallerFilename(targetName)
+  const latestFilename = desktopLatestInstallerFilename(targetName, internalUpdate)
   const latestKey = `desktop/${latestFilename}`
   return {
     environment: update.environment,

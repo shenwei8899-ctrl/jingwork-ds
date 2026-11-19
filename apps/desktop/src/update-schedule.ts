@@ -40,12 +40,14 @@ export class DesktopUpdateSchedule {
    * @param config - Validated polling options.
    * @param random - Instance-local uniform sample in [0, 1).
    * @param now - Monotonic milliseconds, independent of wall-clock corrections.
+   * @param autoDownload - Installed internal-mode authorization; omitted preserves user-requested downloads.
    */
   constructor(
-    private readonly updates: Pick<DesktopUpdateCoordinator, 'check' | 'state'>,
+    private readonly updates: Pick<DesktopUpdateCoordinator, 'check' | 'state' | 'download' | 'revision'>,
     private readonly config: DesktopUpdateScheduleConfig,
     private readonly random: () => number = Math.random,
     private readonly now: () => number = () => performance.now(),
+    private readonly autoDownload = false,
   ) {
     this.delay = config.intervalMs
   }
@@ -66,7 +68,7 @@ export class DesktopUpdateSchedule {
     this.pending = Promise.resolve().then(() => {
       if (this.disposed) throw new Error('desktop update: polling is disposed')
       return this.updates.check(manual)
-    }).then(
+    }).then(async state => state.phase === 'available' ? this.downloadAvailable() : state).then(
       (state) => {
         this.complete(state.phase === 'error' && state.failedOperation === 'check')
         return state
@@ -74,6 +76,16 @@ export class DesktopUpdateSchedule {
       (error: unknown) => { this.complete(true); throw error },
     )
     return this.pending
+  }
+
+  /**
+   * Download the current checked version when the installed package permits it; never install.
+   * @returns Current state for manual mode, disposal, or non-available targets; otherwise download readiness or failure.
+   */
+  async downloadAvailable(): Promise<DesktopUpdateState> {
+    const state = this.updates.state
+    if (!this.autoDownload || this.disposed || state.phase !== 'available' || state.version === undefined) return state
+    return this.updates.download(state.version, this.updates.revision)
   }
 
   /** Stop timers and prevent late completion from rearming; the coordinator owns pending network teardown. */

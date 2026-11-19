@@ -72,6 +72,7 @@ function purgeConfig(environment: NodeJS.ProcessEnv, target: DesktopPackageTarge
 export async function uploadDesktopTarget(args: string[]): Promise<void> {
   const { positionals, values } = parseArgs({ args, allowPositionals: true, options: {
     latest: { type: 'boolean' },
+    'internal-update': { type: 'boolean' },
     'purge-only': { type: 'boolean' },
     'credential-launcher': { type: 'boolean' }, environment: { type: 'string' }, bucket: { type: 'string' },
   } })
@@ -80,12 +81,17 @@ export async function uploadDesktopTarget(args: string[]): Promise<void> {
     throw new DesktopUploadUsageError('desktop upload: expected exactly one target')
   }
   const name = targetName(target)
+  if (values['internal-update'] && (name !== 'win-x64' || values['purge-only'])) {
+    throw new DesktopUploadUsageError('desktop upload: --internal-update requires win-x64 and cannot use --purge-only')
+  }
   if (values['purge-only'] && !values.latest) {
     throw new DesktopUploadUsageError('desktop upload: --purge-only requires --latest')
   }
   let fileEnvironment: NodeJS.ProcessEnv
   try {
-    fileEnvironment = loadDesktopPackageEnvironment(desktopTargetPlatform(name).platform)
+    fileEnvironment = loadDesktopPackageEnvironment(desktopTargetPlatform(name).platform, process.env, undefined,
+      { unsigned: values['internal-update'] === true })
+    if (values['internal-update']) fileEnvironment.DSH_DESKTOP_INTERNAL_UPDATE = '1'
   } catch (error) {
     throw new DesktopUploadUsageError('Cannot load target dotenv; check the target dotenv file and release settings.')
   }
@@ -122,7 +128,7 @@ export async function uploadDesktopTarget(args: string[]): Promise<void> {
     process.stdout.write('desktop upload: installer uploaded; submitting cache purge.\n')
     await purgeDesktopInstaller(purge)
   }
-  if (plan.environment === 'production' && !values.latest) recordProductionRelease(plan)
+  if (plan.environment === 'production' && !values.latest && !values['internal-update']) recordProductionRelease(plan)
 }
 
 /**
@@ -163,7 +169,7 @@ export async function runDesktopUploadCommand(args: string[]): Promise<void> {
     const usage = error instanceof DesktopUploadUsageError
       || (error instanceof Error && 'code' in error && typeof error.code === 'string' && error.code.startsWith('ERR_PARSE_ARGS_'))
     const message = error instanceof DesktopPurgeError ? error.message
-      : usage ? `desktop upload/purge: ${error instanceof DesktopUploadUsageError ? error.message : 'invalid arguments'}. Usage: upload-target.ts <target> [--latest [--purge-only]]; targets: mac-arm64, mac-x64, win-x64.`
+      : usage ? `desktop upload/purge: ${error instanceof DesktopUploadUsageError ? error.message : 'invalid arguments'}. Usage: upload-target.ts <target> [--internal-update] [--latest [--purge-only]]; targets: mac-arm64, mac-x64, win-x64.`
         : 'desktop upload: failed; inspect the printed record directory if allocated. No automatic retry; reconcile remote state before another upload.'
     // The DPAPI launcher suppresses raw stderr; these diagnostics contain no SDK details.
     const output = args.includes('--credential-launcher') ? process.stdout : process.stderr

@@ -39,6 +39,7 @@ async function fixture(
   version = '1.2.3',
   environment: 'test' | 'production' = 'test',
   channel: 'nightly' | 'stable' = 'nightly',
+  internalUpdate = false,
 ): Promise<Fixture> {
   const root = await mkdtemp(join(tmpdir(), 'dsh-desktop-upload-'))
   temporaryDirectories.push(root)
@@ -50,7 +51,7 @@ async function fixture(
   await writeFile(join(appRoot, 'package.json'), `${JSON.stringify({ version })}\n`)
 
   const [os, arch] = target.split('-') as ['mac' | 'win', 'arm64' | 'x64']
-  const base = `deepseek-harness-${version}-${os}-${arch}`
+  const base = `deepseek-harness-${version}-${os}-${arch}${internalUpdate ? '-internal' : ''}`
   const origin = environment === 'test'
     ? TEST_ORIGIN
     : 'https://download.deepseek.com'
@@ -60,7 +61,8 @@ async function fixture(
     target,
     version,
     environment,
-    publicUrl: `${origin}/dsh-desk/${environment === 'test' ? `${RELEASE_ID}/` : ''}feeds/${target}/`,
+    ...(internalUpdate ? { internalUpdate: true } : {}),
+    publicUrl: `${origin}/${internalUpdate ? 'jingwork' : 'dsh-desk'}/${environment === 'test' ? `${RELEASE_ID}/` : ''}${internalUpdate ? 'internal/' : ''}feeds/${target}/`,
   })}\n`)
 
   if (os === 'mac') {
@@ -95,6 +97,7 @@ async function fixture(
     artifactsRoot,
     environment: environment === 'test'
       ? {
+        ...(internalUpdate ? { DSH_DESKTOP_INTERNAL_UPDATE: '1', DSH_DESKTOP_PRODUCT: 'jingwork' } : {}),
         DSH_DESKTOP_UPDATE_CHANNEL: channel,
         DSH_DESKTOP_AUTO_UPDATE_ENV: 'test',
         DOWNLOAD_TEST_ORIGIN: TEST_ORIGIN,
@@ -102,6 +105,7 @@ async function fixture(
         DOWNLOAD_TEST_COS_BUCKET: TEST_BUCKET,
       }
       : {
+        ...(internalUpdate ? { DSH_DESKTOP_INTERNAL_UPDATE: '1', DSH_DESKTOP_PRODUCT: 'jingwork', DOWNLOAD_PROD_ORIGIN: origin } : {}),
         DSH_DESKTOP_UPDATE_CHANNEL: channel,
         DSH_DESKTOP_AUTO_UPDATE_ENV: 'production',
         DOWNLOAD_PROD_COS_BUCKET: PRODUCTION_BUCKET,
@@ -117,6 +121,36 @@ afterEach(async () => {
 })
 
 describe('desktop upload plan', () => {
+  it('publishes internal installers, blockmaps and metadata without touching signed download names', async () => {
+    for (const deployment of ['test', 'production'] as const) {
+      const paths = await fixture('win-x64', '1.2.3', deployment, 'stable', true)
+      const plan = await createDesktopUploadPlan('win-x64', paths)
+      expect(plan.publicUrl).toContain('/internal/feeds/win-x64/')
+      expect(plan.artifacts.map(artifact => artifact.filename)).toEqual([
+        'deepseek-harness-1.2.3-win-x64-internal.exe', 'deepseek-harness-1.2.3-win-x64-internal.exe.blockmap', 'stable.yml',
+      ])
+      expect(plan.artifacts.every(artifact => artifact.key.includes('/internal/'))).toBe(true)
+      expect(plan.artifacts.at(-1)?.channelMetadata).toBe(true)
+      const latest = await createDesktopUploadPlan('win-x64', { ...paths, latest: true })
+      expect(latest.artifacts[0]?.key).toBe('desktop/jingwork-internal-latest-windows-x64.exe')
+      await expect(createDesktopUploadPlan('win-x64', { ...paths,
+        environment: { ...paths.environment, DSH_DESKTOP_INTERNAL_UPDATE: '0' } })).rejects.toThrow('update destination')
+    }
+  })
+
+  it('rejects incomplete or changed internal releases before upload', async () => {
+    const paths = await fixture('win-x64', '1.2.3', 'test', 'nightly', true)
+    const record = join(paths.artifactsRoot, 'win-x64-release.json')
+    const original = await readFile(record, 'utf8')
+    const value = JSON.parse(original) as Record<string, unknown>
+    delete value.internalUpdate
+    await writeFile(record, JSON.stringify(value))
+    await expect(createDesktopUploadPlan('win-x64', paths)).rejects.toThrow('update destination')
+    await writeFile(record, original)
+    await writeFile(join(paths.artifactsRoot, 'deepseek-harness-1.2.3-win-x64-internal.exe'), 'changed')
+    await expect(createDesktopUploadPlan('win-x64', paths)).rejects.toThrow(/size|SHA-512/u)
+  })
+
   it('uploads only the selected latest installer to each deployment using the existing COS transport', async () => {
     const published = []
     for (const environment of ['production', 'test'] as const) {

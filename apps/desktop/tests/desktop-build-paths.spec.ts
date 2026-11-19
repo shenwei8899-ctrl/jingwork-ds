@@ -71,7 +71,7 @@ describe('desktop build paths', () => {
       .toContain(join('targets', 'mac-arm64', 'runtime', 'primary-runtime'))
     expect(developmentRuntimeDirectory({}, 'darwin', 'x64'))
       .toContain(join('targets', 'mac-x64', 'runtime', 'primary-runtime'))
-    expect(developmentRuntimeDirectory({}, 'win32', 'arm64'))
+    expect(developmentRuntimeDirectory({ DSH_DESKTOP_TARGET_ARCH: 'x64' }, 'win32', 'arm64'))
       .toContain(join('targets', 'win-x64', 'runtime', 'primary-runtime'))
   })
 

@@ -215,6 +215,32 @@ it.each(['--unsigned', '--prepare-only'])('keeps %s hardware-free and creates no
   expect(stages.includes('exec tsx scripts/smoke-packaged-runtime.ts --unsigned')).toBe(mode === '--unsigned')
 })
 
+it('records an internal Windows release only after hardware-free packaging and runtime smoke', async () => {
+  const { run, stages } = supervisor()
+  const invocation = parseDesktopPackageInvocation(['win-x64', '--internal-update'], 'win32', 'x64')
+  await packageTarget(invocation, { ...environment, DSH_DESKTOP_PRODUCT: 'jingwork' }, run)
+  expect(stages).not.toContain('preflight:windows-signing')
+  expect(stages.some(stage => stage.startsWith('run sign:primary-runtime'))).toBe(false)
+  expect(stages.at(-1)).toBe('exec tsx scripts/smoke-packaged-runtime.ts --unsigned')
+  for (const call of run.run.mock.calls) {
+    expect(call[3].env).toMatchObject({ DSH_DESKTOP_UNSIGNED: '1', DSH_DESKTOP_INTERNAL_UPDATE: '1' })
+    expect(call[3].env).not.toHaveProperty('DSH_DESKTOP_WINDOWS_TOKEN_PIN')
+  }
+  expect(writeFileSync).toHaveBeenCalledOnce()
+  const [path, contents] = vi.mocked(writeFileSync).mock.calls[0]!
+  expect(path).toMatch(/internal-artifacts[/\\]win-x64-release.json.tmp$/u)
+  if (typeof contents !== 'string') throw new Error('Expected a JSON completion record')
+  expect(JSON.parse(contents)).toMatchObject({ internalUpdate: true,
+    publicUrl: 'https://updates.example.com/jingwork/0123456789abcdef0123456789abcdef/internal/feeds/win-x64/' })
+})
+
+it('withholds internal release completion after an assembled-runtime failure', async () => {
+  const { run } = supervisor('exec tsx scripts/smoke-packaged-runtime.ts --unsigned')
+  await expect(packageTarget(parseDesktopPackageInvocation(['win-x64', '--internal-update'], 'win32', 'x64'),
+    { ...environment, DSH_DESKTOP_PRODUCT: 'jingwork' }, run)).rejects.toThrow('stage refused')
+  expect(writeFileSync).not.toHaveBeenCalled()
+})
+
 it.each(['mac-arm64', 'mac-x64', 'win-x64'] as const)('selects branding from the signing mode for %s', async (target) => {
   const modes = [[], ['--unsigned'], ['--dir'], ['--unsigned', '--dir'], ['--prepare-only'],
     ...(target === 'win-x64' ? [] : [['--skip-notarization'], ['--skip-notarization', '--dir']])]

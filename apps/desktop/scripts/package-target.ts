@@ -169,6 +169,7 @@ function writeReleaseRecord(
     environment: update.environment,
     channel: update.channel,
     publicUrl: update.publicUrl,
+    ...(environment.DSH_DESKTOP_INTERNAL_UPDATE === '1' ? { internalUpdate: true } : {}),
     // Upload reads this to tag the commit a production release was packaged from.
     ...packaged === undefined ? {} : { commit: packaged.commit, dirty: packaged.dirty },
   }, null, 2)}\n`)
@@ -211,6 +212,7 @@ interface DesktopPackageInvocation {
   readonly directory: boolean
   readonly prepareOnly: boolean
   readonly unsigned: boolean
+  readonly internalUpdate: boolean
   readonly skipNotarization: boolean
   readonly check: boolean
   /** Build identifier to publish under, when this build does not publish the product version. */
@@ -244,6 +246,7 @@ export function parseDesktopPackageInvocation(
       dir: { type: 'boolean', default: false },
       'prepare-only': { type: 'boolean', default: false },
       unsigned: { type: 'boolean', default: false },
+      'internal-update': { type: 'boolean', default: false },
       'skip-notarization': { type: 'boolean', default: false },
       check: { type: 'boolean', default: false },
       'build-version': { type: 'string' },
@@ -251,6 +254,10 @@ export function parseDesktopPackageInvocation(
   })
   if (positionals.length > 1) throw new Error('desktop package: expected at most one target')
   const name = positionals[0] ?? hostTargetName(hostPlatform, hostArch)
+  const internalUpdate = values['internal-update']
+  if (internalUpdate && (name !== 'win-x64' || values.unsigned || values['prepare-only'] || values['skip-notarization'])) {
+    throw new Error('desktop package: --internal-update requires win-x64 without --unsigned, --prepare-only, or --skip-notarization')
+  }
   if (values.unsigned && values['prepare-only']) throw new Error('desktop package: --unsigned cannot use --prepare-only')
   if (values['skip-notarization'] && (name.startsWith('win-') || values.unsigned || values['prepare-only'])) {
     throw new Error('desktop package: --skip-notarization requires a signed macOS build, without --prepare-only')
@@ -266,7 +273,8 @@ export function parseDesktopPackageInvocation(
     target: resolveDesktopPackageTarget(name, hostPlatform, hostArch),
     directory: values.dir,
     prepareOnly: values['prepare-only'],
-    unsigned: values.unsigned,
+    unsigned: values.unsigned || internalUpdate,
+    internalUpdate,
     skipNotarization: values['skip-notarization'],
     check: values.check,
     requestedBuildVersion,
@@ -360,13 +368,14 @@ async function main(): Promise<void> {
   if (invocation.skipNotarization) {
     process.stdout.write('desktop package: skipping notarization and stapling; internal debugging only, not qualified for distribution or update publishing\n')
   }
-  const environment = invocation.unsigned
+  const environment = invocation.unsigned && !invocation.internalUpdate
     ? target.platform === 'darwin'
       ? localMacOSPackageEnvironment()
       : localWindowsPackageEnvironment()
     : loadDesktopPackageEnvironment(target.platform, process.env, APP_ROOT, {
       unsigned: invocation.unsigned, prepareOnly: invocation.prepareOnly,
     })
+  if (invocation.internalUpdate) environment.DSH_DESKTOP_INTERNAL_UPDATE = '1'
   const productVersion = packageVersion(join(APP_ROOT, 'package.json'), 'desktop package')
   // Release settings come from the selected configuration files, so the version this run publishes is an
   // argument; the environment variable below only carries it to the child processes that build.
@@ -383,7 +392,8 @@ async function main(): Promise<void> {
   Object.assign(environment, desktopBuildCommitEnvironment(packaged))
   const secrets = Object.entries(environment).filter(([name]) => /KEY|SECRET|TOKEN|PASSWORD|APPLE_ID/iu.test(name)).map(([, value]) => value ?? '')
   const run = createPackagingRun(join(APP_ROOT, '.desktop-build', 'packaging-runs'), {
-    target: target.name, unsigned: invocation.unsigned, skipNotarization: invocation.skipNotarization,
+    target: target.name, unsigned: invocation.unsigned, internalUpdate: invocation.internalUpdate,
+    skipNotarization: invocation.skipNotarization,
     directory: invocation.directory, prepareOnly: invocation.prepareOnly,
     version: buildVersion, productVersion, node: process.version,
     commit: packaged.commit,
@@ -445,14 +455,15 @@ async function preparePackageTarget(
   const packConcurrency = mac?.packConcurrency ?? resolveWindowsPackageSettings(environment).packConcurrency
   const packArguments = ['--concurrency', String(packConcurrency)]
   const buildPaths = desktopTargetBuildPaths(target.name, environment)
-  const releaseRecordPath = join(buildPaths.artifacts, desktopBuildRecordFilename(target.name))
-  if (!invocation.prepareOnly && !invocation.unsigned && !invocation.skipNotarization) {
+  const artifactsRoot = desktopArtifactOutput(buildPaths, invocation).directory
+  const releaseRecordPath = join(artifactsRoot, desktopBuildRecordFilename(target.name))
+  if (!invocation.prepareOnly && (!invocation.unsigned || invocation.internalUpdate) && !invocation.skipNotarization) {
     rmSync(releaseRecordPath, { force: true })
     rmSync(`${releaseRecordPath}.tmp`, { force: true })
   }
-  const artifactsRoot = desktopArtifactOutput(buildPaths, invocation).directory
   const buildEnv = withoutWindowsSigningEnvironment(withoutDesktopUploadCredentials(
     desktopElectronBuilderEnvironment(environment, invocation.unsigned)))
+  if (invocation.internalUpdate) buildEnv.DSH_DESKTOP_INTERNAL_UPDATE = '1'
   const targetEnv: NodeJS.ProcessEnv = {
     ...buildEnv,
     DSH_DESKTOP_MACOS_SKIP_NOTARIZATION: invocation.skipNotarization ? '1' : '0',
@@ -609,8 +620,8 @@ async function preparePackageTarget(
     await execute(['exec', 'tsx', 'scripts/smoke-packaged-runtime.ts',
       ...(invocation.unsigned ? ['--unsigned'] : []), ...(invocation.skipNotarization ? ['--skip-notarization'] : [])], targetEnv)
   }
-  if (!invocation.directory && !invocation.unsigned && !invocation.skipNotarization) {
-    writeReleaseRecord(target, electronBuilderEnv, buildPaths.artifacts)
+  if (!invocation.directory && (!invocation.unsigned || invocation.internalUpdate) && !invocation.skipNotarization) {
+    writeReleaseRecord(target, electronBuilderEnv, artifactsRoot)
   }
   if (journal) recordPackagingEvent(journal, { type: 'artifacts', directory: artifactsRoot })
 }

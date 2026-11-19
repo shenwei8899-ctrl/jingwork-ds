@@ -6,6 +6,23 @@ import { valid } from 'semver'
 export const DESKTOP_AUTO_UPDATE_ENV = 'DSH_DESKTOP_AUTO_UPDATE_ENV'
 
 /**
+ * Resolve explicit unsigned internal distribution without changing signed release defaults.
+ * @param {NodeJS.ProcessEnv} env Packaging or upload settings.
+ * @param {NodeJS.Platform} platform Target platform.
+ * @param {string} arch Target architecture.
+ * @returns {boolean} Whether this is a JingWork Windows x64 internal release.
+ */
+export function resolveDesktopInternalUpdate(env, platform, arch) {
+  const value = env.DSH_DESKTOP_INTERNAL_UPDATE
+  if (value === undefined || value === '0') return false
+  if (value !== '1') throw new Error('desktop internal update: DSH_DESKTOP_INTERNAL_UPDATE must be 0 or 1')
+  if (platform !== 'win32' || arch !== 'x64' || env.DSH_DESKTOP_PRODUCT !== 'jingwork') {
+    throw new Error('desktop internal update: only JingWork Windows x64 supports internal updates')
+  }
+  return true
+}
+
+/**
  * Resolve the channel embedded in the installer; omitted local settings retain nightly.
  * @param {NodeJS.ProcessEnv} env Packaging or upload settings.
  * @returns {'nightly' | 'stable'} Validated channel.
@@ -38,10 +55,15 @@ const UPDATE_TARGETS = new Set(['mac-arm64', 'mac-x64', 'win-x64', 'win-arm64'])
 /**
  * Name the fixed installer object shared by uploading and cache refresh.
  * @param {'mac-arm64' | 'mac-x64' | 'win-x64' | 'win-arm64'} target Supported Desktop target.
+ * @param {boolean} internalUpdate Whether to use the separate internal bootstrap download; omitted uses the signed release name.
  * @returns {string} Fixed download filename.
  */
-export function desktopLatestInstallerFilename(target) {
+export function desktopLatestInstallerFilename(target, internalUpdate = false) {
   if (!UPDATE_TARGETS.has(target)) throw new Error(`desktop upload: unsupported target ${target}`)
+  if (internalUpdate) {
+    if (target !== 'win-x64') throw new Error('desktop internal update: only Windows x64 has an internal installer')
+    return 'jingwork-internal-latest-windows-x64.exe'
+  }
   const windows = target.startsWith('win-')
   const arch = target === 'mac-arm64' || target === 'win-arm64' ? 'arm64' : 'x64'
   return `dsh-latest-${windows ? 'windows' : 'macos'}-${arch}.${windows ? 'exe' : 'dmg'}`
@@ -162,6 +184,7 @@ function httpsOrigin(value, name) {
  * @throws {Error} When the test deployment lacks a valid HTTPS origin or a 32-character lowercase hexadecimal release ID.
  */
 export function resolveDesktopAutoUpdateConfig(env, platform, arch) {
+  const internalUpdate = resolveDesktopInternalUpdate(env, platform, arch)
   const channel = resolveDesktopUpdateChannel(env)
   const environment = resolveDesktopAutoUpdateEnvironment(env)
   const target = resolveDesktopAutoUpdateTarget(platform, arch)
@@ -187,6 +210,7 @@ export function resolveDesktopAutoUpdateConfig(env, platform, arch) {
     }
     releasePrefix += `/${releaseId}`
   }
+  if (internalUpdate) releasePrefix += '/internal'
   const keyPrefix = `${releasePrefix}/feeds/${target}`
   return {
     environment,

@@ -20,7 +20,7 @@ import {
   resolveWindowsUpdatePublisher,
   scrubWindowsSigningEnvironment,
 } from './windows-sign.mjs'
-import { resolveDesktopAutoUpdateConfig } from './desktop-auto-update-environment.mjs'
+import { resolveDesktopAutoUpdateConfig, resolveDesktopInternalUpdate } from './desktop-auto-update-environment.mjs'
 import { resolveDesktopBuildCommit } from './desktop-build-commit.mjs'
 import { resolveDesktopBuildVersion } from './desktop-build-version.mjs'
 import { resolveDesktopPolicyEnvironment } from './desktop-policy-environment.mjs'
@@ -59,6 +59,8 @@ export function createElectronBuilderConfig(
     throw new Error('desktop package: DSH_DESKTOP_UNSIGNED must be 0 or 1')
   }
   const unsigned = env.DSH_DESKTOP_UNSIGNED === '1'
+  const internalUpdate = resolveDesktopInternalUpdate(env, resolvedPlatform, resolvedArch)
+  if (internalUpdate && !unsigned) throw new Error('desktop internal update: internal builds must use unsigned packaging')
   if (env.DSH_DESKTOP_PRODUCT !== undefined && env.DSH_DESKTOP_PRODUCT !== 'jingwork') {
     throw new Error('desktop package: DSH_DESKTOP_PRODUCT must be jingwork when supplied')
   }
@@ -78,7 +80,7 @@ export function createElectronBuilderConfig(
   const macOSSigning = packagesMacOS && !unsigned ? resolveMacOSSigningEnvironment(env) : undefined
   if (packagesMacOS && !unsigned && !skipNotarization) resolveMacOSNotarizationEnvironment(env)
   const buildPaths = desktopTargetBuildPaths(resolveDesktopBuildTarget(env, hostPlatform, hostArch), env)
-  const output = desktopArtifactOutput(buildPaths, { unsigned, skipNotarization })
+  const output = desktopArtifactOutput(buildPaths, { unsigned, skipNotarization, internalUpdate })
   let primaryRuntimeDestination
   let dshDestination
   let windowsCode = []
@@ -106,7 +108,7 @@ export function createElectronBuilderConfig(
   if (windowsSigner !== undefined) {
     installWindowsNsisBootstrapSigner({ sign: windowsSigner })
   }
-  const update = unsigned ? undefined : resolveDesktopAutoUpdateConfig(env, resolvedPlatform, resolvedArch)
+  const update = unsigned && !internalUpdate ? undefined : resolveDesktopAutoUpdateConfig(env, resolvedPlatform, resolvedArch)
   if (preparedRuntime !== undefined) buildPaths.dsh = preparedRuntime
   // electron-builder merges extraMetadata into the packaged manifest, so a build version here reaches
   // the artifact names, the update feed, and the installed app.getVersion() the updater compares against.
@@ -120,6 +122,7 @@ export function createElectronBuilderConfig(
       dshDesktopAppId: appId,
       ...(jingwork ? { dshDesktopProduct: 'jingwork', name: 'jingwork', productName: 'JingWork' } : {}),
       dshDesktopUpdateChannel: update?.channel ?? 'nightly',
+      ...(internalUpdate ? { dshDesktopInternalUpdate: true } : {}),
       ...(policy === undefined ? {} : { dshMandatoryUpdatePolicy: policy }),
       ...buildVersion === productVersion ? {} : { version: buildVersion },
       ...packaged === undefined ? {} : { dshBuildCommit: packaged.commit, dshBuildDirty: packaged.dirty },
@@ -257,6 +260,7 @@ export function createElectronBuilderConfig(
     win: {
       icon: fileURLToPath(new URL(jingwork ? '../resources/icon-jingwork.png' : '../resources/icon-windows.png', import.meta.url)),
       forceCodeSigning: !unsigned,
+      ...(internalUpdate ? { verifyUpdateCodeSignature: false } : {}),
       signtoolOptions: {
         sign: windowsSigner,
         publisherName: windowsSigner === undefined ? undefined : resolveWindowsUpdatePublisher(env.DSH_DESKTOP_WINDOWS_CER_FILE),

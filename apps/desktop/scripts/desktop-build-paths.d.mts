@@ -5,6 +5,7 @@ export interface DesktopTargetBuildPaths {
   readonly root: string
   readonly artifacts: string
   readonly unsignedArtifacts: string
+  readonly internalArtifacts: string
   readonly unnotarizedArtifacts: string
   readonly runtime: string
   readonly packageSet: string
@@ -79,10 +80,10 @@ export function developmentRuntimeDirectory(
 /**
  * Select the output directory and filename suffix for one packaging mode.
  * @param paths Target artifact directories.
- * @param mode Validated packaging mode.
+ * @param mode Validated packaging mode; internalUpdate defaults to false.
  * @returns Matching artifact destination and filename marker.
  */
 export function desktopArtifactOutput(
-  paths: Pick<DesktopTargetBuildPaths, 'artifacts' | 'unsignedArtifacts' | 'unnotarizedArtifacts'>,
-  mode: { unsigned: boolean, skipNotarization: boolean },
+  paths: Pick<DesktopTargetBuildPaths, 'artifacts' | 'unsignedArtifacts' | 'internalArtifacts' | 'unnotarizedArtifacts'>,
+  mode: { unsigned: boolean, skipNotarization: boolean, internalUpdate?: boolean },
 ): { directory: string, suffix: string }

@@ -16,19 +16,21 @@ import { desktopUpdateReadyConfirmation, resolveDesktopLocale } from '../../lib/
 const root = process.env.DSH_WORKSPACE_UPDATE_ROOT
 assert.ok(root)
 const interactive = process.argv.includes('--interactive')
+const internalUpdate = process.argv.includes('--internal-update')
+fixture.internalUpdate = internalUpdate
 const application = join(root, 'app')
 app.setAppPath(application)
 app.setPath('userData', join(root, 'electron'))
 const entry = pathToFileURL(join(application, 'lib/main.js')).href
 const adapters = new URL('./workspace-update-adapters.mjs', import.meta.url).href
 const hooks = registerHooks({ resolve(specifier, context, next) {
-  if (context.parentURL === entry && ['./update-coordinator.js', './host-process.js', './update-error.js'].includes(specifier)) {
+  if (context.parentURL === entry && ['./update-coordinator.js', './host-process.js', './update-error.js', './update-schedule.js'].includes(specifier)) {
     return { url: adapters, shortCircuit: true }
   }
   return next(specifier, context)
 } })
 const server = await createUpdateServer()
-server.select('healthy', '0.1.6-nightly.1')
+server.select(internalUpdate ? 'hold-download' : 'healthy', '0.1.6-nightly.1')
 process.env.DSH_DESKTOP_APP_ID = 'com.deepseek.qualification'
 process.env.DSH_DESKTOP_MANDATORY_UPDATE_CONFIG = JSON.stringify({ origin: new URL(server.url).origin,
   allowedPageOrigins: ['https://downloads.example.com'], intervalMs: 600_000, timeoutMs: 5000, maxBackoffMs: 600_000, jitter: 0 })
@@ -41,9 +43,10 @@ const updater = new updaterModule.NsisUpdater(undefined, {
   whenReady: () => app.whenReady(), quit: forbidden, relaunch: forbidden, onQuit: forbidden,
 })
 updater.logger = null
-updater.httpExecutor = new DesktopUpdateHttpExecutor(interactive ? 600_000 : 10_000)
+updater.httpExecutor = new DesktopUpdateHttpExecutor(interactive ? 600_000 : internalUpdate ? 60_000 : 10_000)
 updater.disableDifferentialDownload = true
 updater.disableWebInstaller = true
+updater._testOnlyOptions = { platform: 'win32' }
 updater.setFeedURL({ provider: 'generic', url: server.url, channel: 'nightly' })
 updater.quitAndInstall = (...args) => { fixture.installations.push(args) }
 fixture.updater = updater
@@ -176,6 +179,7 @@ async function dialogWith(message) {
       if (!window) {
         const owner = BrowserWindow.fromWebContents(contents)
         window = { webContents: contents, isDestroyed: () => contents.isDestroyed(),
+          focus: () => { owner?.focus(); contents.focus() },
           isVisible: () => owner?.isVisible() ?? false, isFocused: () => contents.isFocused(), isEnabled: () => owner?.isEnabled() ?? true }
         dialogDrivers.set(contents, window)
       }
@@ -191,17 +195,24 @@ async function dialogWith(message) {
 async function qualify() {
   let mainWindow
   try {
-    await import(entry)
+    const { startDesktop } = await import(entry)
+    startDesktop()
     console.log('workspace qualification: compiled main module loaded')
     await fixture.ready.promise
     console.log('workspace qualification: Host process ready')
+    const welcome = await windowAt(pathToFileURL(join(application, 'renderer/welcome.html')).href)
+    await press(welcome, `document.getElementById('api-key')`)
+    await press(welcome, `document.getElementById('skip-key')`)
     mainWindow = await windowAt('dsh-app://app/')
     await documentReady(mainWindow, `document.querySelector('[class*="frame"]') && window.dshDesktop?.updates`)
+    await waitFor(() => mainWindow.isVisible(), 'workspace window visibility')
     assert.equal(mainWindow.isVisible(), true, 'Workspace qualification requires a visible application window')
     console.log('workspace qualification: workspace document ready')
     const acknowledgeNotice = `[...document.querySelectorAll('button')].find(button => button.textContent.trim() === '继续')`
-    await press(mainWindow, acknowledgeNotice)
-    await waitFor(async () => !await mainWindow.webContents.executeJavaScript(`!!(${acknowledgeNotice})`), 'first-run notice dismissal')
+    if (await mainWindow.webContents.executeJavaScript(`!!(${acknowledgeNotice})`)) {
+      await press(mainWindow, acknowledgeNotice)
+      await waitFor(async () => !await mainWindow.webContents.executeJavaScript(`!!(${acknowledgeNotice})`), 'first-run notice dismissal')
+    }
     console.log('workspace qualification: first-run notice dismissed')
     await waitFor(async () => !await fixture.host.updateTasks('inspect'), 'workspace startup API requests to settle')
     console.log('workspace qualification: startup API requests settled')
@@ -224,6 +235,58 @@ async function qualify() {
       return
     }
     const cases = ['real-workspace-preload-and-host']
+
+    if (internalUpdate) {
+      const checking = fixture.schedule.check(false, true)
+      await Promise.race([server.arrived(), checking.then(state => {
+        throw new Error(`Internal download did not reach its transport: ${JSON.stringify(state)}`)
+      })])
+      await documentReady(mainWindow, `[...document.querySelectorAll('button')].some(button => button.textContent.includes('%'))`)
+      await screenshot(mainWindow, 'internal-background-download.png')
+      assert.equal(fixture.installations.length, 0)
+      server.release()
+      assert.equal((await checking).phase, 'ready')
+      await documentReady(mainWindow, `[...document.querySelectorAll('button')].some(button => button.textContent.trim() === ${JSON.stringify(messages.installAndRestart)})`)
+      await screenshot(mainWindow, 'internal-restart-ready.png')
+      assert.equal(webContents.getAllWebContents().some(contents => contents.getURL() === 'dsh-app://shell/update-dialog.html'), false)
+      await press(mainWindow, `[...document.querySelectorAll('button')].find(button => button.textContent.trim() === ${JSON.stringify(messages.installAndRestart)})`)
+      const confirmation = desktopUpdateReadyConfirmation(messages, '0.1.6-nightly.1', process.platform)
+      const ready = await dialogWith(confirmation.message)
+      await screenshot(ready, 'internal-restart-confirmation.png')
+      await press(ready, `document.getElementById('close')`)
+      await waitFor(() => fixture.coordinator.state.phase === 'ready', 'deferred internal update')
+      assert.equal(fixture.installations.length, 0)
+
+      await fixture.coordinator.switchChannel('stable', async () => {})
+      server.select('corrupt', '0.1.6-nightly.2')
+      await fixture.coordinator.switchChannel('nightly', async () => {})
+      assert.equal((await fixture.schedule.downloadAvailable()).failedOperation, 'download')
+      const failure = await dialogWith(messages.updateDownloadFailed)
+      await screenshot(failure, 'internal-integrity-failure.png')
+      await clickText(failure, messages.updateAcknowledge)
+      const retryButton = `[...document.querySelectorAll('button')].find(button => button.textContent.trim() === ${JSON.stringify(messages.updateRetry)})`
+      await documentReady(mainWindow, `!!(${retryButton})`)
+      const requests = server.requests.length
+      await fixture.schedule.check(false, true)
+      assert.equal(server.requests.length, requests)
+      assert.equal(fixture.installations.length, 0)
+      server.select('healthy', '0.1.6-nightly.2')
+      await press(mainWindow, retryButton)
+      const retryConfirmation = desktopUpdateReadyConfirmation(messages, '0.1.6-nightly.2', process.platform)
+      const retried = await dialogWith(retryConfirmation.message)
+      await screenshot(retried, 'internal-retry-confirmation.png')
+      await press(retried, `document.getElementById('close')`)
+      await waitFor(() => fixture.coordinator.state.phase === 'ready', 'retried internal update')
+      assert.equal(fixture.installations.length, 0)
+      const result = { realElectron: true, realHostProcess: true, compiledMainEntry: true,
+        scheduling: 'Windows internal mode injected by fixture', installerExecuted: false,
+        cases: ['background-download-without-click', 'ready-action-without-automatic-install',
+          'restart-confirmation-can-be-dismissed', 'checksum-failure-blocks-readiness', 'failed-download-requires-explicit-retry'] }
+      const expected = JSON.parse(await readFile(new URL('../expected/internal-updates.json', import.meta.url), 'utf8'))
+      assert.deepEqual(result, expected)
+      await writeFile(join(root, 'result.json'), JSON.stringify(result, null, 2) + '\n')
+      return
+    }
 
     server.select('hold-check', '0.1.5-rc.1')
     checkMenu.click()
@@ -398,7 +461,7 @@ async function qualify() {
       menu: menu.map(item => item.label), phases: fixture.states.map(state => state.phase) }, null, 2) + '\n')
   } catch (error) {
     await writeFile(join(root, 'failure.txt'), String(error.stack ?? error))
-    await writeFile(join(root, 'failure-update-state.json'), JSON.stringify(fixture.coordinator?.state, null, 2))
+    await writeFile(join(root, 'failure-update-state.json'), JSON.stringify(fixture.coordinator?.state ?? null, null, 2))
     await writeFile(join(root, 'task-queries.json'), JSON.stringify(fixture.taskQueries, null, 2))
     try { await writeFile(join(root, 'failure-host-state.json'), JSON.stringify(await control('status'), null, 2)) }
     catch (diagnosticError) { await writeFile(join(root, 'failure-host-state.txt'), String(diagnosticError)) }

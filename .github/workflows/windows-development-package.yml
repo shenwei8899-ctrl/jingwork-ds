@@ -12,6 +12,14 @@ on:
         required: true
         default: 0.2.2-alpha.2
         type: string
+      internal_update:
+        description: Build a JingWork internal installer with background updates
+        default: false
+        type: boolean
+      update_origin:
+        description: HTTPS download origin for internal updates, without a path
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -29,6 +37,8 @@ jobs:
     timeout-minutes: 180
     env:
       PACKAGE_VERSION: ${{ inputs.version || (github.ref_name == 'codex/windows-package-0.2.2-alpha.2' && '0.2.2-alpha.2' || '0.2.2-rc.2') }}
+      PACKAGE_INTERNAL_UPDATE: ${{ inputs.internal_update || false }}
+      PACKAGE_UPDATE_ORIGIN: ${{ inputs.update_origin }}
     concurrency:
       group: windows-development-package-${{ github.ref }}-${{ matrix.target }}
       cancel-in-progress: false
@@ -69,12 +79,30 @@ jobs:
           if ([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString().ToLowerInvariant() -ne '${{ matrix.arch }}') {
             throw 'The runner architecture does not match the package target'
           }
-      - name: Build unsigned installer
+      - name: Configure internal update distribution
+        if: inputs.internal_update
+        run: |
+          $origin = [Uri]$env:PACKAGE_UPDATE_ORIGIN
+          if (-not $origin.IsAbsoluteUri -or $origin.Scheme -ne 'https' -or
+              $origin.AbsolutePath -ne '/' -or $origin.UserInfo -or $origin.Query -or $origin.Fragment) {
+            throw 'Internal updates require an HTTPS origin without a path or credentials'
+          }
+          @(
+            'DSH_DESKTOP_APP_ID=com.jingwork.desktop'
+            'DSH_DESKTOP_PRODUCT=jingwork'
+            'DSH_DESKTOP_AUTO_UPDATE_ENV=production'
+            "DOWNLOAD_PROD_ORIGIN=$($origin.GetLeftPart([UriPartial]::Authority))"
+          ) | Set-Content -LiteralPath 'apps/desktop/.env.windows' -Encoding utf8
+      - name: Build unsigned or internal installer
         run: |
           $env:DSH_DESKTOP_TARGET_PLATFORM = 'win32'
           $env:DSH_DESKTOP_TARGET_ARCH = '${{ matrix.arch }}'
           for ($attempt = 1; $attempt -le 3; $attempt++) {
-            pnpm run package:desktop:win:${{ matrix.arch }}:unsigned -- --build-version $env:PACKAGE_VERSION
+            if ($env:PACKAGE_INTERNAL_UPDATE -eq 'true') {
+              pnpm --dir apps/desktop run package:win:x64:internal --build-version $env:PACKAGE_VERSION
+            } else {
+              pnpm run package:desktop:win:${{ matrix.arch }}:unsigned -- --build-version $env:PACKAGE_VERSION
+            }
             $packageExit = $LASTEXITCODE
             if ($packageExit -eq 0) { exit 0 }
             $record = Get-ChildItem 'apps/desktop/.desktop-build/packaging-runs' -Directory |
@@ -89,9 +117,13 @@ jobs:
             Start-Sleep -Seconds 10
           }
       - name: Record installer checksum
+        id: artifacts
         run: |
-          $installer = "apps/desktop/.desktop-build/targets/${{ matrix.target }}/unsigned-artifacts/deepseek-harness-$env:PACKAGE_VERSION-${{ matrix.target }}-unsigned.exe"
+          $mode = if ($env:PACKAGE_INTERNAL_UPDATE -eq 'true') { 'internal' } else { 'unsigned' }
+          $directory = "apps/desktop/.desktop-build/targets/${{ matrix.target }}/$mode-artifacts"
+          $installer = "$directory/deepseek-harness-$env:PACKAGE_VERSION-${{ matrix.target }}-$mode.exe"
           $hash = Get-FileHash -Algorithm SHA256 -LiteralPath $installer
+          "directory=$directory" >> $env:GITHUB_OUTPUT
           "### ${{ matrix.target }} installer`n`n$($hash.Hash.ToLowerInvariant())  $([IO.Path]::GetFileName($installer))" >> $env:GITHUB_STEP_SUMMARY
       - name: Upload installer
         uses: actions/upload-artifact@v7.0.1
@@ -99,7 +131,11 @@ jobs:
           name: JingWork-Windows-${{ matrix.target }}-${{ env.PACKAGE_VERSION }}
           compression-level: 0
           include-hidden-files: true
-          path: apps/desktop/.desktop-build/targets/${{ matrix.target }}/unsigned-artifacts/deepseek-harness-${{ env.PACKAGE_VERSION }}-${{ matrix.target }}-unsigned.exe
+          path: |
+            ${{ steps.artifacts.outputs.directory }}/*.exe
+            ${{ steps.artifacts.outputs.directory }}/*.blockmap
+            ${{ steps.artifacts.outputs.directory }}/*.yml
+            ${{ steps.artifacts.outputs.directory }}/*-release.json
           if-no-files-found: error
           retention-days: 14
       - name: Upload packaging diagnostics

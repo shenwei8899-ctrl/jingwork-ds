@@ -16,23 +16,74 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-function fixture(jitter = 0, random = () => 0.5) {
+function fixture(jitter = 0, random = () => 0.5, autoDownload = false) {
   const checkForUpdates = vi.fn(async () => ({ isUpdateAvailable: false, updateInfo: { version: '1.0.0' } }))
   const events = new EventEmitter()
   const downloadUpdate = vi.fn(async () => {
     events.emit('update-downloaded', { version: '1.1.0-nightly.1' })
     return ['verified']
   })
-  const updater = Object.assign(events, { checkForUpdates, downloadUpdate, quitAndInstall: vi.fn() }) as unknown as AppUpdater
+  const quitAndInstall = vi.fn()
+  const updater = Object.assign(events, { checkForUpdates, downloadUpdate, quitAndInstall }) as unknown as AppUpdater
   const states: DesktopUpdateState[] = []
   const coordinator = new DesktopUpdateCoordinator((state) => { states.push(state); return state }, async () => true,
     updater, () => true, () => '1.0.0')
-  const schedule = new DesktopUpdateSchedule(coordinator, { intervalMs: 10_000, maxBackoffMs: 40_000, jitter }, random)
+  const schedule = new DesktopUpdateSchedule(coordinator, { intervalMs: 10_000, maxBackoffMs: 40_000, jitter },
+    random, undefined, autoDownload)
   cleanup.push(() => { schedule.dispose(); coordinator.dispose() })
-  return { schedule, coordinator, states, checkForUpdates, downloadUpdate }
+  return { schedule, coordinator, states, checkForUpdates, downloadUpdate, quitAndInstall }
 }
 
 describe('ordinary update polling', () => {
+  it('downloads an internal update in the background and waits for explicit installation', async () => {
+    const f = fixture(0, () => 0.5, true)
+    f.checkForUpdates.mockResolvedValue({ isUpdateAvailable: true, updateInfo: { version: '1.1.0-nightly.1' } })
+    expect(await f.schedule.check()).toEqual({ phase: 'ready', version: '1.1.0-nightly.1' })
+    expect(f.states.map(state => state.phase)).toEqual(['available', 'downloading', 'ready'])
+    expect(f.downloadUpdate).toHaveBeenCalledOnce()
+    expect(f.quitAndInstall).not.toHaveBeenCalled()
+    await vi.advanceTimersByTimeAsync(30_000)
+    expect(f.downloadUpdate).toHaveBeenCalledOnce()
+    await f.coordinator.install('1.1.0-nightly.1')
+    expect(f.quitAndInstall).toHaveBeenCalledExactlyOnceWith(true, true)
+  })
+
+  it('retains internal download failures without silently retrying or installing', async () => {
+    const f = fixture(0, () => 0.5, true)
+    f.checkForUpdates.mockResolvedValue({ isUpdateAvailable: true, updateInfo: { version: '1.1.0-nightly.1' } })
+    f.downloadUpdate.mockRejectedValueOnce(new Error('SHA-512 mismatch'))
+    expect(await f.schedule.check()).toMatchObject({ phase: 'error', failedOperation: 'download' })
+    await vi.advanceTimersByTimeAsync(30_000)
+    expect(f.downloadUpdate).toHaveBeenCalledOnce()
+    expect(f.quitAndInstall).not.toHaveBeenCalled()
+    await f.coordinator.download('1.1.0-nightly.1')
+    expect(f.coordinator.state.phase).toBe('ready')
+  })
+
+  it('downloads the new internal channel target after retiring the old target', async () => {
+    const f = fixture(0, () => 0.5, true)
+    f.checkForUpdates.mockResolvedValue({ isUpdateAvailable: true, updateInfo: { version: '1.1.0-nightly.1' } })
+    await f.coordinator.switchChannel('stable', async () => {})
+    await f.schedule.downloadAvailable()
+    expect(f.coordinator.state.phase).toBe('ready')
+    expect(f.downloadUpdate).toHaveBeenCalledOnce()
+    expect(f.quitAndInstall).not.toHaveBeenCalled()
+  })
+
+  it('does not start internal downloads when disposed before a check finishes', async () => {
+    const f = fixture(0, () => 0.5, true)
+    const pending = Promise.withResolvers<Awaited<ReturnType<typeof f.checkForUpdates>>>()
+    const started = Promise.withResolvers<undefined>()
+    f.checkForUpdates.mockImplementationOnce(() => { started.resolve(undefined); return pending.promise })
+    const checking = f.schedule.check()
+    await started.promise
+    f.schedule.dispose()
+    pending.resolve({ isUpdateAvailable: true, updateInfo: { version: '1.1.0-nightly.1' } })
+    await checking
+    expect(f.downloadUpdate).not.toHaveBeenCalled()
+    expect(vi.getTimerCount()).toBe(0)
+  })
+
   it('checks immediately, doubles failed delays up to the cap, and resets after success', async () => {
     const f = fixture()
     f.checkForUpdates.mockRejectedValue(new Error('offline'))

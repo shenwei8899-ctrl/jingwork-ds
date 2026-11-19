@@ -12,7 +12,11 @@ import { desktopTargetPlatform, developmentRuntimeDirectory, resolveDesktopBuild
 
 const repo = resolve(import.meta.dirname, '../../..')
 const interactive = process.argv.includes('--interactive')
-if (process.argv.slice(2).some(argument => argument !== '--interactive')) throw new Error('Expected only --interactive')
+const internalUpdate = process.argv.includes('--internal-update')
+if (process.argv.slice(2).some(argument => !['--interactive', '--internal-update'].includes(argument))) {
+  throw new Error('Expected --interactive or --internal-update')
+}
+if (interactive && internalUpdate) throw new Error('Internal update qualification is noninteractive')
 const evidence = join(repo, 'apps/desktop/.desktop-build/qualification')
 await mkdir(evidence, { recursive: true })
 const root = await mkdtemp(join(evidence, 'electron-workspace-updates-'))
@@ -37,8 +41,9 @@ try {
       .map(name => ({ name, version: manifest.version, path: `node_modules/${name}` })),
   }))
   await cp(join(repo, 'apps/desktop/lib/types'), join(application, 'lib'), { recursive: true })
+  await cp(join(repo, 'apps/desktop/lib/welcome'), join(application, 'lib/welcome'), { recursive: true })
   await cp(join(repo, 'apps/desktop/renderer'), join(application, 'renderer'), { recursive: true })
-  for (const name of ['preload-app', 'preload-mandatory', 'preload-update-dialog']) {
+  for (const name of ['preload-app', 'preload-welcome', 'preload-mandatory', 'preload-update-dialog']) {
     await cp(join(repo, `apps/desktop/lib/${name}.cjs`), join(application, `lib/${name}.cjs`))
   }
   await writeFile(join(application, 'package.json'), JSON.stringify({ name: 'desktop-update-qualification', version: manifest.version, type: 'module' }))
@@ -59,9 +64,10 @@ try {
   const environment = Object.fromEntries(Object.entries(process.env).filter(([name]) =>
     /^(?:path|systemroot|windir|comspec|pathext)$/iu.test(name)))
   const child = spawn(electron, [fileURLToPath(new URL('../tests/fixtures/workspace-updates.mjs', import.meta.url)), '--lang=zh-CN',
-    ...(interactive ? ['--interactive'] : [])], {
+    ...(interactive ? ['--interactive'] : []), ...(internalUpdate ? ['--internal-update'] : [])], {
     cwd: root, env: { ...environment, DSH_HOME: join(root, 'home'), USERPROFILE: root, HOME: root,
       TEMP: root, TMP: root, TMPDIR: root, DSH_WORKSPACE_UPDATE_ROOT: root, DSH_WORKSPACE_UPDATE_TOKEN: randomUUID(),
+      DSH_CLIENT_VERSION: manifest.version,
       DSH_DESKTOP_PRIMARY_RUNTIME_DIR: developmentRuntimeDirectory(), DSH_DESKTOP_OPEN_DEVTOOLS: '0' },
     // Hiding the GUI process suppresses its first window and can suspend renderer frame callbacks.
     stdio: 'inherit', windowsHide: false,

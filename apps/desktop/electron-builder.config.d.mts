@@ -21,6 +21,7 @@ export interface DesktopElectronBuilderConfig {
     readonly dshDesktopProduct?: 'jingwork'
     readonly name?: 'jingwork'
     readonly productName?: 'JingWork'
+    readonly dshDesktopInternalUpdate?: true
   }
   readonly asarUnpack: readonly string[]
   readonly extraResources: readonly [
@@ -46,6 +47,7 @@ export interface DesktopElectronBuilderConfig {
     readonly writeUpdateInfo: boolean
   }
   readonly win: {
+    readonly verifyUpdateCodeSignature?: false
     readonly icon: string
     readonly forceCodeSigning: boolean
     readonly signtoolOptions: {

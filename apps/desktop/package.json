@@ -17,6 +17,7 @@
     "start": "tsx scripts/dev.ts --skip-build",
     "test:updates:channels": "pnpm run build && node scripts/test-update-channels.mjs",
     "test:updates:local": "pnpm run build && node scripts/test-local-updater.mjs",
+    "test:updates:internal": "pnpm run build && tsx scripts/test-workspace-updates.ts --internal-update",
     "prepare:runtime": "tsx scripts/prepare-runtime.ts",
     "render:tray-icon": "tsx scripts/render-tray-icon.ts",
     "prepare:primary-runtime": "tsx scripts/prepare-primary-runtime.ts",
@@ -38,12 +39,15 @@
     "package:mac:x64:dir": "tsx scripts/package-target.ts mac-x64 --dir",
     "package:win:x64": "tsx scripts/package-target.ts win-x64",
     "package:win:x64:unsigned": "tsx scripts/package-target.ts win-x64 --unsigned",
+    "package:win:x64:internal": "tsx scripts/package-target.ts win-x64 --internal-update",
     "package:win:x64:dir": "tsx scripts/package-target.ts win-x64 --dir",
     "package:win:arm64": "tsx scripts/package-target.ts win-arm64 --unsigned",
     "package:win:arm64:unsigned": "tsx scripts/package-target.ts win-arm64 --unsigned",
     "upload:mac:arm64": "tsx scripts/upload-target.ts mac-arm64",
     "upload:mac:x64": "tsx scripts/upload-target.ts mac-x64",
     "upload:win:x64": "tsx scripts/upload-target.ts win-x64",
+    "upload:win:x64:internal": "tsx scripts/upload-target.ts win-x64 --internal-update",
+    "upload:latest:win:x64:internal": "tsx scripts/upload-target.ts win-x64 --internal-update --latest",
     "upload:latest:mac:arm64": "tsx scripts/upload-target.ts mac-arm64 --latest",
     "upload:latest:mac:x64": "tsx scripts/upload-target.ts mac-x64 --latest",
     "upload:latest:win:x64": "tsx scripts/upload-target.ts win-x64 --latest",
@@ -54,7 +58,8 @@
     "semver": "^7.8.5",
     "ws": "^8.21.3",
     "@deepseek-ai/dsh-api-gateway": "workspace:*",
-    "@deepseek-ai/cordis": "workspace:~"
+    "@deepseek-ai/cordis": "workspace:~",
+    "@deepseek-ai/dsh-brand": "workspace:*"
   },
   "devDependencies": {
     "@deepseek-ai/dsh-app-boot": "workspace:*",
@@ -92,6 +97,7 @@
     "zod": "4.6.6",
     "@deepseek-ai/dsh-util-file-drag": "workspace:*",
     "@deepseek-ai/dsh-client-ui-file-actions": "workspace:*",
+    "@deepseek-ai/dsh-client-ui-deliverables": "workspace:*",
     "tencentcloud-sdk-nodejs-teo": "4.1.330"
   }
 }

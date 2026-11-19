@@ -1,6 +1,15 @@
 /** Environment variable that selects the Desktop update deployment. */
 export const DESKTOP_AUTO_UPDATE_ENV: 'DSH_DESKTOP_AUTO_UPDATE_ENV'
 
+/**
+ * Resolve explicit unsigned internal distribution without changing signed release defaults.
+ * @param env Packaging or upload settings.
+ * @param platform Target platform.
+ * @param arch Target architecture.
+ * @returns Whether this is a JingWork Windows x64 internal release.
+ */
+export function resolveDesktopInternalUpdate(env: NodeJS.ProcessEnv, platform: NodeJS.Platform, arch: string): boolean
+
 /** Supported Desktop update deployment. */
 export type DesktopAutoUpdateEnvironment = 'test' | 'production'
 
@@ -10,9 +19,10 @@ export type DesktopAutoUpdateTarget = 'mac-arm64' | 'mac-x64' | 'win-x64' | 'win
 /**
  * Name the fixed installer object shared by uploading and cache refresh.
  * @param target Supported Desktop target.
+ * @param internalUpdate Whether to use the separate internal bootstrap download; omitted uses the signed release name.
  * @returns Fixed download filename.
  */
-export function desktopLatestInstallerFilename(target: DesktopAutoUpdateTarget): string
+export function desktopLatestInstallerFilename(target: DesktopAutoUpdateTarget, internalUpdate?: boolean): string
 
 /**
  * Resolve the production website installer URL shared by approval, upload and purge.

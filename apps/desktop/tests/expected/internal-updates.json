@@ -1,0 +1,14 @@
+{
+  "realElectron": true,
+  "realHostProcess": true,
+  "compiledMainEntry": true,
+  "scheduling": "Windows internal mode injected by fixture",
+  "installerExecuted": false,
+  "cases": [
+    "background-download-without-click",
+    "ready-action-without-automatic-install",
+    "restart-confirmation-can-be-dismissed",
+    "checksum-failure-blocks-readiness",
+    "failed-download-requires-explicit-retry"
+  ]
+}

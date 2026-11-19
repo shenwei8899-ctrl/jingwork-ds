@@ -12,7 +12,8 @@ const { values } = parseArgs({ options: { unsigned: { type: 'boolean', default: 
 const target = resolveDesktopBuildTarget()
 const windows = target.startsWith('win-')
 const applicationName = process.env.DSH_DESKTOP_PRODUCT === 'jingwork' ? 'JingWork' : 'DeepSeek Harness'
-const artifacts = desktopArtifactOutput(paths, { unsigned: values.unsigned, skipNotarization: values['skip-notarization'] }).directory
+const artifacts = desktopArtifactOutput(paths, { unsigned: values.unsigned, skipNotarization: values['skip-notarization'],
+  internalUpdate: process.env.DSH_DESKTOP_INTERNAL_UPDATE === '1' }).directory
 const application = windows ? join(artifacts, target === 'win-arm64' ? 'win-arm64-unpacked' : 'win-unpacked')
   : join(artifacts, target === 'mac-arm64' ? 'mac-arm64' : 'mac', `${applicationName}.app`, 'Contents')
 const resources = join(application, windows ? 'resources' : 'Resources')

@@ -1,0 +1,28 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write apps/desktop/internal-updates/README.md
+/:
+  en: ccb97a2f97d37cb0
+  zh: 31e890c78ced0b00
+/windows-internal-updates:
+  en: 290803027e372a89
+  zh: 23ba9f911d098c32
+/windows-internal-updates/summary:
+  en: ef92c838dc73c20b
+  zh: 58fe918f162f1bf3
+/windows-internal-updates/table-of-contents:
+  en: d78412992b08af72
+  zh: a89029d710dee291
+/windows-internal-updates/build-and-publish:
+  en: d95d630beff41156
+  zh: 9daddc150983d1f2
+/windows-internal-updates/installation-and-trust:
+  en: 9cd2d2b530563009
+  zh: 3d8010bb8f126268
+/windows-internal-updates/verification:
+  en: 8b50a981b57f848e
+  zh: 27196c96f28ed74d
+/windows-internal-updates/dev-note:
+  en: b75c8458928b72b9
+  zh: 003ba4e17b4b5269
