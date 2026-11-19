@@ -12,7 +12,7 @@ import type {} from '@deepseek-ai/dsh-client-ui-deliverables/types'
 import type { ModelCatalog } from '@deepseek-ai/dsh-api-session-controller/types'
 import type { AgentPresetRow } from '@deepseek-ai/dsh-agent-preset-registry/types'
 import type { WorkspaceDirectoryListing } from '@deepseek-ai/dsh-api-workspace-files/types'
-import type { Connector, Expert, ExpertTeam, WorkbenchData, WorkbenchSkill } from '../types.ts'
+import type { Connector, Expert, ExpertTeam, ServerSkillId, WorkbenchData, WorkbenchSkill } from '../types.ts'
 import { validateWorkbench } from '../validation.ts'
 import { resolveExpert } from '../expert.ts'
 import type { WorkbenchKey } from './locales.ts'
@@ -35,6 +35,10 @@ export interface LibrarySession {
 }
 /** Data fetched from the Host, owned by this controller rather than copied into a view store. */
 export interface WorkbenchSnapshot {
+  /** Approved enterprise skills, present only for native enterprise profiles. */
+  serverSkills?: readonly { id: ServerSkillId; slug: string; name: string; description: string }[]
+  /** Server skill reads failed independently of the local configuration. */
+  serverSkillsError?: boolean
   /** Live Jingwork catalog, absent for profiles without native enterprise login. */
   enterprise?: readonly Expert[]
   /** Authorized knowledge catalog from the management backend. */
@@ -55,6 +59,8 @@ export interface WorkbenchSnapshot {
 }
 /** Settings and file commands supplied by the plugin's injected services. */
 export interface WorkbenchPorts {
+  /** Read approved skill metadata through the native credential owner. */
+  listServerSkills?: () => Promise<{ id: ServerSkillId; slug: string; name: string; description: string }[]>
   form: ConfigForm<WorkbenchData>
   /** Restore the composition default before removing the selected preset; refuse stale selections. */
   restoreDefault: (preset: string) => Promise<WorkbenchKey | null>
@@ -105,8 +111,9 @@ export class WorkbenchController {
   async load(): Promise<void> {
     const generation = ++this.rosterGeneration
     try {
-      const [result, enterprise, models, knowledgeBases] = await Promise.all([
+      const [result, enterprise, models, knowledgeBases, serverSkills] = await Promise.all([
         this.ports.listPresets(), this.ports.listEnterprise?.(), this.ports.listModels?.(), this.ports.listKnowledgeBases?.(),
+        this.ports.listServerSkills?.().then(value => ({ value, error: false }), () => ({ value: [], error: true })),
       ])
       if (this.abort.signal.aborted || generation !== this.rosterGeneration) return
       if (models && !models.ok) throw new Error(models.error.message)
@@ -116,6 +123,7 @@ export class WorkbenchController {
         ...(models?.ok ? { models: models.value } : {}),
         ...(enterprise === undefined ? {} : { enterprise }),
         ...(knowledgeBases === undefined ? {} : { knowledgeBases }),
+        ...(serverSkills === undefined ? {} : { serverSkills: serverSkills.value, serverSkillsError: serverSkills.error }),
       })
     } catch (_error) {
       if (!this.abort.signal.aborted && generation === this.rosterGeneration) this.patch({ error: 'loadError' })

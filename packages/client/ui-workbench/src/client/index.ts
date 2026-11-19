@@ -23,6 +23,7 @@ import { PreviewNavigation, type PreviewFace } from './preview-navigation.tsx'
 import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
 import { connectorCredentialRef } from '../connector-catalog.ts'
 import { WorkbenchController } from './controller.ts'
+import type { ServerSkillId, WorkbenchSkill } from '../types.ts'
 import { zh, en, type WorkbenchKey } from './locales.ts'
 
 type WorkbenchFactoryDefinition = {
@@ -89,6 +90,9 @@ export async function apply(ctx: Context): Promise<void> {
 function registerWorkbench(ctx: Context): void {
   const jingwork = (globalThis as typeof globalThis & {
     dshJingwork?: {
+      skills: () => Promise<{ id: ServerSkillId; slug: string; name: string; description: string }[]>
+      submitSkill: (skill: WorkbenchSkill) => Promise<string>
+      downloadSkill: (id: ServerSkillId) => Promise<WorkbenchSkill>
       knowledgeBases: () => Promise<{ id: string; name: string; description: string }[]>
       agents: () => Promise<{ id: string; name: string; description: string }[]>
       openAgent: (id: string) => Promise<string>
@@ -110,6 +114,7 @@ function registerWorkbench(ctx: Context): void {
       return accepted ? null : 'saveError'
     },
     ...(jingwork === undefined ? {} : {
+      listServerSkills: () => jingwork.skills(),
       listKnowledgeBases: () => jingwork.knowledgeBases(),
       listEnterprise: async () => (await jingwork.agents()).map(agent => ({
         slug: enterprisePrefix + agent.id, name: agent.name, description: agent.description,
@@ -148,6 +153,28 @@ function registerWorkbench(ctx: Context): void {
   const t = ctx.locale.bind('workbench')
   const face = (page: WorkbenchFace['page']): WorkbenchFace => ({
     page,
+    ...(jingwork === undefined ? {} : {
+      submitSkill: async (skill: WorkbenchSkill): Promise<WorkbenchKey> => {
+        try {
+          const status = await jingwork.submitSkill(skill)
+          const labels: Record<string, WorkbenchKey> = {
+            pending: 'skillSubmitted', approved: 'skillAlreadyApproved',
+            rejected: 'skillAlreadyRejected', withdrawn: 'skillAlreadyWithdrawn',
+          }
+          return labels[status] ?? 'skillSubmitError'
+        } catch (_error: unknown) {
+          return 'skillSubmitError'
+        }
+      },
+      installServerSkill: async (id: ServerSkillId, revision: number | undefined) => {
+        try {
+          const skill = await jingwork.downloadSkill(id)
+          return await controller.save('skills', skill, undefined, revision)
+        } catch (_error: unknown) {
+          return 'serverSkillInstallError' as const
+        }
+      },
+    }),
     hooks: { form: controller.form, catalog: controller.source },
     listConnectorKnowledge: async (url, slug, signal) => {
       try {

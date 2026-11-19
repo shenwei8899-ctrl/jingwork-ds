@@ -1,0 +1,7 @@
+- region "服务器技能":
+  - heading "服务器技能" [level=2]
+  - article:
+    - heading "会议纪要与行动项整理" [level=2]
+    - text: /meeting-summary
+    - paragraph: 整理会议记录，提取责任人和待办事项。
+    - button "安装到本地"

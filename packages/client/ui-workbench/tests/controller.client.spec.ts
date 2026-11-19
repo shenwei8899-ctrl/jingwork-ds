@@ -4,7 +4,7 @@ import type { SettingsPathOpView } from '@deepseek-ai/dsh-api-remotes/client'
 import type { ConfigFormSnapshot } from '@deepseek-ai/dsh-client-ui-settings/client'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
 import { defaultWorkbench } from '../src/defaults.ts'
-import type { WorkbenchData } from '../src/types.ts'
+import type { ServerSkillId, WorkbenchData } from '../src/types.ts'
 import { WorkbenchController, type WorkbenchPorts } from '../src/client/controller.ts'
 
 function fixture(overrides: Partial<WorkbenchPorts> = {}) {
@@ -46,6 +46,18 @@ function fixture(overrides: Partial<WorkbenchPorts> = {}) {
 }
 
 describe('workbench editor and library commands', () => {
+  it('loads approved server skills and retains local edits when the server directory fails', async () => {
+    const card = { id: 'version-1' as ServerSkillId, slug: 'notes', name: 'Notes', description: 'Summarize notes' }
+    const listServerSkills = vi.fn().mockResolvedValueOnce([card]).mockRejectedValueOnce(new Error('offline'))
+    const { controller, snapshot, mutate } = fixture({ listServerSkills })
+    await controller.load()
+    expect(controller.source.getSnapshot().serverSkills).toEqual([card])
+    await controller.load()
+    expect(controller.source.getSnapshot()).toMatchObject({ serverSkills: [], serverSkillsError: true, error: null })
+    expect(snapshot.value).toEqual(defaultWorkbench())
+    expect(mutate).not.toHaveBeenCalled()
+    controller.dispose()
+  })
   it('keeps expert ordering and uses the revision read when editing began', async () => {
     const { controller, snapshot, mutate } = fixture()
     const expert = { ...defaultWorkbench().experts[0]!, name: 'My assistant' }

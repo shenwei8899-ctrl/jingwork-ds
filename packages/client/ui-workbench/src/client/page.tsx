@@ -24,7 +24,7 @@ import type { WorkspaceDirectoryEntry } from '@deepseek-ai/dsh-api-workspace-fil
 import type { HostObservable, InjectFace, PropsLocale, PropsRuntime, PropsStore } from '@deepseek-ai/dsh-client-ui-slots'
 import type { ConfigFormSnapshot } from '@deepseek-ai/dsh-client-ui-settings/client'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
-import type { WorkbenchData } from '../types.ts'
+import type { ServerSkillId, WorkbenchData, WorkbenchSkill } from '../types.ts'
 import { EXPERT_TEMPLATES } from '../defaults.ts'
 import type { Entity, EntityKind, WorkbenchController, WorkbenchSnapshot } from './controller.ts'
 import { saveDownload } from './controller.ts'
@@ -38,6 +38,10 @@ import { BuiltinSkills } from './BuiltinSkills.tsx'
 
 /** Commands and observable data injected by the plugin registration. */
 export interface WorkbenchFace {
+  /** Submit a local immutable version for enterprise review when native login is configured. */
+  submitSkill?: (skill: WorkbenchSkill) => Promise<WorkbenchKey>
+  /** Download an approved version and save it with a local Settings revision fence. */
+  installServerSkill?: (id: ServerSkillId, revision: number | undefined) => Promise<WorkbenchKey | null>
   page: 'assistants' | 'experts' | 'capabilities' | 'library'
   initialTab?: EntityKind
   initialTemplates?: boolean
@@ -623,6 +627,39 @@ export function WorkbenchPage(props: PageProps) {
       ) : (
         <>
           {showingSkills && <BuiltinSkills t={t} query={query} />}
+          {showingSkills && catalog.serverSkills !== undefined && (
+            <section className={css.skillCatalog} aria-label={t('serverSkills')}>
+              <div className={css.skillSectionHeader}><h2>{t('serverSkills')}</h2></div>
+              {catalog.serverSkillsError && <p role="alert" className={css.error}>{t('serverSkillsError')}</p>}
+              <div className={css.skillGrid}>
+                {catalog.serverSkills.filter(matches).map(skill => (
+                  <article className={`${cardStyles.surface} ${cardStyles.catalogSurface} ${css.card} ${css.skillCard}`} key={skill.id}>
+                    <div className={css.skillCardHeader}>
+                      <span className={css.skillIcon} aria-hidden="true"><IconAppsAddOutlineRegular size={26} /></span>
+                      <div className={css.skillIdentity}>
+                        <h2 className={css.skillTitle}>{skill.name}</h2>
+                        <span className={css.skillBadge}>/{skill.slug}</span>
+                      </div>
+                    </div>
+                    <p className={css.skillDescription}>{skill.description}</p>
+                    <div className={css.skillFooter}>
+                      <Button variant="outline" disabled={busy || !form.writable || data?.skills.some(row => row.slug === skill.slug)}
+                        onClick={() => {
+                          void perform(async () => {
+                            const failure = await props.installServerSkill?.(skill.id, form.revision) ?? null
+                            props.actions.show(failure ?? 'serverSkillInstalled', failure === null)
+                            return failure
+                          })
+                        }}>
+                        {t(data?.skills.some(row => row.slug === skill.slug) ? 'serverSkillLocalExists' : 'serverSkillInstall')}
+                      </Button>
+                    </div>
+                  </article>
+                ))}
+                {!catalog.serverSkillsError && !catalog.serverSkills.filter(matches).length && <p className={css.empty}>{t('serverSkillsEmpty')}</p>}
+              </div>
+            </section>
+          )}
           <section aria-label={showingSkills ? t('mySkills') : undefined}>
             {showingSkills && (
               <div className={css.skillSectionHeader}>
@@ -678,6 +715,15 @@ export function WorkbenchPage(props: PageProps) {
                       </div>
                     )}
                     <div className={showingSkills ? css.skillFooter : css.cardactions}>
+                      {showingSkills && 'content' in row && props.submitSkill && (
+                        <Button variant="outline" disabled={busy} onClick={() => {
+                          void perform(async () => {
+                            const key = await props.submitSkill?.(row) ?? 'skillSubmitError'
+                            props.actions.show(key, key !== 'skillSubmitError')
+                            return key === 'skillSubmitError' ? key : null
+                          })
+                        }}>{t('skillSubmit')}</Button>
+                      )}
                       {(kind === 'experts' || kind === 'teams') && (
                         <Button
                           className={css.cardMainAction}

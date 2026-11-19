@@ -1,3 +1,8 @@
+import type { Branded } from '@deepseek-ai/dsh-brand'
+
+/** Immutable enterprise submission identifier admitted by the native catalog reader. */
+export type ServerSkillId = Branded<'JingworkSkillSubmissionId'>
+
 /** Assistant ownership category within the profile. */
 export type ExpertCategory = 'personal' | 'enterprise' | 'builtin'
 

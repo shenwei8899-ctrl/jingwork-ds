@@ -11,3 +11,4 @@
   - term: 模型调用
   - definition: 支持
   - paragraph: 实际可调用的技能以当前会话的技能目录为准
+  - button "关闭"

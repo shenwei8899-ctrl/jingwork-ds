@@ -67,6 +67,8 @@ Other presentation hosts render the `workbench.assistants`, `workbench.library` 
 <a id="understand-the-implementation"></a>
 ## Understand the implementation
 
+With native JingWork login, Skills separates local definitions from approved server submissions. Saving an assistant submits its selected Markdown uploads after the local Settings write succeeds. Failed submission retains the saved local content and offers a retry from Local skills. Installation downloads the currently approved version and uses the Settings revision fence. A matching local slug blocks installation. Server withdrawal stops future downloads, while installed local copies remain user-owned.
+
 The Host registers enabled presets with `agentPresets` and skills with `skills.registerProvider`. A team is registered only when all its members are enabled. The workbench supplies the Jingwork logo to the sidebar and new-session heading. The Client registers four keyed `main` panels and sidebar entries for assistants, capabilities and the library; its injected controller uses shared Settings forms and workspace-file remotes. Preset updates retire previous generations through the registry. Configuration lives in the profile rather than browser storage; definitions without ownership or activation metadata resolve to personal and enabled.
 
 The Client build scans repository skill frontmatter into a metadata-only catalog; typed workbench dictionaries own localized display text. This catalog does not embed skill instruction bodies.

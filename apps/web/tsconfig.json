@@ -25,6 +25,7 @@
   "exclude": [
     "tests/super-agent.e2e.ts",
     "tests/workbench-skills.e2e.ts",
+    "tests/workbench-server-skills.e2e.ts",
     "tests/workbench.e2e.ts",
     "tests/home-whale.e2e.ts",
     "tests/sidebar-drawer.e2e.ts",

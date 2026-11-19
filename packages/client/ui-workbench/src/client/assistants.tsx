@@ -56,6 +56,7 @@ type Editor = {
   generation: number
   draft: Expert
   importedSkills: WorkbenchSkill[]
+  uploadedSkillSlugs: string[]
   original: string | undefined
   revision: number | undefined
   step: WizardStep
@@ -187,6 +188,7 @@ export function AssistantsPage(props: Props) {
       generation: ++editorGeneration.current,
       draft,
       importedSkills: [],
+      uploadedSkillSlugs: [],
       original: editing ? source?.slug : undefined,
       revision: form.revision,
       step: 0,
@@ -260,6 +262,14 @@ export function AssistantsPage(props: Props) {
     setQuery('')
     setHighlight(draft.slug)
     props.actions.show('agentSaved', true)
+    const submitSkill = props.submitSkill
+    const uploads = editor.importedSkills.filter(skill =>
+      draft.skills.includes(skill.slug) && editor.uploadedSkillSlugs.includes(skill.slug))
+    if (submitSkill && uploads.length > 0) {
+      const results = await Promise.all(uploads.map(skill => submitSkill(skill)))
+      const failed = results.includes('skillSubmitError')
+      props.actions.show(failed ? 'skillSubmitError' : 'skillSubmitted', !failed)
+    }
   }
   const action = async (run: () => Promise<WorkbenchKey | null>, success: WorkbenchKey) => {
     if (busy) return
@@ -804,6 +814,7 @@ export function AssistantsPage(props: Props) {
                                 return {
                                   ...current,
                                   importedSkills: [...current.importedSkills, skill],
+                                  uploadedSkillSlugs: [...current.uploadedSkillSlugs, skill.slug],
                                   draft: { ...current.draft, skills: [...current.draft.skills, skill.slug] },
                                 }
                               })
